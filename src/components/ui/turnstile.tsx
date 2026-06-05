@@ -11,6 +11,11 @@ interface TurnstileProps {
 export function Turnstile({ onSuccess, onError, onExpire }: TurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const callbacksRef = useRef({ onSuccess, onError, onExpire });
+
+  useEffect(() => {
+    callbacksRef.current = { onSuccess, onError, onExpire };
+  });
 
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -52,13 +57,13 @@ export function Turnstile({ onSuccess, onError, onExpire }: TurnstileProps) {
         const widgetId = (window as any).turnstile.render(containerRef.current, {
           sitekey: siteKey,
           callback: (token: string) => {
-            if (isMounted) onSuccess(token);
+            if (isMounted) callbacksRef.current.onSuccess(token);
           },
           "error-callback": () => {
-            if (isMounted && onError) onError();
+            if (isMounted && callbacksRef.current.onError) callbacksRef.current.onError();
           },
           "expired-callback": () => {
-            if (isMounted && onExpire) onExpire();
+            if (isMounted && callbacksRef.current.onExpire) callbacksRef.current.onExpire();
           },
         });
         widgetIdRef.current = widgetId;
@@ -77,7 +82,7 @@ export function Turnstile({ onSuccess, onError, onExpire }: TurnstileProps) {
         } catch {}
       }
     };
-  }, [onSuccess, onError, onExpire]);
+  }, []);
 
   return <div ref={containerRef} className="my-2 flex justify-center" />;
 }
