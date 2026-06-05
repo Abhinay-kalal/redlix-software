@@ -5,13 +5,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
+import { Turnstile } from "@/components/ui/turnstile";
 
 function ExamLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  
   const examIdParam = searchParams.get("examId");
 
   const [name, setName] = useState("");
@@ -20,6 +20,8 @@ function ExamLoginContent() {
   const [htError, setHtError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("Verifying credentials...");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [securityError, setSecurityError] = useState("");
 
   const loadingSteps = [
     "Verifying credentials...",
@@ -55,13 +57,39 @@ function ExamLoginContent() {
       setHtError("");
     }
 
+    if (!turnstileToken) {
+      setSecurityError("Please complete the security check.");
+      valid = false;
+    } else {
+      setSecurityError("");
+    }
+
     if (!valid) return;
 
     setIsLoading(true);
     setLoadingMsg(loadingSteps[0]);
 
     try {
-      
+      const verifyRes = await fetch("/api/verify-turnstile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setSecurityError("Security verification failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+    } catch {
+      setSecurityError("Failed to verify security token. Please try again.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
       const { data: reg, error: regError } = await supabase
         .from("registrations")
         .select("id, candidate_name, exam_id, photo_url, registration_number, hall_ticket_number")
@@ -74,14 +102,12 @@ function ExamLoginContent() {
         return;
       }
 
-      
       if (reg.candidate_name.toLowerCase().trim() !== name.toLowerCase().trim()) {
         setNameError("Name does not match our records for this hall ticket.");
         setIsLoading(false);
         return;
       }
 
-      
       const { data: exam, error: examError } = await supabase
         .from("exams")
         .select("id, name, company_name, company_logo, date, time, description, total_qns, types_of_qns")
@@ -94,7 +120,6 @@ function ExamLoginContent() {
         return;
       }
 
-      
       sessionStorage.setItem(
         "exam_session",
         JSON.stringify({
@@ -117,10 +142,8 @@ function ExamLoginContent() {
     <FloatingPathsBackground position={-1} className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900 overflow-hidden">
       <div className="w-full max-w-4xl flex flex-col md:flex-row shadow-lg border border-zinc-200 bg-white relative z-10">
 
-        {}
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200">
           <div className="space-y-6">
-            {}
             <div className="flex items-center gap-2">
               <img
                 src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
@@ -150,7 +173,6 @@ function ExamLoginContent() {
           </p>
         </div>
 
-        {}
         <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white min-h-[400px]">
 
           {isLoading ? (
@@ -169,7 +191,6 @@ function ExamLoginContent() {
 
               <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
 
-                {}
                 <div>
                   <label htmlFor="candidate-name" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Full Name
@@ -190,7 +211,6 @@ function ExamLoginContent() {
                   )}
                 </div>
 
-                {}
                 <div>
                   <label htmlFor="hall-ticket" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Hall Ticket Number
@@ -212,7 +232,18 @@ function ExamLoginContent() {
                   )}
                 </div>
 
-                {}
+                <Turnstile
+                  onSuccess={(token) => {
+                    setTurnstileToken(token);
+                    setSecurityError("");
+                  }}
+                  onError={() => setSecurityError("Security verification encountered an error.")}
+                  onExpire={() => setTurnstileToken("")}
+                />
+                {securityError && (
+                  <p className="text-red-500 text-xs mt-1">{securityError}</p>
+                )}
+
                 <button
                   type="submit"
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-none transition-colors cursor-pointer mt-2 shadow-sm text-sm"
@@ -239,3 +270,4 @@ export default function ExamLoginPage() {
     </Suspense>
   );
 }
+

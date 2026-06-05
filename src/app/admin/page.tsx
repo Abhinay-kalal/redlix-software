@@ -3,6 +3,7 @@
 import { SunIcon as Sunburst } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Turnstile } from "@/components/ui/turnstile";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,7 +12,8 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [securityError, setSecurityError] = useState("");
   
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
@@ -46,7 +48,7 @@ export default function LoginPage() {
     return value.length >= 8;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let valid = true;
 
@@ -79,19 +81,44 @@ export default function LoginPage() {
       valid = false;
     }
 
-    if (valid) {
-      setIsLoading(true);
-      setLoadingStep(0);
+    if (!turnstileToken) {
+      setSecurityError("Please complete the security check.");
+      valid = false;
+    } else {
+      setSecurityError("");
+    }
+
+    if (!valid) return;
+
+    setIsLoading(true);
+    setLoadingStep(0);
+
+    try {
+      const res = await fetch("/api/verify-turnstile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setSecurityError("Security verification failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+    } catch {
+      setSecurityError("Failed to verify security token. Please try again.");
+      setIsLoading(false);
+      return;
     }
   };
 
   return (
     <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 sm:p-6 md:p-8 relative font-sans text-zinc-900">
       
-      {}
       <div className="w-full relative max-w-4xl flex flex-col md:flex-row shadow-lg rounded-none border border-zinc-200 bg-white">
         
-        {}
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between rounded-none border-b md:border-b-0 md:border-r border-zinc-200">
           <div className="space-y-6">
             <div className="flex items-center gap-2">
@@ -111,7 +138,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {}
         <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white rounded-none min-h-[400px]">
           
           {isLoading ? (
@@ -141,7 +167,6 @@ export default function LoginPage() {
 
               <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
                 
-                {}
                 <div>
                   <label htmlFor="email" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Email address
@@ -168,7 +193,6 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {}
                 <div>
                   <label htmlFor="password" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Password
@@ -195,7 +219,6 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {}
                 <div className="flex items-center">
                   <input
                     id="remember-me"
@@ -209,7 +232,20 @@ export default function LoginPage() {
                   </label>
                 </div>
 
-                {}
+                <Turnstile
+                  onSuccess={(token) => {
+                    setTurnstileToken(token);
+                    setSecurityError("");
+                  }}
+                  onError={() => setSecurityError("Security verification encountered an error.")}
+                  onExpire={() => setTurnstileToken("")}
+                />
+                {securityError && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {securityError}
+                  </p>
+                )}
+
                 <button
                   type="submit"
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-none transition-colors cursor-pointer mt-2 shadow-sm"

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { SunIcon as Sunburst, ArrowLeft, CheckCircle, Camera } from "lucide-react";
 import Link from "next/link";
+import { Turnstile } from "@/components/ui/turnstile";
 
 interface ExamDetails {
   id: number;
@@ -45,6 +46,7 @@ function RegisterFormContent() {
   const [errorMsg, setErrorMsg] = useState("");
   const [generatedRegNum, setGeneratedRegNum] = useState("");
   const [generatedHtNum, setGeneratedHtNum] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   useEffect(() => {
     if (!examId) {
@@ -106,9 +108,33 @@ function RegisterFormContent() {
       setErrorMsg("Please accept all three declaration checkboxes to register.");
       return;
     }
+    if (!turnstileToken) {
+      setErrorMsg("Please complete the security check.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMsg("");
+
+    try {
+      const verifyRes = await fetch("/api/verify-turnstile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: turnstileToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        setErrorMsg("Security verification failed. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+    } catch {
+      setErrorMsg("Failed to verify security token. Please try again.");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const regNum = String(Math.floor(100000 + Math.random() * 900000));
@@ -569,7 +595,17 @@ function RegisterFormContent() {
           </div>
         </div>
 
-        {}
+        <div className="border-t border-zinc-200 pt-4 flex flex-col items-center">
+          <Turnstile
+            onSuccess={(token) => {
+              setTurnstileToken(token);
+              setErrorMsg("");
+            }}
+            onError={() => setErrorMsg("Security verification encountered an error.")}
+            onExpire={() => setTurnstileToken("")}
+          />
+        </div>
+
         <div className="pt-4 flex gap-4">
           <Link
             href="/scheduled-exams"
