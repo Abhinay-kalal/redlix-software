@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
+import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 
 function ExamLoginContent() {
   const router = useRouter();
@@ -113,8 +114,8 @@ function ExamLoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900">
-      <div className="w-full max-w-4xl flex flex-col md:flex-row shadow-lg border border-zinc-200 bg-white">
+    <FloatingPathsBackground position={-1} className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900 overflow-hidden">
+      <div className="w-full max-w-4xl flex flex-col md:flex-row shadow-lg border border-zinc-200 bg-white relative z-10">
 
         {}
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200">
@@ -218,7 +219,7 @@ function ExamLoginContent() {
           )}
         </div>
       </div>
-    </div>
+    </FloatingPathsBackground>
   );
 }
 
