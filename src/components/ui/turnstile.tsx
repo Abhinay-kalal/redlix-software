@@ -84,5 +84,5 @@ export function Turnstile({ onSuccess, onError, onExpire }: TurnstileProps) {
     };
   }, []);
 
-  return <div ref={containerRef} className="my-2 flex justify-center" />;
+  return <div ref={containerRef} className="my-2 flex justify-start" />;
 }

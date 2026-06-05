@@ -595,7 +595,7 @@ function RegisterFormContent() {
           </div>
         </div>
 
-        <div className="border-t border-zinc-200 pt-4 flex flex-col items-center">
+        <div className="border-t border-zinc-200 pt-4 flex flex-col items-start">
           <Turnstile
             onSuccess={(token) => {
               setTurnstileToken(token);
