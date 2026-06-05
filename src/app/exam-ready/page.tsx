@@ -59,10 +59,25 @@ export default function ExamReadyPage() {
     finally { setLoading(false); }
   }, [router]);
 
-  const handleBeginExam = () => {
+  const handleBeginExam = async () => {
     if (!agreed) return;
     setStarting(true);
-    setTimeout(() => router.push("/exam-session"), 1500);
+
+    // Request fullscreen NOW — must be inside a user gesture (button click)
+    // Browsers reject fullscreen requests that originate from useEffect/async after navigation
+    try {
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if ((el as any).webkitRequestFullscreen) {
+        await (el as any).webkitRequestFullscreen(); // Safari
+      }
+    } catch {
+      // Fullscreen denied (e.g. permissions policy) — still allow exam entry
+      // exam-session will detect non-fullscreen and flag it
+    }
+
+    router.push("/exam-session");
   };
 
   if (loading) return (

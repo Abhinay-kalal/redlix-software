@@ -607,16 +607,28 @@ export default function ExamSessionPage() {
     }
   }, []);
 
-  
+  // Setup: request media then ensure fullscreen
   useEffect(() => {
     if (!session) return;
     (async () => {
       const mediaOk = await requestMedia();
       if (!mediaOk) return;
-      await requestFullscreen();
+
+      // Fullscreen should already be active (entered on exam-ready page during button click).
+      // Only request again if not already in fullscreen — avoids the browser rejecting
+      // a programmatic (non-user-gesture) fullscreen call.
+      const alreadyFullscreen =
+        !!document.fullscreenElement || !!(document as any).webkitFullscreenElement;
+      if (!alreadyFullscreen) {
+        await requestFullscreen();
+      } else {
+        setFullscreen(true);
+      }
+
       setSetupDone(true);
     })();
   }, [session, requestMedia, requestFullscreen]);
+
 
   
   useEffect(() => {
