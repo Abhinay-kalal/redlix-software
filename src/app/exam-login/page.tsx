@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
 import { getVisitorId } from "@/utils/fingerprint";
@@ -10,7 +9,6 @@ import { getVisitorId } from "@/utils/fingerprint";
 function ExamLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
 
   const examIdParam = searchParams.get("examId");
 
@@ -98,35 +96,32 @@ function ExamLoginContent() {
     }
 
     try {
-      const { data: reg, error: regError } = await supabase
-        .from("registrations")
-        .select("id, candidate_name, exam_id, photo_url, registration_number, hall_ticket_number")
-        .ilike("hall_ticket_number", hallTicket.trim())
-        .single();
+      // Verify credentials server-side (service role bypasses RLS safely)
+      const verifyCredRes = await fetch("/api/exam/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          hallTicketNumber: hallTicket.trim(),
+          candidateName: name.trim(),
+        }),
+      });
+      const verifyCredData = await verifyCredRes.json();
 
-      if (regError || !reg) {
-        setHtError("Hall ticket number not found. Please check and try again.");
+      if (!verifyCredData.success) {
+        if (verifyCredData.error === "not_found") {
+          setHtError("Hall ticket number not found. Please check and try again.");
+        } else if (verifyCredData.error === "name_mismatch") {
+          setNameError("Name does not match our records for this hall ticket.");
+        } else if (verifyCredData.error === "exam_not_found") {
+          setHtError("Could not fetch exam details. Please contact the exam administrator.");
+        } else {
+          setHtError("Verification failed. Please try again.");
+        }
         setIsLoading(false);
         return;
       }
 
-      if (reg.candidate_name.toLowerCase().trim() !== name.toLowerCase().trim()) {
-        setNameError("Name does not match our records for this hall ticket.");
-        setIsLoading(false);
-        return;
-      }
-
-      const { data: exam, error: examError } = await supabase
-        .from("exams")
-        .select("id, name, company_name, company_logo, date, time, description, total_qns, types_of_qns")
-        .eq("id", reg.exam_id)
-        .single();
-
-      if (examError || !exam) {
-        setHtError("Could not fetch exam details. Please contact the exam administrator.");
-        setIsLoading(false);
-        return;
-      }
+      const { candidate, exam } = verifyCredData;
 
       // Ensure fingerprint is collected (may already be set from background effect)
       if (!visitorIdRef.current) {
@@ -143,7 +138,7 @@ function ExamLoginContent() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            hallTicketNumber: reg.hall_ticket_number,
+            hallTicketNumber: candidate.hallTicketNumber,
             visitorId: visitorIdRef.current,
           }),
         });
@@ -167,12 +162,13 @@ function ExamLoginContent() {
       sessionStorage.setItem(
         "exam_session",
         JSON.stringify({
-          candidateName: reg.candidate_name,
-          hallTicketNumber: reg.hall_ticket_number,
-          registrationNumber: reg.registration_number,
-          photoUrl: reg.photo_url,
+          candidateName: candidate.candidateName,
+          hallTicketNumber: candidate.hallTicketNumber,
+          registrationNumber: candidate.registrationNumber,
+          photoUrl: candidate.photoUrl,
           visitorId: visitorIdRef.current,
           exam,
+
         })
       );
 
