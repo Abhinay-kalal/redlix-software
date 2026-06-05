@@ -634,7 +634,8 @@ export default function ExamSessionPage() {
           last_flag_type: "None",
           severity: "Normal",
           timestamp: "Just started",
-          avatar: session.candidateName.substring(0, 2).toUpperCase()
+          avatar: session.candidateName.substring(0, 2).toUpperCase(),
+          visitor_id: session.visitorId ?? null,
         });
       } catch (e) {
         console.error("Failed to initialize session in DB:", e);

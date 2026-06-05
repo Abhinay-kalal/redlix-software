@@ -61,30 +61,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Upsert the visitor_id into the sessions row
-    const { error: upsertError } = await supabase
-      .from("sessions")
-      .upsert({ id: hallTicketNumber, visitor_id: visitorId });
+    // 2. If the session row already exists, update visitor_id on it.
+    //    If it doesn't exist yet (exam hasn't started), skip — initDBSession in
+    //    exam-session will create the full row and include visitor_id there.
+    if (existing) {
+      const { error: updateError } = await supabase
+        .from("sessions")
+        .update({ visitor_id: visitorId })
+        .eq("id", hallTicketNumber);
 
-    if (upsertError) {
-      console.error("Error upserting session:", upsertError);
-      return NextResponse.json(
-        { success: false, error: "Failed to register device fingerprint" },
-        { status: 500 }
-      );
+      if (updateError) {
+        console.error("Error updating visitor_id on session:", updateError);
+        // Non-fatal — still allow the exam; log and continue
+      }
     }
 
-    // 3. Log the successful start event
+    // 3. Log the fingerprint registration event
     await supabase.from("security_logs").insert({
       session_id: hallTicketNumber,
       visitor_id: visitorId,
-      event_type: "EXAM_START",
-      details: "Exam session started with registered device fingerprint",
+      event_type: "DEVICE_FINGERPRINT_REGISTERED",
+      details: existing
+        ? "Device fingerprint registered to existing session"
+        : "Device fingerprint recorded at login (session not yet started)",
       ip_address: req.headers.get("x-forwarded-for") ?? "unknown",
       user_agent: req.headers.get("user-agent") ?? "unknown",
     });
 
     return NextResponse.json({ success: true });
+
   } catch (err) {
     console.error("Unexpected error in /api/exam/start:", err);
     return NextResponse.json(
