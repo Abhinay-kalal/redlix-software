@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 
 interface Session {
   id: string;
@@ -50,8 +49,24 @@ interface Registration {
 
 export default function Dashboard() {
   const router = useRouter();
-  const supabase = createClient();
-  
+
+  const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secure-admin-token-2026";
+
+  const adminFetch = async (method: "GET" | "POST", params?: Record<string, string>, body?: object) => {
+    const url = method === "GET"
+      ? `/api/admin?${new URLSearchParams(params ?? {}).toString()}`
+      : "/api/admin";
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-token": ADMIN_TOKEN,
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    return res.json();
+  };
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,22 +107,12 @@ export default function Dashboard() {
   const fetchExamsAndRegistrations = async () => {
     setLoadingExamsTab(true);
     try {
-      const { data: examsData, error: examsError } = await supabase
-        .from("exams")
-        .select()
-        .order("id", { ascending: false });
-      
-      const { data: regsData, error: regsError } = await supabase
-        .from("registrations")
-        .select()
-        .order("id", { ascending: false });
-
-      if (!examsError && examsData) {
-        setExams(examsData);
-      }
-      if (!regsError && regsData) {
-        setRegistrations(regsData);
-      }
+      const [examsRes, regsRes] = await Promise.all([
+        adminFetch("GET", { resource: "exams" }),
+        adminFetch("GET", { resource: "registrations" }),
+      ]);
+      if (examsRes.success) setExams(examsRes.data);
+      if (regsRes.success) setRegistrations(regsRes.data);
     } catch (err) {
       console.error("Error loading exams and registrations:", err);
     } finally {
@@ -115,31 +120,31 @@ export default function Dashboard() {
     }
   };
 
+
   const toggleExamStarted = async (exam: Exam) => {
     const newValue = !exam.is_started;
-    const { error } = await supabase
-      .from("exams")
-      .update({ is_started: newValue })
-      .eq("id", exam.id);
-    if (!error) {
-      setExams((prev) =>
-        prev.map((e) => (e.id === exam.id ? { ...e, is_started: newValue } : e))
-      );
+    // Optimistic update
+    setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, is_started: newValue } : e)));
+    const res = await adminFetch("POST", undefined, { action: "toggle_started", examId: exam.id, value: newValue });
+    if (!res.success) {
+      // Revert on failure
+      setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, is_started: !newValue } : e)));
+      console.error("Failed to toggle exam started:", res.error);
     }
   };
 
   const toggleExamShowLogin = async (exam: Exam) => {
     const newValue = !exam.show_login;
-    const { error } = await supabase
-      .from("exams")
-      .update({ show_login: newValue })
-      .eq("id", exam.id);
-    if (!error) {
-      setExams((prev) =>
-        prev.map((e) => (e.id === exam.id ? { ...e, show_login: newValue } : e))
-      );
+    // Optimistic update
+    setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, show_login: newValue } : e)));
+    const res = await adminFetch("POST", undefined, { action: "toggle_show_login", examId: exam.id, value: newValue });
+    if (!res.success) {
+      // Revert on failure
+      setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, show_login: !newValue } : e)));
+      console.error("Failed to toggle show login:", res.error);
     }
   };
+
 
   
   useEffect(() => {
@@ -182,9 +187,9 @@ export default function Dashboard() {
   
   const fetchSessions = async () => {
     try {
-      const { data, error } = await supabase.from("sessions").select().order("timestamp", { ascending: true });
-      if (!error && data) {
-        const mapped: Session[] = data.map((item: any) => ({
+      const res = await adminFetch("GET", { resource: "sessions" });
+      if (res.success && res.data) {
+        const mapped: Session[] = res.data.map((item: any) => ({
           id: item.id,
           student: item.student,
           email: item.email,
@@ -205,6 +210,7 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -229,40 +235,23 @@ export default function Dashboard() {
   };
 
   const handleResolve = async (id: string) => {
-    
+    // Optimistic update
     setSessions((prev) =>
       prev.map((s) =>
         s.id === id ? { ...s, flagsCount: 0, integrityScore: 100, severity: "Normal", lastFlagType: "None (Resolved)" } : s
       )
     );
-    
-    
-    await supabase
-      .from("sessions")
-      .update({
-        flags_count: 0,
-        integrity_score: 100,
-        severity: "Normal",
-        last_flag_type: "None (Resolved)"
-      })
-      .eq("id", id);
-
-    if (activeStreamSession?.id === id) {
-      setActiveStreamSession(null);
-    }
+    await adminFetch("POST", undefined, { action: "resolve_session", sessionId: id });
+    if (activeStreamSession?.id === id) setActiveStreamSession(null);
   };
 
   const handleDismiss = async (id: string) => {
-    
+    // Optimistic update
     setSessions((prev) => prev.filter((s) => s.id !== id));
-    
-    
-    await supabase.from("sessions").delete().eq("id", id);
-
-    if (activeStreamSession?.id === id) {
-      setActiveStreamSession(null);
-    }
+    await adminFetch("POST", undefined, { action: "dismiss_session", sessionId: id });
+    if (activeStreamSession?.id === id) setActiveStreamSession(null);
   };
+
 
   
   const addCustomField = () => {
@@ -294,48 +283,34 @@ export default function Dashboard() {
     setPublishSuccess(false);
 
     try {
-      
       const customFieldsObj: Record<string, string> = {};
       customFields.forEach((cf) => {
-        if (cf.key.trim()) {
-          customFieldsObj[cf.key.trim()] = cf.value;
-        }
+        if (cf.key.trim()) customFieldsObj[cf.key.trim()] = cf.value;
+      });
+      if (examDuration.trim()) customFieldsObj["Duration"] = `${examDuration.trim()} minutes`;
+
+      const res = await adminFetch("POST", undefined, {
+        action: "create_exam",
+        examData: {
+          name: examName,
+          date: examDate,
+          time: examTime,
+          description: finalDescription,
+          total_qns: Number(totalQns),
+          types_of_qns: finalTypes,
+          company_name: companyName,
+          company_logo: companyLogo,
+          custom_fields: customFieldsObj,
+        },
       });
 
-      
-      if (examDuration.trim()) {
-        customFieldsObj["Duration"] = `${examDuration.trim()} minutes`;
-      }
-
-      const { error } = await supabase.from("exams").insert({
-        name: examName,
-        date: examDate,
-        time: examTime,
-        description: finalDescription,
-        total_qns: Number(totalQns),
-        types_of_qns: finalTypes,
-        company_name: companyName,
-        company_logo: companyLogo,
-        custom_fields: customFieldsObj
-      });
-
-      if (error) {
-        setPublishError(error.message);
+      if (!res.success) {
+        setPublishError(res.error || "Failed to publish exam.");
       } else {
         setPublishSuccess(true);
-        
-        setExamName("");
-        setExamDate("");
-        setExamTime("");
-        setExamDescription("");
-        setTotalQns("");
-        setTypesOfQns("");
-        setCompanyName("");
-        setCompanyLogo("");
-        setExamDuration("");
-        setTypesOfQnsList([""]);
-        setDescriptionsList([""]);
-        setCustomFields([]);
+        setExamName(""); setExamDate(""); setExamTime(""); setExamDescription("");
+        setTotalQns(""); setTypesOfQns(""); setCompanyName(""); setCompanyLogo("");
+        setExamDuration(""); setTypesOfQnsList([""]); setDescriptionsList([""]); setCustomFields([]);
       }
     } catch (err: any) {
       setPublishError(err.message || "An unexpected error occurred.");
@@ -343,6 +318,7 @@ export default function Dashboard() {
       setIsPublishing(false);
     }
   };
+
 
   
   const filteredSessions = sessions.filter((s) => {
