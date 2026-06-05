@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import Image from "next/image";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
+import { getVisitorId } from "@/utils/fingerprint";
 
 function ExamLoginContent() {
   const router = useRouter();
@@ -22,6 +22,14 @@ function ExamLoginContent() {
   const [loadingMsg, setLoadingMsg] = useState("Verifying credentials...");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [securityError, setSecurityError] = useState("");
+  const visitorIdRef = useRef<string>("");
+
+  // Eagerly collect fingerprint in the background so it's ready when the form submits
+  useEffect(() => {
+    getVisitorId()
+      .then((id) => { visitorIdRef.current = id; })
+      .catch(() => { /* non-fatal */ });
+  }, []);
 
   const loadingSteps = [
     "Verifying credentials...",
@@ -120,6 +128,42 @@ function ExamLoginContent() {
         return;
       }
 
+      // Ensure fingerprint is collected (may already be set from background effect)
+      if (!visitorIdRef.current) {
+        try {
+          visitorIdRef.current = await getVisitorId();
+        } catch {
+          // non-fatal – proceed without fingerprint if collection fails
+        }
+      }
+
+      // Register device fingerprint & check for concurrent sessions
+      try {
+        const startRes = await fetch("/api/exam/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hallTicketNumber: reg.hall_ticket_number,
+            visitorId: visitorIdRef.current,
+          }),
+        });
+        const startData = await startRes.json();
+        if (!startData.success) {
+          if (startData.error === "concurrent_device") {
+            setHtError(
+              "This exam is already active on another device. Only one device is allowed per session."
+            );
+          } else {
+            setHtError("Security check failed. Please try again.");
+          }
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // Non-blocking – proceed if the network call fails
+        console.warn("Device fingerprint registration failed; proceeding anyway.");
+      }
+
       sessionStorage.setItem(
         "exam_session",
         JSON.stringify({
@@ -127,6 +171,7 @@ function ExamLoginContent() {
           hallTicketNumber: reg.hall_ticket_number,
           registrationNumber: reg.registration_number,
           photoUrl: reg.photo_url,
+          visitorId: visitorIdRef.current,
           exam,
         })
       );

@@ -9,6 +9,7 @@ interface ExamSession {
   hallTicketNumber: string;
   registrationNumber: string;
   photoUrl: string;
+  visitorId?: string;
   exam: {
     id: number;
     name: string;
@@ -511,6 +512,19 @@ export default function ExamSessionPage() {
         const parsed = JSON.parse(raw);
         if (parsed.hallTicketNumber) {
           localStorage.setItem(`exam_violated_${parsed.hallTicketNumber}`, "true");
+
+          // Log the violation to security_logs (fire-and-forget)
+          fetch("/api/exam/log-event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({
+              sessionId: parsed.hallTicketNumber,
+              visitorId: parsed.visitorId ?? "",
+              eventType: "PROCTORING_VIOLATION",
+              details: reason,
+            }),
+          }).catch(() => {});
         }
       }
     } catch (e) {
