@@ -769,8 +769,14 @@ export default function ExamSessionPage() {
       }, 150);
     };
 
-    
+    // Only block copy/paste/cut outside of legitimate input elements (e.g. code editor)
     const preventAction = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const isInputField =
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLInputElement;
+      if (isInputField) return; // allow normal editing inside code editor / input fields
+
       e.preventDefault();
       if (!isSubmitted) {
         triggerViolation(`Prohibited action detected: ${e.type}`);
@@ -779,7 +785,11 @@ export default function ExamSessionPage() {
 
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      
+      const target = e.target as HTMLElement;
+      const isInputField =
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLInputElement;
+
       const isF12 = e.key === "F12";
       const isCtrlShiftDev = e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase());
       const isMacDev = e.metaKey && e.altKey && e.key.toLowerCase() === "i";
@@ -790,8 +800,9 @@ export default function ExamSessionPage() {
         return;
       }
 
-      
+      // Allow Ctrl/Cmd+C/V/X inside the code editor textarea, block everywhere else
       if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "u"].includes(e.key.toLowerCase())) {
+        if (isInputField && e.key.toLowerCase() !== "u") return; // allow copy/paste/cut in editor
         e.preventDefault();
         triggerViolation(`Prohibited shortcut combination: ${e.key.toUpperCase()}`);
         return;
