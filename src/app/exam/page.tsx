@@ -24,10 +24,10 @@ interface ExamSession {
   exam: ExamData;
 }
 
-/* ── Helpers ── */
+
 function parseExamDateTime(date: string, time: string): Date | null {
   try {
-    // date like "2026-06-05", time like "10:00 AM" or "10:00"
+    
     const dateStr = date.split("T")[0];
     const combined = `${dateStr}T${to24h(time)}:00`;
     const d = new Date(combined);
@@ -66,15 +66,15 @@ export default function ExamPage() {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Countdown
+  
   const [countdown, setCountdown] = useState({ h: "00", m: "00", s: "00", total: -1 });
   const examTarget = useRef<Date | null>(null);
 
-  // Admin-enabled flag
+  
   const [isStarted, setIsStarted] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /* ── Load session ── */
+  
   useEffect(() => {
     const raw = sessionStorage.getItem("exam_session");
     if (!raw) { router.replace("/exam-login"); return; }
@@ -90,7 +90,7 @@ export default function ExamPage() {
     finally { setLoading(false); }
   }, [router]);
 
-  /* ── Countdown tick ── */
+  
   useEffect(() => {
     if (!session) return;
     const tick = () => {
@@ -103,7 +103,7 @@ export default function ExamPage() {
     return () => clearInterval(id);
   }, [session]);
 
-  /* ── Poll is_started every 5 s ── */
+  
   useEffect(() => {
     if (!session) return;
     const check = async () => {
@@ -141,10 +141,10 @@ export default function ExamPage() {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 flex flex-col">
 
-      {/* ── HEADER ── */}
+      {}
       <header className="bg-orange-500 border-b border-orange-600 shadow-sm shrink-0">
         <div className="max-w-5xl mx-auto px-8 py-5 flex items-center justify-between gap-4">
-          {/* Left: logo + exam name */}
+          {}
           <div className="flex items-center gap-4 min-w-0">
             {exam.company_logo
               ? <img src={exam.company_logo} alt={exam.company_name} className="w-10 h-10 object-contain rounded-none shrink-0" />
@@ -156,7 +156,7 @@ export default function ExamPage() {
             </div>
           </div>
 
-          {/* Right: countdown timer */}
+          {}
           <div className="shrink-0 text-right">
             {!isStarted && countdown.total > 0 ? (
               <div>
@@ -180,10 +180,10 @@ export default function ExamPage() {
         </div>
       </header>
 
-      {/* ── MAIN ── */}
+      {}
       <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-10 flex flex-col gap-8">
 
-        {/* Candidate details */}
+        {}
         <div className="bg-white border border-zinc-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-5">
           {photoUrl && (
             <img src={photoUrl} alt={candidateName} className="w-16 h-20 object-cover border border-zinc-300 shrink-0" />
@@ -204,7 +204,7 @@ export default function ExamPage() {
           </div>
         </div>
 
-        {/* ── STATUS BANNER (only when exam is open) ── */}
+        {}
         {isStarted && (
           <div className="bg-orange-50 border border-orange-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ export default function ExamPage() {
           </div>
         )}
 
-        {/* Exam info card */}
+        {}
         <div className="bg-white border border-zinc-200 shadow-sm p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-zinc-100 pb-3">
             <div>
@@ -271,7 +271,7 @@ export default function ExamPage() {
 
       </main>
 
-      {/* Footer */}
+      {}
       <footer className="border-t border-zinc-200 bg-white py-3 px-6 shrink-0">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <p className="text-[10px] text-zinc-400">Powered by <span className="font-semibold text-zinc-600">Redlix Secure</span></p>

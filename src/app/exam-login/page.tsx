@@ -10,7 +10,7 @@ function ExamLoginContent() {
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // Pre-fill examId from URL if navigated from scheduled-exams
+  
   const examIdParam = searchParams.get("examId");
 
   const [name, setName] = useState("");
@@ -60,7 +60,7 @@ function ExamLoginContent() {
     setLoadingMsg(loadingSteps[0]);
 
     try {
-      // Look up registration by hall ticket number
+      
       const { data: reg, error: regError } = await supabase
         .from("registrations")
         .select("id, candidate_name, exam_id, photo_url, registration_number, hall_ticket_number")
@@ -73,14 +73,14 @@ function ExamLoginContent() {
         return;
       }
 
-      // Verify name matches (case-insensitive)
+      
       if (reg.candidate_name.toLowerCase().trim() !== name.toLowerCase().trim()) {
         setNameError("Name does not match our records for this hall ticket.");
         setIsLoading(false);
         return;
       }
 
-      // Fetch exam details
+      
       const { data: exam, error: examError } = await supabase
         .from("exams")
         .select("id, name, company_name, company_logo, date, time, description, total_qns, types_of_qns")
@@ -93,7 +93,7 @@ function ExamLoginContent() {
         return;
       }
 
-      // Save to sessionStorage and redirect
+      
       sessionStorage.setItem(
         "exam_session",
         JSON.stringify({
@@ -116,10 +116,10 @@ function ExamLoginContent() {
     <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900">
       <div className="w-full max-w-4xl flex flex-col md:flex-row shadow-lg border border-zinc-200 bg-white">
 
-        {/* Left Info Panel */}
+        {}
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200">
           <div className="space-y-6">
-            {/* Logo */}
+            {}
             <div className="flex items-center gap-2">
               <img
                 src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
@@ -144,7 +144,7 @@ function ExamLoginContent() {
           </p>
         </div>
 
-        {/* Right Form Panel */}
+        {}
         <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white min-h-[400px]">
 
           {isLoading ? (
@@ -163,7 +163,7 @@ function ExamLoginContent() {
 
               <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
 
-                {/* Full Name */}
+                {}
                 <div>
                   <label htmlFor="candidate-name" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Full Name
@@ -184,7 +184,7 @@ function ExamLoginContent() {
                   )}
                 </div>
 
-                {/* Hall Ticket Number */}
+                {}
                 <div>
                   <label htmlFor="hall-ticket" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Hall Ticket Number
@@ -206,7 +206,7 @@ function ExamLoginContent() {
                   )}
                 </div>
 
-                {/* Submit */}
+                {}
                 <button
                   type="submit"
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-none transition-colors cursor-pointer mt-2 shadow-sm text-sm"

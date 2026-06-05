@@ -1,6 +1,6 @@
--- SQL Database Schema for Proctoring System (PostgreSQL)
 
--- 1. Exams Table
+
+
 CREATE TABLE public.exams (
   id SERIAL PRIMARY KEY,
   name VARCHAR(200) NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE public.exams (
   is_started BOOLEAN DEFAULT FALSE
 );
 
--- 2. Registrations Table
+
 CREATE TABLE public.registrations (
   id SERIAL PRIMARY KEY,
   exam_id INTEGER NOT NULL REFERENCES public.exams(id) ON DELETE CASCADE,
@@ -30,7 +30,7 @@ CREATE TABLE public.registrations (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- 3. Sessions Table
+
 CREATE TABLE public.sessions (
   id VARCHAR(50) PRIMARY KEY,
   student VARCHAR(100) NOT NULL,

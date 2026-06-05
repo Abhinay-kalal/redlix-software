@@ -36,7 +36,7 @@ interface Question {
 }
 
 const QUESTIONS: Question[] = [
-  // Section A: MCQs (1-10)
+  
   {
     id: 1,
     type: "mcq",
@@ -177,7 +177,7 @@ const QUESTIONS: Question[] = [
     ],
     marks: 3
   },
-  // Section B: Coding Challenges (11-20)
+  
   {
     id: 11,
     type: "coding",
@@ -304,7 +304,7 @@ const highlightJavaScript = (code: string) => {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Tokenize comments, strings, numbers, keywords, builtins, and functions
+  
   const tokenRegex = /(\/\/.*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b\d+\b)|(\b(?:function|const|let|var|return|async|await|if|else|for|while|import|export|default|new|class|extends|from|try|catch|finally|throw|break|continue|switch|case|typeof|instanceof|in|of)\b)|(\b(?:console|log|fetch|response|require|mongoose|Schema|express|app|jwt|jsonwebtoken|React|useState|useEffect|useRef|JSON|stringify|parse|map|filter|reduce|split|join|reverse|push|pop|shift|unshift)\b)|(\b\w+(?=\())/g;
 
   html = html.replace(tokenRegex, (match, comment, string, number, keyword, builtin, funcName) => {
@@ -317,7 +317,7 @@ const highlightJavaScript = (code: string) => {
     return match;
   });
 
-  // Ensure trailing newline has height
+  
   if (code.endsWith("\n")) {
     html += " ";
   }
@@ -333,13 +333,13 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
   const [lineCount, setLineCount] = useState(1);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
 
-  // Update line count
+  
   useEffect(() => {
     const lines = value.split("\n").length;
     setLineCount(Math.max(lines, 1));
   }, [value]);
 
-  // Handle Tab key interception
+  
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Tab") {
       e.preventDefault();
@@ -347,18 +347,18 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
-      // Insert 2 spaces
+      
       const newValue = value.substring(0, start) + "  " + value.substring(end);
       onChange(newValue);
 
-      // Reset selection position
+      
       setTimeout(() => {
         textarea.selectionStart = textarea.selectionEnd = start + 2;
       }, 0);
     }
   };
 
-  // Sync scroll positions
+  
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
     const { scrollTop, scrollLeft } = e.currentTarget;
     if (lineNumbersRef.current) {
@@ -370,7 +370,7 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
     }
   };
 
-  // Calculate cursor positions
+  
   const handleCursorMove = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
     const textarea = e.currentTarget;
     const start = textarea.selectionStart;
@@ -384,7 +384,7 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
 
   return (
     <div className="w-full border border-zinc-700 bg-[#1e1e1e] text-zinc-300 font-mono text-xs flex flex-col relative rounded-none shadow-md overflow-hidden">
-      {/* Editor Header */}
+      {}
       <div className="bg-[#2d2d2d] px-4 py-2 border-b border-zinc-800 flex items-center justify-between shrink-0 select-none text-[11px] text-zinc-400 font-sans">
         <div className="flex items-center gap-2">
           <span className="text-[#e37933] font-bold font-mono">JS</span>
@@ -396,9 +396,9 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
         </div>
       </div>
 
-      {/* Editor Body */}
+      {}
       <div className="flex flex-1 min-h-[320px] relative">
-        {/* Line Numbers */}
+        {}
         <div
           ref={lineNumbersRef}
           className="w-10 bg-[#1e1e1e] text-[#858585] border-r border-[#2d2d2d] py-3 text-right pr-2.5 select-none overflow-hidden font-mono text-[11px] leading-6"
@@ -410,9 +410,9 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
           ))}
         </div>
 
-        {/* Highlighted text container and textarea overlay */}
+        {}
         <div className="flex-1 min-h-[320px] relative overflow-hidden">
-          {/* Highlighted text underneath */}
+          {}
           <pre
             ref={highlightRef}
             className="absolute inset-0 pointer-events-none select-none text-[#d4d4d4] overflow-hidden whitespace-pre z-0"
@@ -426,7 +426,7 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
             dangerouslySetInnerHTML={{ __html: highlightJavaScript(value) }}
           />
 
-          {/* Transparent interactive textarea on top */}
+          {}
           <textarea
             ref={textareaRef}
             value={value}
@@ -453,7 +453,7 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
         </div>
       </div>
 
-      {/* Editor Footer Status Bar */}
+      {}
       <div className="bg-[#007acc] text-white px-4 py-1 flex items-center justify-between shrink-0 text-[10px] font-sans font-medium select-none">
         <div className="flex items-center gap-3">
           <span className="bg-[#1f8ad2] px-1.5 py-0.5 uppercase font-bold tracking-wider">Editor</span>
@@ -478,23 +478,23 @@ export default function ExamSessionPage() {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Permission + device states
+  
   const [camGranted, setCamGranted] = useState(false);
   const [micGranted, setMicGranted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [permError, setPermError] = useState("");
   const [setupDone, setSetupDone] = useState(false);
 
-  // Flags / violations
+  
   const [flags, setFlags] = useState<string[]>([]);
 
-  // Exam session states
+  
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [questionStatuses, setQuestionStatuses] = useState<
     Record<number, "not_visited" | "not_answered" | "answered" | "marked">
   >({});
-  const [timeLeft, setTimeLeft] = useState(7200); // 120 minutes = 2 hours
+  const [timeLeft, setTimeLeft] = useState(7200); 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isViolated, setIsViolated] = useState(false);
@@ -530,7 +530,7 @@ export default function ExamSessionPage() {
   }, []);
 
 
-  // Load session
+  
   useEffect(() => {
     const raw = sessionStorage.getItem("exam_session");
     if (!raw) {
@@ -565,7 +565,7 @@ export default function ExamSessionPage() {
     }
   }, [router]);
 
-  // ── Request camera + mic ──────────────────────────────
+  
   const requestMedia = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -579,7 +579,7 @@ export default function ExamSessionPage() {
     }
   }, []);
 
-  // ── Request fullscreen ────────────────────────────────
+  
   const requestFullscreen = useCallback(async () => {
     try {
       const el = document.documentElement;
@@ -593,7 +593,7 @@ export default function ExamSessionPage() {
     }
   }, []);
 
-  // ── Run setup on mount once session is ready ─────────
+  
   useEffect(() => {
     if (!session) return;
     (async () => {
@@ -604,7 +604,7 @@ export default function ExamSessionPage() {
     })();
   }, [session, requestMedia, requestFullscreen]);
 
-  // ── Initialize proctoring session in DB ────────────────
+  
   useEffect(() => {
     if (!setupDone || !session) return;
 
@@ -630,7 +630,7 @@ export default function ExamSessionPage() {
     initDBSession();
   }, [setupDone, session]);
 
-  // ── Clean up active proctoring session on submission ──
+  
   useEffect(() => {
     if (isSubmitted && session?.hallTicketNumber) {
       supabase
@@ -641,7 +641,7 @@ export default function ExamSessionPage() {
     }
   }, [isSubmitted, session]);
 
-  // ── Clean up session on window close/unload ───────────
+  
   useEffect(() => {
     if (!session?.hallTicketNumber) return;
 
@@ -667,7 +667,7 @@ export default function ExamSessionPage() {
     return () => window.removeEventListener("unload", cleanup);
   }, [session]);
 
-  // ── Webcam Live Feed Frame Uploader ────────────────────
+  
   useEffect(() => {
     if (!setupDone || isSubmitted || !session || !videoRef.current) return;
 
@@ -691,18 +691,18 @@ export default function ExamSessionPage() {
       }
     };
 
-    // Upload a frame every 2500ms
+    
     const interval = setInterval(uploadFrame, 2500);
     return () => clearInterval(interval);
   }, [setupDone, isSubmitted, session]);
 
-  // ── Attach stream to video once main UI is rendered ──
+  
   useEffect(() => {
     if (!setupDone || !streamRef.current || !videoRef.current) return;
     videoRef.current.srcObject = streamRef.current;
   }, [setupDone]);
 
-  // ── Initialize first question status ──────────────────
+  
   useEffect(() => {
     if (setupDone) {
       const firstQId = QUESTIONS[0].id;
@@ -713,7 +713,7 @@ export default function ExamSessionPage() {
     }
   }, [setupDone]);
 
-  // ── Fullscreen monitoring ────────────────────────────
+  
   useEffect(() => {
     const onFsChange = () => {
       const isFs = !!(
@@ -733,20 +733,20 @@ export default function ExamSessionPage() {
     };
   }, [setupDone, isSubmitted, triggerViolation]);
 
-  // ── Strict Proctoring Monitoring (Tab switches, Blur, Copy, Paste, DevTools) ──
+  
   useEffect(() => {
     if (!setupDone || isSubmitted) return;
 
-    // Visibility and Tab Switches
+    
     const onVisibility = () => {
       if (document.hidden && !isSubmitted) {
         triggerViolation("Tab switch detected");
       }
     };
 
-    // Focus Loss (Window Blur)
+    
     const onBlur = () => {
-      // Small timeout to confirm the window has indeed lost focus
+      
       setTimeout(() => {
         if (!document.hasFocus() && !isSubmitted) {
           triggerViolation("Window focus lost (navigated away)");
@@ -754,7 +754,7 @@ export default function ExamSessionPage() {
       }, 150);
     };
 
-    // Copy / Paste / Cut / ContextMenu blockers
+    
     const preventAction = (e: Event) => {
       e.preventDefault();
       if (!isSubmitted) {
@@ -762,9 +762,9 @@ export default function ExamSessionPage() {
       }
     };
 
-    // Keyboard Shortcuts
+    
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 1. DevTools shortcuts: F12, Ctrl+Shift+I/J/C, Cmd+Option+I (Mac)
+      
       const isF12 = e.key === "F12";
       const isCtrlShiftDev = e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase());
       const isMacDev = e.metaKey && e.altKey && e.key.toLowerCase() === "i";
@@ -775,7 +775,7 @@ export default function ExamSessionPage() {
         return;
       }
 
-      // 2. Clipboard shortcuts: Ctrl/Cmd + C, V, X, U (view source)
+      
       if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "u"].includes(e.key.toLowerCase())) {
         e.preventDefault();
         triggerViolation(`Prohibited shortcut combination: ${e.key.toUpperCase()}`);
@@ -802,14 +802,14 @@ export default function ExamSessionPage() {
     };
   }, [setupDone, isSubmitted, triggerViolation]);
 
-  // ── Cleanup on unmount ────────────────────────────────
+  
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
 
-  // ── Auto submission trigger ───────────────────────────
+  
   const triggerAutoSubmit = useCallback(() => {
     setIsSubmitted(true);
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -818,7 +818,7 @@ export default function ExamSessionPage() {
     }
   }, []);
 
-  // ── Countdown timer ───────────────────────────────────
+  
   useEffect(() => {
     if (!setupDone || isSubmitted) return;
     const interval = setInterval(() => {
@@ -834,7 +834,7 @@ export default function ExamSessionPage() {
     return () => clearInterval(interval);
   }, [setupDone, isSubmitted, triggerAutoSubmit]);
 
-  // ── Question navigation and state handlers ────────────
+  
   const handleQuestionSelect = (index: number) => {
     const prevQ = QUESTIONS[currentIndex];
     const prevAns = answers[prevQ.id];
@@ -975,7 +975,7 @@ export default function ExamSessionPage() {
 
   const { exam, candidateName, hallTicketNumber } = session;
 
-  // ── Permission error gate ─────────────────────────────
+  
   if (permError) {
     return (
       <div className="min-h-screen bg-zinc-900 flex items-center justify-center font-sans p-6">
@@ -994,7 +994,7 @@ export default function ExamSessionPage() {
     );
   }
 
-  // ── Setup in progress ─────────────────────────────────
+  
   if (!setupDone) {
     return (
       <div className="min-h-screen bg-zinc-900 flex flex-col items-center justify-center font-sans gap-6 p-6">
@@ -1009,7 +1009,7 @@ export default function ExamSessionPage() {
     );
   }
 
-  // ── Violation Screen ──────────────────────────────────
+  
   if (isViolated) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans p-6 select-none text-zinc-900">
@@ -1067,7 +1067,7 @@ export default function ExamSessionPage() {
     );
   }
 
-  // ── Exam finished screen ──────────────────────────────
+  
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans p-6 select-none">
@@ -1132,10 +1132,10 @@ export default function ExamSessionPage() {
   const currentQuestion = QUESTIONS[currentIndex];
   const activeAnswer = answers[currentQuestion.id] || "";
 
-  // ── Main active exam UI ───────────────────────────────
+  
   return (
     <div className="h-screen w-screen overflow-hidden bg-zinc-50 font-sans text-zinc-900 flex flex-col select-none">
-      {/* ── TOP BAR ── */}
+      {}
       <header className="bg-orange-500 px-6 py-3 flex items-center justify-between shrink-0 border-b border-orange-600 shadow-sm">
         <div className="flex items-center gap-3">
           {exam.company_logo ? (
@@ -1161,11 +1161,11 @@ export default function ExamSessionPage() {
         </div>
       </header>
 
-      {/* ── BODY ── */}
+      {}
       <div className="flex flex-1 overflow-hidden">
-        {/* ── MAIN QUESTION AREA (left) ── */}
+        {}
         <main className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col justify-between relative bg-zinc-50">
-          {/* Watermark Overlay (diagonal repeating lines) */}
+          {}
           <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 flex flex-col justify-between opacity-[0.12] p-12">
             {[...Array(9)].map((_, i) => (
               <div
@@ -1181,7 +1181,7 @@ export default function ExamSessionPage() {
           </div>
 
           <div className="relative z-10 w-full max-w-3xl mx-auto space-y-6">
-            {/* Header section status */}
+            {}
             <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 font-mono">
@@ -1198,14 +1198,14 @@ export default function ExamSessionPage() {
               </span>
             </div>
 
-            {/* Question Text */}
+            {}
             <div className="bg-white border border-zinc-200 p-6 shadow-sm">
               <p className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap font-sans">
                 {currentQuestion.questionText}
               </p>
             </div>
 
-            {/* Answer Selector */}
+            {}
             {currentQuestion.type === "mcq" ? (
               <div className="space-y-2.5">
                 {currentQuestion.options?.map((opt) => {
@@ -1269,7 +1269,7 @@ export default function ExamSessionPage() {
               </div>
             )}
 
-            {/* Violation Alert inside Exam area */}
+            {}
             {flags.length > 0 && (
               <div className="bg-red-50 border border-red-200 p-4 space-y-1 font-mono text-xs">
                 <p className="font-bold text-red-700 uppercase">Proctor Violations Detected</p>
@@ -1282,7 +1282,7 @@ export default function ExamSessionPage() {
             )}
           </div>
 
-          {/* Action buttons */}
+          {}
           <div className="relative z-10 w-full max-w-3xl mx-auto border-t border-zinc-200 pt-6 mt-8 flex items-center justify-between">
             <div className="flex gap-2">
               <button
@@ -1319,10 +1319,10 @@ export default function ExamSessionPage() {
           </div>
         </main>
 
-        {/* ── CAMERA / STATUS SIDEBAR (right) ── */}
+        {}
         <aside className="w-80 shrink-0 bg-white border-l border-zinc-200 flex flex-col justify-between overflow-y-auto">
           <div>
-            {/* Live Camera Frame */}
+            {}
             <div className="p-4 border-b border-zinc-200 bg-zinc-50">
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
@@ -1342,7 +1342,7 @@ export default function ExamSessionPage() {
               </div>
             </div>
 
-            {/* Candidate photo / details */}
+            {}
             <div className="p-4 border-b border-zinc-200 bg-white space-y-3 shrink-0">
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 font-mono">
                 Candidate Profile
@@ -1370,7 +1370,7 @@ export default function ExamSessionPage() {
               </div>
             </div>
 
-            {/* Countdown timer */}
+            {}
             <div className="px-4 py-3 bg-zinc-900 text-white flex items-center justify-between border-b border-zinc-800">
               <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Time Remaining</span>
               <span
@@ -1382,7 +1382,7 @@ export default function ExamSessionPage() {
               </span>
             </div>
 
-            {/* Palette grid */}
+            {}
             <div className="p-4 space-y-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
@@ -1436,7 +1436,7 @@ export default function ExamSessionPage() {
           </div>
 
           <div>
-            {/* Status Legend */}
+            {}
             <div className="p-4 border-t border-zinc-200 bg-zinc-50 space-y-2">
               <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Question Legend</p>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px] font-medium text-zinc-600">
@@ -1461,7 +1461,7 @@ export default function ExamSessionPage() {
               </div>
             </div>
 
-            {/* Submission triggers */}
+            {}
             <div className="p-4 border-t border-zinc-200 bg-white shrink-0">
               <button
                 onClick={() => setShowSubmitModal(true)}
@@ -1474,7 +1474,7 @@ export default function ExamSessionPage() {
         </aside>
       </div>
 
-      {/* ── SUBMIT CONFIRMATION MODAL ── */}
+      {}
       {showSubmitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans select-none animate-fade-in">
           <div className="bg-white border border-zinc-300 w-full max-w-md p-6 space-y-4 shadow-xl">

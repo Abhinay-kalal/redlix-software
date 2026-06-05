@@ -57,12 +57,12 @@ export default function Dashboard() {
   const [selectedSeverity, setSelectedSeverity] = useState<string>("All");
   const [activeTab, setActiveTab] = useState("live");
   
-  // Database states
+  
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStreamSession, setActiveStreamSession] = useState<Session | null>(null);
 
-  // Exam Creation Form States
+  
   const [examName, setExamName] = useState("");
   const [examDate, setExamDate] = useState("");
   const [examTime, setExamTime] = useState("");
@@ -75,14 +75,14 @@ export default function Dashboard() {
   const [typesOfQnsList, setTypesOfQnsList] = useState<string[]>([""]);
   const [descriptionsList, setDescriptionsList] = useState<string[]>([""]);
   
-  // Custom fields state
+  
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [publishError, setPublishError] = useState("");
   const [clockTime, setClockTime] = useState("2026-06-05 20:15 IST");
 
-  // Exams tab state variables
+  
   const [exams, setExams] = useState<Exam[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [selectedExamForCandidates, setSelectedExamForCandidates] = useState<Exam | null>(null);
@@ -127,7 +127,7 @@ export default function Dashboard() {
     }
   };
 
-  // Auth Guard
+  
   useEffect(() => {
     const auth = localStorage.getItem("is_authenticated");
     const email = localStorage.getItem("user_email") || "admin@redlixsecure.com";
@@ -139,7 +139,7 @@ export default function Dashboard() {
     }
   }, [router]);
 
-  // Live IST Clock
+  
   useEffect(() => {
     const updateClock = () => {
       const d = new Date();
@@ -165,7 +165,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch from Supabase Database
+  
   const fetchSessions = async () => {
     try {
       const { data, error } = await supabase.from("sessions").select().order("timestamp", { ascending: true });
@@ -215,14 +215,14 @@ export default function Dashboard() {
   };
 
   const handleResolve = async (id: string) => {
-    // Optimistic local state update
+    
     setSessions((prev) =>
       prev.map((s) =>
         s.id === id ? { ...s, flagsCount: 0, integrityScore: 100, severity: "Normal", lastFlagType: "None (Resolved)" } : s
       )
     );
     
-    // Update record in Supabase
+    
     await supabase
       .from("sessions")
       .update({
@@ -239,10 +239,10 @@ export default function Dashboard() {
   };
 
   const handleDismiss = async (id: string) => {
-    // Optimistic local state update
+    
     setSessions((prev) => prev.filter((s) => s.id !== id));
     
-    // Delete record from Supabase
+    
     await supabase.from("sessions").delete().eq("id", id);
 
     if (activeStreamSession?.id === id) {
@@ -250,7 +250,7 @@ export default function Dashboard() {
     }
   };
 
-  // Exam Creation Custom Field Helpers
+  
   const addCustomField = () => {
     setCustomFields([...customFields, { key: "", value: "" }]);
   };
@@ -280,7 +280,7 @@ export default function Dashboard() {
     setPublishSuccess(false);
 
     try {
-      // Serialize custom fields array into an object
+      
       const customFieldsObj: Record<string, string> = {};
       customFields.forEach((cf) => {
         if (cf.key.trim()) {
@@ -288,7 +288,7 @@ export default function Dashboard() {
         }
       });
 
-      // Add Duration field if provided
+      
       if (examDuration.trim()) {
         customFieldsObj["Duration"] = `${examDuration.trim()} minutes`;
       }
@@ -309,7 +309,7 @@ export default function Dashboard() {
         setPublishError(error.message);
       } else {
         setPublishSuccess(true);
-        // Reset form states
+        
         setExamName("");
         setExamDate("");
         setExamTime("");
@@ -330,7 +330,7 @@ export default function Dashboard() {
     }
   };
 
-  // Filter logic
+  
   const filteredSessions = sessions.filter((s) => {
     const matchesSearch =
       s.student.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -370,10 +370,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-zinc-100 text-zinc-800 flex flex-col lg:flex-row font-sans">
       
-      {/* Sidebar navigation (Light Theme, Sharp Edges) */}
+      {}
       <aside className="w-full lg:w-64 bg-white border-b lg:border-b-0 lg:border-r border-zinc-200 flex flex-col shrink-0">
         
-        {/* Brand/Logo */}
+        {}
         <div className="h-16 flex items-center gap-3 px-6 border-b border-zinc-200">
           <img
             src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
@@ -386,7 +386,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Navigation links */}
+        {}
         <nav className="flex-1 px-4 py-6 space-y-1">
           <button 
             onClick={() => setActiveTab("live")}
@@ -460,7 +460,7 @@ export default function Dashboard() {
           </button>
         </nav>
 
-        {/* User profile / session status */}
+        {}
         <div className="p-4 border-t border-zinc-200 bg-zinc-50">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-none bg-white flex items-center justify-center font-bold text-xs text-orange-600 border border-zinc-200">
@@ -484,10 +484,10 @@ export default function Dashboard() {
 
       </aside>
 
-      {/* Main Content Area */}
+      {}
       <main className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Header */}
+        {}
         <header className="h-16 border-b border-zinc-200 flex items-center justify-between px-6 bg-white">
           <div className="flex items-center gap-4">
             <h1 className="text-md font-bold text-zinc-900 tracking-wide uppercase">
@@ -513,16 +513,16 @@ export default function Dashboard() {
         </header>
 
         {loading ? (
-          /* Central database fetch loader */
+          
           <div className="flex-1 flex flex-col items-center justify-center">
             <div className="w-12 h-12 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin mb-4" />
             <p className="text-zinc-500 text-xs">Loading database records...</p>
           </div>
         ) : activeTab === "live" ? (
-          /* Live Monitor View */
+          
           <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             
-            {/* Metric cards */}
+            {}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               
               <div className="p-5 bg-white rounded-none border border-zinc-200 shadow-sm relative overflow-hidden">
@@ -596,13 +596,13 @@ export default function Dashboard() {
 
             </div>
 
-            {/* Sessions Table Container */}
+            {}
             <div className="bg-white rounded-none border border-zinc-200 shadow-sm overflow-hidden">
               
-              {/* Search & Filter */}
+              {}
               <div className="p-5 border-b border-zinc-200 flex flex-col md:flex-row gap-4 items-center justify-between bg-zinc-50">
                 
-                {/* Search */}
+                {}
                 <div className="relative w-full md:w-80">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -618,7 +618,7 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {/* Filter buttons */}
+                {}
                 <div className="flex gap-1 bg-white p-1 rounded-none border border-zinc-200">
                   {["All", "Critical", "Warning", "Normal"].map((severity) => (
                     <button
@@ -637,7 +637,7 @@ export default function Dashboard() {
 
               </div>
 
-              {/* Grid Database Table */}
+              {}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -770,18 +770,18 @@ export default function Dashboard() {
 
           </div>
         ) : activeTab === "analytics" ? (
-          /* Analytics Tab (Light Theme) */
+          
           <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
-              {/* Chart container */}
+              {}
               <div className="lg:col-span-2 p-6 bg-white rounded-none border border-zinc-200 shadow-sm flex flex-col justify-between h-[380px]">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Integrity Trend Log</h3>
                   <p className="text-xs text-zinc-400">Hourly system integrity metrics analysis</p>
                 </div>
                 
-                {/* Visual Chart representation */}
+                {}
                 <div className="flex-1 flex items-end gap-2.5 mt-8 h-48 border-b border-l border-zinc-200 pb-2 pl-2">
                   {(sessions.length > 0 ? sessions.map(s => s.integrityScore) : [100, 100, 100]).map((val, idx) => (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
@@ -807,7 +807,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Categorization */}
+              {}
               <div className="p-6 bg-white rounded-none border border-zinc-200 shadow-sm flex flex-col justify-between h-[380px]">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Incident Breakdown</h3>
@@ -863,7 +863,7 @@ export default function Dashboard() {
             </div>
           </div>
         ) : activeTab === "configs" ? (
-          /* Configurations Tab (Light Theme) */
+          
           <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             <div className="max-w-2xl bg-white rounded-none border border-zinc-200 shadow-sm p-6 space-y-6">
               
@@ -916,7 +916,7 @@ export default function Dashboard() {
             </div>
           </div>
         ) : activeTab === "create-exam" ? (
-          /* Create Exam Form View */
+          
           <div className="flex-1 p-6 space-y-6 overflow-y-auto">
             <div className="max-w-2xl bg-white rounded-none border border-zinc-200 shadow-sm p-6 space-y-6">
               
@@ -1048,7 +1048,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Types of Questions Dynamic List */}
+                {}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
                     <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500">Question Types *</label>
@@ -1089,7 +1089,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Description Dynamic List */}
+                {}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
                     <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500">Description Sections *</label>
@@ -1130,7 +1130,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Dynamic Custom Fields Section */}
+                {}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Custom Fields</span>
@@ -1197,9 +1197,9 @@ export default function Dashboard() {
                 <p className="text-zinc-500 text-xs">Loading directory...</p>
               </div>
             ) : selectedExamForCandidates ? (
-              /* Registered Candidates View for a specific Exam */
+              
               <div className="space-y-6">
-                {/* Header Back controls */}
+                {}
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => setSelectedExamForCandidates(null)}
@@ -1215,7 +1215,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Candidate list cards */}
+                {}
                 {registrations.filter((r) => r.exam_id === selectedExamForCandidates.id).length === 0 ? (
                   <div className="py-16 text-center bg-white border border-zinc-200 shadow-sm p-8">
                     <p className="text-zinc-500 text-sm font-medium">No candidates registered for this exam yet.</p>
@@ -1261,7 +1261,7 @@ export default function Dashboard() {
                 )}
               </div>
             ) : (
-              /* Exams list tab */
+              
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Exams Listing</h3>
@@ -1308,7 +1308,7 @@ export default function Dashboard() {
                           </div>
 
                           <div className="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-3 flex-wrap">
-                            {/* Status badge */}
+                            {}
                             <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 border ${
                               exam.is_started
                                 ? "bg-green-50 text-green-700 border-green-200"
@@ -1347,7 +1347,7 @@ export default function Dashboard() {
 
       </main>
 
-      {/* Simulated Live Stream Modal (Light Theme, Sharp Edges) */}
+      {}
   {activeStreamSession && (() => {
     const currentStream = sessions.find((s) => s.id === activeStreamSession.id) || activeStreamSession;
     return (
@@ -1355,7 +1355,7 @@ export default function Dashboard() {
         
         <div className="relative w-full max-w-lg bg-white border border-zinc-200 rounded-none overflow-hidden shadow-2xl">
           
-          {/* Modal Header */}
+          {}
           <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
             <div>
               <h3 className="text-sm font-bold text-zinc-950 flex items-center gap-2">
@@ -1374,7 +1374,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Webcam video live feed */}
+          {}
           <div className="relative aspect-video bg-zinc-950 flex items-center justify-center overflow-hidden border-b border-zinc-200">
             {currentStream.liveFeed ? (
               <img 
@@ -1386,11 +1386,11 @@ export default function Dashboard() {
               <>
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.6)_100%)] pointer-events-none" />
                 
-                {/* Grid */}
+                {}
                 <div className="absolute top-1/4 left-1/4 right-1/4 bottom-1/4 border border-orange-500/30 rounded-none flex items-center justify-center">
                   <div className="absolute inset-0 bg-orange-500/5 animate-pulse" />
                   
-                  {/* Crosshairs */}
+                  {}
                   <div className="w-4 h-4 border-t border-l border-orange-400 absolute top-0 left-0" />
                   <div className="w-4 h-4 border-t border-r border-orange-400 absolute top-0 right-0" />
                   <div className="w-4 h-4 border-b border-l border-orange-400 absolute bottom-0 left-0" />
@@ -1401,7 +1401,7 @@ export default function Dashboard() {
                   </span>
                 </div>
 
-                {/* Vector representation */}
+                {}
                 <svg className="absolute inset-0 w-full h-full text-orange-500/30" viewBox="0 0 400 225">
                   <path d="M 200,80 L 175,110 L 185,150 L 200,165 L 215,150 L 225,110 Z" fill="none" stroke="currentColor" strokeWidth={1.5} className="animate-pulse" />
                   <circle cx={185} cy={105} r={3} fill="currentColor" />
@@ -1428,7 +1428,7 @@ export default function Dashboard() {
 
           </div>
 
-            {/* Modal Actions */}
+            {}
             <div className="p-4 bg-zinc-50 flex justify-between gap-3 border-t border-zinc-200">
               <span className="text-xs text-zinc-500 flex items-center">
                 Total flags: {currentStream.flagsCount}

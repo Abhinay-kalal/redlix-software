@@ -39,7 +39,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom Webkit Scrollbars */
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -58,7 +58,7 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Glassmorphism card */
+
 .glass-card {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
@@ -66,7 +66,7 @@ body {
   border: 1px solid var(--card-border);
 }
 
-/* Subtle gradient text */
+
 .text-gradient {
   background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
   -webkit-background-clip: text;
@@ -79,7 +79,7 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Pulse animation for glowing orbs */
+
 @keyframes float {
   0%, 100% {
     transform: translateY(0px) scale(1);
@@ -106,7 +106,7 @@ body {
   animation: float-delayed 10s ease-in-out infinite;
 }
 
-/* Shimmer effect for borders */
+
 @keyframes border-shimmer {
   0% {
     background-position: 0% 50%;

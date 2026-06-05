@@ -49,10 +49,10 @@ export default function ScheduledExams() {
   return (
     <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
       
-      {/* Top Banner Header */}
+      {}
       <header className="bg-orange-500 border-b border-orange-600 py-3.5 px-6 shadow-xs">
         <div className="max-w-5xl mx-auto flex items-center justify-start">
-          {/* Breadcrumbs */}
+          {}
           <nav className="text-xs text-orange-100 font-semibold flex items-center gap-1.5">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-orange-200">/</span>
@@ -61,10 +61,10 @@ export default function ScheduledExams() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {}
       <main className="flex-1 max-w-5xl w-full mx-auto p-6 space-y-6">
         
-        {/* Title & Description */}
+        {}
         <div className="space-y-2 text-center sm:text-left">
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Scheduled Examinations</h1>
           <p className="text-sm text-zinc-500 max-w-md leading-relaxed">
@@ -72,7 +72,7 @@ export default function ScheduledExams() {
           </p>
         </div>
 
-        {/* Search Input Bar */}
+        {}
         <div className="relative max-w-md w-full">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,22 +98,22 @@ export default function ScheduledExams() {
             <p className="text-zinc-500 text-sm font-medium">No scheduled examinations found.</p>
           </div>
         ) : (
-          /* list of exams cards */
+          
           <div className="space-y-6">
             {filteredExams.map((exam) => (
               <div 
                 key={exam.id} 
                 className="bg-white border border-zinc-200 shadow-sm rounded-none flex flex-col md:flex-row hover:border-orange-500/30 transition-all duration-200 overflow-hidden"
               >
-                {/* Left Side: Exam Cover Image */}
+                {}
                 <div className="w-full md:w-56 h-48 md:h-auto bg-zinc-100 shrink-0 relative overflow-hidden border-b md:border-b-0 md:border-r border-zinc-200">
                   <img src="/exam-cover.png" alt="Exam Cover" className="w-full h-full object-cover" />
                 </div>
 
-                {/* Right Side: Content */}
+                {}
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-4">
-                    {/* Exam name & conducting company */}
+                    {}
                     <div>
                       <span className="text-[10px] font-bold tracking-wider uppercase bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-0.5 rounded-none">
                         {exam.company_name}
@@ -123,7 +123,7 @@ export default function ScheduledExams() {
                       </h3>
                     </div>
 
-                    {/* Date, Time, and Questions Details */}
+                    {}
                     <div className="grid grid-cols-2 gap-4 py-3 border-y border-zinc-200 text-xs font-semibold text-zinc-700">
                       <div>
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-1 font-bold">Schedule</p>
@@ -137,14 +137,14 @@ export default function ScheduledExams() {
                       </div>
                     </div>
 
-                    {/* Description */}
+                    {}
                     {exam.description && (
                       <div className="text-xs text-zinc-800 leading-relaxed bg-zinc-50 p-4 border border-zinc-200 font-normal whitespace-pre-line">
                         {exam.description}
                       </div>
                     )}
 
-                    {/* Dynamic Custom Fields */}
+                    {}
                     {Object.keys(exam.custom_fields || {}).length > 0 && (
                       <div className="space-y-2.5 pt-1">
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Guidelines & Details</p>
@@ -160,7 +160,7 @@ export default function ScheduledExams() {
                     )}
                   </div>
 
-                  {/* Footer Action */}
+                  {}
                   <div className="pt-4 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <p className="text-[10px] text-zinc-400 hidden sm:block">Already registered? Enter your hall ticket to start.</p>
                     <div className="flex gap-2">
@@ -187,7 +187,7 @@ export default function ScheduledExams() {
 
       </main>
 
-      {/* Footer Info */}
+      {}
       <footer className="py-8 border-t border-zinc-200 bg-white mt-12 text-center text-xs text-zinc-400">
         © 2026 Redlix Secure. Secure Examinations Registry.
       </footer>

@@ -26,8 +26,8 @@ function RegisterFormContent() {
   const [exam, setExam] = useState<ExamDetails | null>(null);
   const [loadingExam, setLoadingExam] = useState(true);
   
-  // Form fields state
-  const [photo, setPhoto] = useState<string>(""); // Base64 string
+  
+  const [photo, setPhoto] = useState<string>(""); 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -35,7 +35,7 @@ function RegisterFormContent() {
   const [department, setDepartment] = useState("");
   const [yearOfStudy, setYearOfStudy] = useState("1st Year");
   
-  // Declaration states
+  
   const [decl1, setDecl1] = useState(false);
   const [decl2, setDecl2] = useState(false);
   const [decl3, setDecl3] = useState(false);
@@ -74,7 +74,7 @@ function RegisterFormContent() {
     fetchExamDetails();
   }, [examId]);
 
-  // File to base64 converter
+  
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -204,7 +204,7 @@ function RegisterFormContent() {
           }
         `}} />
 
-        {/* Action Panel */}
+        {}
         <div className="no-print bg-white border border-zinc-200 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 rounded-none">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-none bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0">
@@ -231,18 +231,18 @@ function RegisterFormContent() {
           </div>
         </div>
 
-        {/* Printable Hall Ticket Container */}
+        {}
         <div id="hall-ticket-print-area" className="bg-white border border-zinc-200 p-8 shadow-xs font-sans text-zinc-700 text-left space-y-6 relative rounded-none print:border-none print:shadow-none print:p-0">
           
-          {/* Top Decorative Color Bar */}
+          {}
           <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
 
-          {/* Header Title Grid (with company logo on the left, left-aligned content, and QR code on the right) */}
+          {}
           <div className="border-b border-zinc-200 pb-5 pt-2 flex flex-col md:flex-row items-center justify-between gap-4">
             
-            {/* Left side: Logo & Left-aligned Legend */}
+            {}
             <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left w-full md:w-auto justify-center sm:justify-start">
-              {/* Company Logo */}
+              {}
               <div className="shrink-0">
                 {exam?.company_logo ? (
                   <img src={exam.company_logo} alt="Company Logo" className="h-12 w-12 object-contain" />
@@ -253,7 +253,7 @@ function RegisterFormContent() {
                 )}
               </div>
               
-              {/* Header Legend */}
+              {}
               <div className="flex flex-col items-center sm:items-start">
                 <h1 className="text-xl font-semibold text-zinc-900 leading-snug">{exam?.company_name || "CMR Institute of Technology"}</h1>
                 <p className="text-[10px] font-medium text-orange-600 mt-0.5">Online Examination Portal</p>
@@ -263,7 +263,7 @@ function RegisterFormContent() {
               </div>
             </div>
 
-            {/* Right side: Valid Scannable QR Code */}
+            {}
             <div className="shrink-0 flex flex-col items-center gap-1.5 border-t md:border-t-0 pt-4 md:pt-0 w-full md:w-auto md:items-end justify-center">
               <div className="w-16 h-16 bg-white border border-zinc-200 flex items-center justify-center p-1 shadow-xs relative">
                 <img
@@ -279,7 +279,7 @@ function RegisterFormContent() {
 
           </div>
 
-          {/* Core Ticket Credentials */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start pt-2">
             <div className="md:col-span-2 space-y-4">
               <div>
@@ -304,7 +304,7 @@ function RegisterFormContent() {
               </div>
             </div>
 
-            {/* Photo Column */}
+            {}
             <div className="flex flex-col items-center justify-center gap-1 border-t md:border-t-0 md:border-l border-zinc-200 pt-4 md:pt-0 md:pl-6 shrink-0">
               <div className="w-24 h-28 bg-zinc-50 border border-zinc-200 overflow-hidden shrink-0 shadow-xs relative">
                 {photo ? (
@@ -317,11 +317,11 @@ function RegisterFormContent() {
             </div>
           </div>
 
-          {/* Exam Details Section */}
+          {}
           <div className="space-y-3 pt-4 border-t border-zinc-200">
             <h4 className="text-xs font-semibold text-zinc-800">{exam?.name} Schedule</h4>
             
-            {/* Table */}
+            {}
             <div className="border border-zinc-200 divide-y divide-zinc-200 text-xs">
               <div className="grid grid-cols-12 bg-zinc-50 font-medium py-2 px-3 text-[10px] text-zinc-500 border-b border-zinc-200">
                 <div className="col-span-1">No.</div>
@@ -342,7 +342,7 @@ function RegisterFormContent() {
             </div>
           </div>
 
-          {/* Clear Candidate Details Block at the Bottom */}
+          {}
           <div className="space-y-3 pt-5 border-t border-zinc-200">
             <h4 className="text-xs font-semibold text-zinc-800">Candidate Registration Profile</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6 bg-zinc-50/50 p-4 border border-zinc-200 text-xs">
@@ -369,7 +369,7 @@ function RegisterFormContent() {
             </div>
           </div>
 
-          {/* Instructions Box */}
+          {}
           <div className="space-y-2 pt-2 text-[10px] text-zinc-450 leading-relaxed font-normal">
             <p className="font-semibold text-zinc-700 text-[10px]">Important Instructions:</p>
             <ul className="list-disc pl-4 space-y-1">
@@ -378,7 +378,7 @@ function RegisterFormContent() {
             </ul>
           </div>
 
-          {/* Download Footnote */}
+          {}
           <div className="text-[9px] text-zinc-400 font-mono text-center pt-4 border-t border-zinc-100 flex flex-col sm:flex-row justify-between items-center gap-2">
             <span>Downloaded on: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
           </div>
@@ -406,7 +406,7 @@ function RegisterFormContent() {
 
       <form onSubmit={handleSubmit} className="space-y-6 font-normal">
         
-        {/* Photo Upload with Preview */}
+        {}
         <div className="space-y-2">
           <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">Candidate Verification Photo *</label>
           <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-zinc-50 border border-zinc-200">
@@ -419,7 +419,7 @@ function RegisterFormContent() {
             </div>
             <div className="space-y-2 text-center sm:text-left">
               <p className="text-[10px] text-zinc-500">Upload your photograph for candidate identity verification.</p>
-              {/* Passport photo requirements — shown in red */}
+              {}
               <div className="space-y-0.5">
                 <p className="text-[10px] font-bold text-red-600 flex items-center gap-1">
                   <span>⚠</span> Strictly passport-size photo required
@@ -439,7 +439,7 @@ function RegisterFormContent() {
           </div>
         </div>
 
-        {/* Text Fields */}
+        {}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="reg-name" className="block text-xs font-semibold text-zinc-700 mb-1">Full Name *</label>
@@ -525,7 +525,7 @@ function RegisterFormContent() {
           </div>
         </div>
 
-        {/* Declarations */}
+        {}
         <div className="border-t border-zinc-100 pt-4 space-y-3">
           <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider mb-2">Candidate Declarations *</label>
           
@@ -569,7 +569,7 @@ function RegisterFormContent() {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {}
         <div className="pt-4 flex gap-4">
           <Link
             href="/scheduled-exams"
@@ -594,10 +594,10 @@ function RegisterFormContent() {
 export default function RegisterForExamPage() {
   return (
     <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
-      {/* Mini Header */}
+      {}
       <header className="bg-orange-500 border-b border-orange-600 py-3.5 px-6 shrink-0 shadow-xs">
         <div className="max-w-5xl mx-auto flex items-center justify-start">
-          {/* Breadcrumbs */}
+          {}
           <nav className="text-xs text-orange-100 font-semibold flex items-center gap-1.5">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-orange-200">/</span>
@@ -608,7 +608,7 @@ export default function RegisterForExamPage() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {}
       <main className="flex-1 w-full max-w-5xl mx-auto p-6 flex flex-col justify-center">
         <Suspense fallback={
           <div className="py-20 flex flex-col items-center justify-center">
@@ -620,7 +620,7 @@ export default function RegisterForExamPage() {
         </Suspense>
       </main>
 
-      {/* Footer Info */}
+      {}
       <footer className="py-6 border-t border-zinc-200 bg-white mt-12 text-center text-xs text-zinc-400 shrink-0">
         © 2026 Redlix Secure. Secure Examinations Registry.
       </footer>

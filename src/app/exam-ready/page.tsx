@@ -78,7 +78,7 @@ export default function ExamReadyPage() {
   return (
     <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
 
-      {/* Header */}
+      {}
       <header className="bg-orange-500 border-b border-orange-600 shadow-sm shrink-0">
         <div className="max-w-3xl mx-auto px-8 py-5 flex items-center gap-4">
           {exam.company_logo
@@ -92,10 +92,10 @@ export default function ExamReadyPage() {
         </div>
       </header>
 
-      {/* Main */}
+      {}
       <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-8 flex flex-col gap-5">
 
-        {/* Candidate */}
+        {}
         <div className="bg-white border border-zinc-200 shadow-sm px-5 py-3 flex items-center justify-between flex-wrap gap-2">
           <div>
             <p className="text-xs font-semibold text-zinc-800">{candidateName}</p>
@@ -106,7 +106,7 @@ export default function ExamReadyPage() {
           </span>
         </div>
 
-        {/* Instructions */}
+        {}
         <div className="bg-white border border-zinc-200 shadow-sm p-5 space-y-3">
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Instructions &amp; Guidelines</p>
           <ul className="space-y-2">
@@ -119,7 +119,7 @@ export default function ExamReadyPage() {
           </ul>
         </div>
 
-        {/* Declaration + Begin */}
+        {}
         <div className="bg-white border border-zinc-200 shadow-sm p-5 space-y-4">
           <label className="flex items-start gap-3 cursor-pointer select-none">
             <input
@@ -163,7 +163,7 @@ export default function ExamReadyPage() {
 
       </main>
 
-      {/* Footer */}
+      {}
       <footer className="border-t border-zinc-200 bg-white py-3 px-6 shrink-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <p className="text-[10px] text-zinc-400">Powered by <span className="font-semibold text-zinc-600">Redlix Secure</span></p>

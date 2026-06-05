@@ -52,7 +52,7 @@ export const FullScreenSignup = () => {
     <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 text-zinc-900 font-sans">
       <div className="w-full relative max-w-5xl flex flex-col md:flex-row shadow-lg rounded-none border border-zinc-200 bg-white overflow-hidden">
         
-        {/* Left Info Panel (Light theme, sharp edges) */}
+        {}
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between rounded-none border-b md:border-b-0 md:border-r border-zinc-200">
           <div className="space-y-6">
             <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ export const FullScreenSignup = () => {
           </div>
         </div>
  
-        {/* Right Info Panel / Form */}
+        {}
         <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white rounded-none z-10 text-zinc-900">
           <div className="flex flex-col items-left mb-6">
             <h2 className="text-2xl font-medium tracking-tight">

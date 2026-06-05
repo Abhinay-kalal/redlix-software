@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   
-  // Loading & interactive states
+  
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
 
@@ -88,10 +88,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 sm:p-6 md:p-8 relative font-sans text-zinc-900">
       
-      {/* Main card with sharp edges, light theme, and simple borders */}
+      {}
       <div className="w-full relative max-w-4xl flex flex-col md:flex-row shadow-lg rounded-none border border-zinc-200 bg-white">
         
-        {/* Left Side: Clean Info Panel (Light gray, sharp edges, simple grammar) */}
+        {}
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between rounded-none border-b md:border-b-0 md:border-r border-zinc-200">
           <div className="space-y-6">
             <div className="flex items-center gap-2">
@@ -111,11 +111,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side: Simple Form (White background, sharp inputs, simple labels) */}
+        {}
         <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white rounded-none min-h-[400px]">
           
           {isLoading ? (
-            /* Loading State with sharp elements */
+            
             <div className="py-8 flex flex-col items-center justify-center text-center">
               <div className="relative w-16 h-16 mb-6">
                 <div className="absolute inset-0 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
@@ -128,7 +128,7 @@ export default function LoginPage() {
               </div>
             </div>
           ) : (
-            /* Form Panel */
+            
             <div className="w-full max-w-sm mx-auto">
               <div className="flex flex-col items-left mb-6">
                 <h2 className="text-2xl font-medium tracking-tight text-zinc-900">
@@ -141,7 +141,7 @@ export default function LoginPage() {
 
               <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
                 
-                {/* Email field */}
+                {}
                 <div>
                   <label htmlFor="email" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Email address
@@ -168,7 +168,7 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Password field */}
+                {}
                 <div>
                   <label htmlFor="password" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Password
@@ -195,7 +195,7 @@ export default function LoginPage() {
                   )}
                 </div>
 
-                {/* Remember session checkbox */}
+                {}
                 <div className="flex items-center">
                   <input
                     id="remember-me"
@@ -209,7 +209,7 @@ export default function LoginPage() {
                   </label>
                 </div>
 
-                {/* Submit button with sharp edges */}
+                {}
                 <button
                   type="submit"
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-none transition-colors cursor-pointer mt-2 shadow-sm"

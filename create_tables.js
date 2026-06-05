@@ -12,7 +12,7 @@ async function run() {
     await client.connect();
     console.log("Connected to database.");
 
-    // Create public.sessions table
+    
     console.log("Dropping existing tables if any...");
     await client.query(`DROP TABLE IF EXISTS public.sessions;`);
 
@@ -33,7 +33,7 @@ async function run() {
     `);
     console.log("Table 'sessions' created successfully.");
 
-    // Insert original proctoring sessions data
+    
     const sessions = [
       ["S-1092", "Marcus Aurelius", "marcus.a@academy.edu", "PHL-301: Advanced Epistemology", 4, 68, "Multiple Faces Detected", "Critical", "2 mins ago", "MA"],
       ["S-2051", "Ada Lovelace", "ada.l@polytechnic.edu", "CS-402: Compiler Architecture", 2, 84, "Tab Switch Detected", "Warning", "5 mins ago", "AL"],
@@ -53,7 +53,7 @@ async function run() {
     }
     console.log("Insert completed successfully.");
 
-    // Verify row count
+    
     const resCount = await client.query(`SELECT count(*) FROM public.sessions`);
     console.log(`Verified row count in database: ${resCount.rows[0].count}`);
 
