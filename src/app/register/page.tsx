@@ -394,7 +394,7 @@ function RegisterFormContent() {
         <span className="text-[9px] font-bold tracking-wider uppercase bg-orange-50 text-orange-700 border border-orange-100 px-2 py-0.5 rounded-none">
           {exam?.company_name}
         </span>
-        <h2 className="text-xl font-bold text-zinc-900 mt-2 tracking-tight">Candidate Registration</h2>
+        <h1 className="text-xl font-bold text-zinc-900 mt-2 tracking-tight">Candidate Registration</h1>
         <p className="text-xs text-zinc-500 mt-1">Registering for: <span className="font-semibold text-zinc-800">{exam?.name}</span></p>
       </div>
 
@@ -429,6 +429,7 @@ function RegisterFormContent() {
                 </p>
               </div>
               <input
+                id="photo-upload-input"
                 type="file"
                 accept="image/*"
                 onChange={handlePhotoUpload}
@@ -441,8 +442,9 @@ function RegisterFormContent() {
         {/* Text Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Full Name *</label>
+            <label htmlFor="reg-name" className="block text-xs font-semibold text-zinc-700 mb-1">Full Name *</label>
             <input
+              id="reg-name"
               type="text"
               required
               placeholder="e.g. Jean Doe"
@@ -453,8 +455,9 @@ function RegisterFormContent() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Email Address *</label>
+            <label htmlFor="reg-email" className="block text-xs font-semibold text-zinc-700 mb-1">Email Address *</label>
             <input
+              id="reg-email"
               type="email"
               required
               placeholder="e.g. jean.doe@edu.in"
@@ -465,8 +468,9 @@ function RegisterFormContent() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Phone Number *</label>
+            <label htmlFor="reg-phone" className="block text-xs font-semibold text-zinc-700 mb-1">Phone Number *</label>
             <input
+              id="reg-phone"
               type="tel"
               required
               placeholder="e.g. +91 9876543210"
@@ -477,8 +481,9 @@ function RegisterFormContent() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Year of Study *</label>
+            <label htmlFor="reg-year" className="block text-xs font-semibold text-zinc-700 mb-1">Year of Study *</label>
             <select
+              id="reg-year"
               value={yearOfStudy}
               onChange={(e) => setYearOfStudy(e.target.value)}
               className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
@@ -494,8 +499,9 @@ function RegisterFormContent() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">College/Institution Name *</label>
+            <label htmlFor="reg-college" className="block text-xs font-semibold text-zinc-700 mb-1">College/Institution Name *</label>
             <input
+              id="reg-college"
               type="text"
               required
               placeholder="e.g. IIT Madras"
@@ -506,8 +512,9 @@ function RegisterFormContent() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-zinc-700 mb-1">Department / Branch Name *</label>
+            <label htmlFor="reg-department" className="block text-xs font-semibold text-zinc-700 mb-1">Department / Branch Name *</label>
             <input
+              id="reg-department"
               type="text"
               required
               placeholder="e.g. Computer Science & Eng"

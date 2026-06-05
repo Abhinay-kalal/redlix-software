@@ -66,7 +66,7 @@ export default function ScheduledExams() {
         
         {/* Title & Description */}
         <div className="space-y-2 text-center sm:text-left">
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Scheduled Examinations</h2>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Scheduled Examinations</h1>
           <p className="text-sm text-zinc-500 max-w-md leading-relaxed">
             Public registry of upcoming and active proctored evaluations. Find scheduled dates, guidelines, and formats below.
           </p>
