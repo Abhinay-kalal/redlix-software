@@ -136,8 +136,13 @@ function ExamLoginContent() {
             <p className="text-zinc-500 text-sm max-w-xs leading-relaxed">
               Enter your registered name and hall ticket number to access your assigned examination.
             </p>
-
-
+            <div className="flex justify-center pt-2">
+              <img
+                src="https://ik.imagekit.io/dypkhqxip/Online%20test-bro.svg"
+                alt="Online Test Illustration"
+                className="w-full max-w-[220px] h-auto object-contain select-none pointer-events-none"
+              />
+            </div>
           </div>
 
           <p className="text-[10px] text-zinc-400 mt-8">
