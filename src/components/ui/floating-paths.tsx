@@ -30,7 +30,7 @@ export function FloatingPathsBackground({
     <div className={cn("w-full relative", className)}>
       <div className="absolute inset-0 pointer-events-none">
         <svg
-          className="w-full h-full text-zinc-200/40 dark:text-zinc-800/40"
+          className="w-full h-full text-orange-500"
           viewBox="0 0 696 316"
           fill="none"
         >
@@ -40,7 +40,7 @@ export function FloatingPathsBackground({
               d={path.d}
               stroke="currentColor"
               strokeWidth={path.width}
-              strokeOpacity={0.1 + path.id * 0.03}
+              strokeOpacity={0.12 + path.id * 0.016}
               initial={{ pathLength: 0.3, opacity: 0.6 }}
               animate={{
                 pathLength: 1,
