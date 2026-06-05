@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Exam {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(200)
+  companyName   String         @map("company_name") @db.VarChar(200)
+  companyLogo   String?        @map("company_logo")
+  date          String         @db.VarChar(50)
+  time          String         @db.VarChar(50)
+  description   String         @db.Text
+  totalQns      Int            @map("total_qns")
+  typesOfQns    String         @map("types_of_qns") @db.VarChar(100)
+  isStarted     Boolean?       @default(false) @map("is_started")
+  registrations Registration[]
+
+  @@map("exams")
+}
+
+model Registration {
+  id                 Int       @id @default(autoincrement())
+  examId             Int       @map("exam_id")
+  candidateName      String    @map("candidate_name") @db.VarChar(150)
+  email              String    @db.VarChar(150)
+  phone              String    @db.VarChar(50)
+  college            String    @db.VarChar(200)
+  department         String    @db.VarChar(100)
+  yearOfStudy        String    @map("year_of_study") @db.VarChar(50)
+  photoUrl           String    @map("photo_url")
+  registrationNumber String?   @map("registration_number") @db.VarChar(10)
+  hallTicketNumber   String?   @map("hall_ticket_number") @db.VarChar(15)
+  createdAt          DateTime? @default(now()) @map("created_at")
+  exam               Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("registrations")
+}
+
+model Session {
+  id             String  @id @db.VarChar(50)
+  student        String  @db.VarChar(100)
+  email          String  @db.VarChar(100)
+  exam           String  @db.VarChar(200)
+  flagsCount     Int?    @default(0) @map("flags_count")
+  integrityScore Int?    @default(100) @map("integrity_score")
+  lastFlagType   String? @default("None") @map("last_flag_type") @db.VarChar(100)
+  severity       String? @default("Normal") @db.VarChar(50)
+  timestamp      String  @db.VarChar(50)
+  avatar         String  @db.VarChar(10)
+  liveFeed       String? @map("live_feed")
+
+  @@map("sessions")
+}

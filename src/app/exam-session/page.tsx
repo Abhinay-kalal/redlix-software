@@ -1,0 +1,1537 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+
+interface ExamSession {
+  candidateName: string;
+  hallTicketNumber: string;
+  registrationNumber: string;
+  photoUrl: string;
+  exam: {
+    id: number;
+    name: string;
+    company_name: string;
+    company_logo?: string;
+    date: string;
+    time: string;
+    description: string;
+    total_qns: number;
+    types_of_qns: string;
+  };
+}
+
+interface Question {
+  id: number;
+  type: "mcq" | "coding";
+  section: "A" | "B";
+  number: number;
+  questionText: string;
+  options?: string[];
+  sampleInput?: string;
+  sampleOutput?: string;
+  starterCode?: string;
+  marks: number;
+}
+
+const QUESTIONS: Question[] = [
+  // Section A: MCQs (1-10)
+  {
+    id: 1,
+    type: "mcq",
+    section: "A",
+    number: 1,
+    questionText: "Which hook is used to manage state in React?",
+    options: [
+      "A) useEffect",
+      "B) useState",
+      "C) useContext",
+      "D) useRef"
+    ],
+    marks: 3
+  },
+  {
+    id: 2,
+    type: "mcq",
+    section: "A",
+    number: 2,
+    questionText: "Which HTTP method is used to update data?",
+    options: [
+      "A) GET",
+      "B) POST",
+      "C) PUT",
+      "D) OPTIONS"
+    ],
+    marks: 3
+  },
+  {
+    id: 3,
+    type: "mcq",
+    section: "A",
+    number: 3,
+    questionText: "What does JWT stand for?",
+    options: [
+      "A) Java Web Token",
+      "B) JSON Web Token",
+      "C) JavaScript Web Token",
+      "D) JSON Wrapper Token"
+    ],
+    marks: 3
+  },
+  {
+    id: 4,
+    type: "mcq",
+    section: "A",
+    number: 4,
+    questionText: "Which MongoDB method retrieves all documents?",
+    options: [
+      "A) get()",
+      "B) find()",
+      "C) select()",
+      "D) fetch()"
+    ],
+    marks: 3
+  },
+  {
+    id: 5,
+    type: "mcq",
+    section: "A",
+    number: 5,
+    questionText: "Which command initializes Git?",
+    options: [
+      "A) git start",
+      "B) git init",
+      "C) git create",
+      "D) git open"
+    ],
+    marks: 3
+  },
+  {
+    id: 6,
+    type: "mcq",
+    section: "A",
+    number: 6,
+    questionText: "Which company developed React?",
+    options: [
+      "A) Google",
+      "B) Microsoft",
+      "C) Meta",
+      "D) Amazon"
+    ],
+    marks: 3
+  },
+  {
+    id: 7,
+    type: "mcq",
+    section: "A",
+    number: 7,
+    questionText: "Which CSS property creates a Flexbox layout?",
+    options: [
+      "A) flexbox",
+      "B) display:flex",
+      "C) justify-content",
+      "D) align-items"
+    ],
+    marks: 3
+  },
+  {
+    id: 8,
+    type: "mcq",
+    section: "A",
+    number: 8,
+    questionText: "Which status code means \"Not Found\"?",
+    options: [
+      "A) 200",
+      "B) 401",
+      "C) 404",
+      "D) 500"
+    ],
+    marks: 3
+  },
+  {
+    id: 9,
+    type: "mcq",
+    section: "A",
+    number: 9,
+    questionText: "Which JavaScript keyword creates block scope?",
+    options: [
+      "A) var",
+      "B) let",
+      "C) static",
+      "D) public"
+    ],
+    marks: 3
+  },
+  {
+    id: 10,
+    type: "mcq",
+    section: "A",
+    number: 10,
+    questionText: "Which hook runs after component render?",
+    options: [
+      "A) useState",
+      "B) useMemo",
+      "C) useEffect",
+      "D) useData"
+    ],
+    marks: 3
+  },
+  // Section B: Coding Challenges (11-20)
+  {
+    id: 11,
+    type: "coding",
+    section: "B",
+    number: 1,
+    questionText: "Reverse String (5 Marks)\nInput: studentforge\nOutput: egroftneduts\n\nWrite a JavaScript function to reverse the input string.",
+    sampleInput: "studentforge",
+    sampleOutput: "egroftneduts",
+    starterCode: "function reverseString(str) {\n  // Write your code here\n  \n}",
+    marks: 5
+  },
+  {
+    id: 12,
+    type: "coding",
+    section: "B",
+    number: 2,
+    questionText: "Palindrome Checker (5 Marks)\nInput: madam\nOutput: Palindrome\n\nWrite a function that checks if a string is a palindrome. Return 'Palindrome' if true, otherwise return 'Not Palindrome'.",
+    sampleInput: "madam",
+    sampleOutput: "Palindrome",
+    starterCode: "function isPalindrome(str) {\n  // Write your code here\n  \n}",
+    marks: 5
+  },
+  {
+    id: 13,
+    type: "coding",
+    section: "B",
+    number: 3,
+    questionText: "Find Largest Number in Array (5 Marks)\nInput: [12,45,67,23,89]\nOutput: 89\n\nWrite a JavaScript function to find the largest number in the array.",
+    sampleInput: "[12,45,67,23,89]",
+    sampleOutput: "89",
+    starterCode: "function findLargest(arr) {\n  // Write your code here\n  \n}",
+    marks: 5
+  },
+  {
+    id: 14,
+    type: "coding",
+    section: "B",
+    number: 4,
+    questionText: "Remove Duplicate Elements (10 Marks)\nInput: [1,2,2,3,4,4,5]\nOutput: [1,2,3,4,5]\n\nWrite a JavaScript function that removes duplicate values from an array.",
+    sampleInput: "[1,2,2,3,4,4,5]",
+    sampleOutput: "[1,2,3,4,5]",
+    starterCode: "function removeDuplicates(arr) {\n  // Write your code here\n  \n}",
+    marks: 10
+  },
+  {
+    id: 15,
+    type: "coding",
+    section: "B",
+    number: 5,
+    questionText: "Build Login Validation (10 Marks)\nValidate:\n- Email contains @\n- Password length >= 8\nReturn:\n- \"Valid Login\" or \"Invalid Login\"",
+    sampleInput: "email: user@test.com, password: password123",
+    sampleOutput: "Valid Login",
+    starterCode: "function validateLogin(email, password) {\n  // Write your code here\n  \n}",
+    marks: 10
+  },
+  {
+    id: 16,
+    type: "coding",
+    section: "B",
+    number: 6,
+    questionText: "API Integration (10 Marks)\nUsing JavaScript Fetch API:\n- Fetch data from: https://jsonplaceholder.typicode.com/users\n- Display: Name and Email",
+    sampleInput: "Fetch https://jsonplaceholder.typicode.com/users",
+    sampleOutput: "Map and print: Name - Email",
+    starterCode: "async function fetchUsers() {\n  // Write your code here using fetch()\n  \n}",
+    marks: 10
+  },
+  {
+    id: 17,
+    type: "coding",
+    section: "B",
+    number: 7,
+    questionText: "React Component (10 Marks)\nCreate a functional React component that uses standard hooks to manage a counter and increment it by 1 when a button is clicked.",
+    sampleInput: "Component load",
+    sampleOutput: "Counter increments on button click",
+    starterCode: "import React, { useState } from 'react';\n\nexport default function Counter() {\n  // Write your counter component here\n  \n}",
+    marks: 10
+  },
+  {
+    id: 18,
+    type: "coding",
+    section: "B",
+    number: 8,
+    questionText: "Express Route (5 Marks)\nCreate a GET /students Express route that returns a hardcoded list of student objects in JSON format.",
+    sampleInput: "GET /students request",
+    sampleOutput: "[\n  { \"id\": 1, \"name\": \"Student Forge\" }\n]",
+    starterCode: "const express = require('express');\nconst app = express();\n\n// Create the GET /students route here\n",
+    marks: 5
+  },
+  {
+    id: 19,
+    type: "coding",
+    section: "B",
+    number: 9,
+    questionText: "MongoDB CRUD (5 Marks)\nCreate a Mongoose Student Schema containing Name, Email, and Department. Implement basic Create, Read, Update, and Delete handler operations.",
+    sampleInput: "Mongoose schema config",
+    sampleOutput: "Schema template with CRUD routes/functions",
+    starterCode: "const mongoose = require('mongoose');\n\n// 1. Define the Student Schema\n\n// 2. Implement CRUD functions\n",
+    marks: 5
+  },
+  {
+    id: 20,
+    type: "coding",
+    section: "B",
+    number: 10,
+    questionText: "JWT Authentication (5 Marks)\nGenerate a JWT token after login and verify it for a protected Express route.",
+    sampleInput: "User credentials verified",
+    sampleOutput: "Generate token and middleware to verify authorization header",
+    starterCode: "const jwt = require('jsonwebtoken');\n\n// 1. Generate JWT token\n\n// 2. Verify JWT token middleware\n",
+    marks: 5
+  }
+];
+
+interface CodeEditorProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}
+
+const highlightJavaScript = (code: string) => {
+  if (!code) return "";
+
+  let html = code
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Tokenize comments, strings, numbers, keywords, builtins, and functions
+  const tokenRegex = /(\/\/.*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b\d+\b)|(\b(?:function|const|let|var|return|async|await|if|else|for|while|import|export|default|new|class|extends|from|try|catch|finally|throw|break|continue|switch|case|typeof|instanceof|in|of)\b)|(\b(?:console|log|fetch|response|require|mongoose|Schema|express|app|jwt|jsonwebtoken|React|useState|useEffect|useRef|JSON|stringify|parse|map|filter|reduce|split|join|reverse|push|pop|shift|unshift)\b)|(\b\w+(?=\())/g;
+
+  html = html.replace(tokenRegex, (match, comment, string, number, keyword, builtin, funcName) => {
+    if (comment) return `<span class="text-zinc-500 font-normal italic">${match}</span>`;
+    if (string) return `<span class="text-amber-300 font-medium">${match}</span>`;
+    if (number) return `<span class="text-emerald-400 font-semibold">${match}</span>`;
+    if (keyword) return `<span class="text-blue-400 font-bold">${match}</span>`;
+    if (builtin) return `<span class="text-cyan-400 font-bold">${match}</span>`;
+    if (funcName) return `<span class="text-yellow-200 font-semibold">${match}</span>`;
+    return match;
+  });
+
+  // Ensure trailing newline has height
+  if (code.endsWith("\n")) {
+    html += " ";
+  }
+
+  return html;
+};
+
+function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+  const [lineCount, setLineCount] = useState(1);
+  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+
+  // Update line count
+  useEffect(() => {
+    const lines = value.split("\n").length;
+    setLineCount(Math.max(lines, 1));
+  }, [value]);
+
+  // Handle Tab key interception
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const textarea = e.currentTarget;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      // Insert 2 spaces
+      const newValue = value.substring(0, start) + "  " + value.substring(end);
+      onChange(newValue);
+
+      // Reset selection position
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
+      }, 0);
+    }
+  };
+
+  // Sync scroll positions
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    const { scrollTop, scrollLeft } = e.currentTarget;
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = scrollTop;
+    }
+    if (highlightRef.current) {
+      highlightRef.current.scrollTop = scrollTop;
+      highlightRef.current.scrollLeft = scrollLeft;
+    }
+  };
+
+  // Calculate cursor positions
+  const handleCursorMove = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const textBeforeCursor = value.substring(0, start);
+    const lines = textBeforeCursor.split("\n");
+    setCursorPos({
+      line: lines.length,
+      col: lines[lines.length - 1].length + 1
+    });
+  };
+
+  return (
+    <div className="w-full border border-zinc-700 bg-[#1e1e1e] text-zinc-300 font-mono text-xs flex flex-col relative rounded-none shadow-md overflow-hidden">
+      {/* Editor Header */}
+      <div className="bg-[#2d2d2d] px-4 py-2 border-b border-zinc-800 flex items-center justify-between shrink-0 select-none text-[11px] text-zinc-400 font-sans">
+        <div className="flex items-center gap-2">
+          <span className="text-[#e37933] font-bold font-mono">JS</span>
+          <span className="font-semibold text-zinc-300">solution.js</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" title="Unsaved changes" />
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-zinc-500">JavaScript (Node.js)</span>
+        </div>
+      </div>
+
+      {/* Editor Body */}
+      <div className="flex flex-1 min-h-[320px] relative">
+        {/* Line Numbers */}
+        <div
+          ref={lineNumbersRef}
+          className="w-10 bg-[#1e1e1e] text-[#858585] border-r border-[#2d2d2d] py-3 text-right pr-2.5 select-none overflow-hidden font-mono text-[11px] leading-6"
+        >
+          {Array.from({ length: lineCount }).map((_, idx) => (
+            <div key={idx} className="h-6">
+              {idx + 1}
+            </div>
+          ))}
+        </div>
+
+        {/* Highlighted text container and textarea overlay */}
+        <div className="flex-1 min-h-[320px] relative overflow-hidden">
+          {/* Highlighted text underneath */}
+          <pre
+            ref={highlightRef}
+            className="absolute inset-0 pointer-events-none select-none text-[#d4d4d4] overflow-hidden whitespace-pre z-0"
+            style={{
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              fontSize: '13px',
+              lineHeight: '24px',
+              padding: '12px',
+              margin: '0',
+            }}
+            dangerouslySetInnerHTML={{ __html: highlightJavaScript(value) }}
+          />
+
+          {/* Transparent interactive textarea on top */}
+          <textarea
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onScroll={handleScroll}
+            onKeyUp={handleCursorMove}
+            onSelect={handleCursorMove}
+            onClick={handleCursorMove}
+            placeholder={placeholder}
+            className="absolute inset-0 w-full h-full border-none focus:outline-none resize-none overflow-auto whitespace-pre focus:ring-0 focus:ring-offset-0 z-10"
+            style={{
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+              fontSize: '13px',
+              lineHeight: '24px',
+              padding: '12px',
+              margin: '0',
+              color: 'transparent',
+              caretColor: '#d4d4d4',
+              background: 'transparent',
+            }}
+            spellCheck={false}
+          />
+        </div>
+      </div>
+
+      {/* Editor Footer Status Bar */}
+      <div className="bg-[#007acc] text-white px-4 py-1 flex items-center justify-between shrink-0 text-[10px] font-sans font-medium select-none">
+        <div className="flex items-center gap-3">
+          <span className="bg-[#1f8ad2] px-1.5 py-0.5 uppercase font-bold tracking-wider">Editor</span>
+          <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span>Spaces: 2</span>
+          <span>UTF-8</span>
+          <span>JavaScript</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ExamSessionPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const [session, setSession] = useState<ExamSession | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Permission + device states
+  const [camGranted, setCamGranted] = useState(false);
+  const [micGranted, setMicGranted] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [permError, setPermError] = useState("");
+  const [setupDone, setSetupDone] = useState(false);
+
+  // Flags / violations
+  const [flags, setFlags] = useState<string[]>([]);
+
+  // Exam session states
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [questionStatuses, setQuestionStatuses] = useState<
+    Record<number, "not_visited" | "not_answered" | "answered" | "marked">
+  >({});
+  const [timeLeft, setTimeLeft] = useState(7200); // 120 minutes = 2 hours
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [isViolated, setIsViolated] = useState(false);
+  const [violationReason, setViolationReason] = useState("");
+
+  const triggerViolation = useCallback((reason: string) => {
+    setIsViolated(true);
+    setViolationReason(reason);
+    setIsSubmitted(true);
+
+    try {
+      const raw = sessionStorage.getItem("exam_session");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.hallTicketNumber) {
+          localStorage.setItem(`exam_violated_${parsed.hallTicketNumber}`, "true");
+        }
+      }
+    } catch (e) {
+      console.error("Failed to save violation status:", e);
+    }
+
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+    try {
+      window.close();
+      if (!window.closed) {
+        window.open('about:blank', '_self')?.close();
+      }
+    } catch (e) {}
+  }, []);
+
+
+  // Load session
+  useEffect(() => {
+    const raw = sessionStorage.getItem("exam_session");
+    if (!raw) {
+      router.replace("/exam-login");
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed.hallTicketNumber && localStorage.getItem(`exam_violated_${parsed.hallTicketNumber}`)) {
+        setIsViolated(true);
+        setViolationReason("Proctoring violation detected in a previous session.");
+        setIsSubmitted(true);
+        setSession(parsed);
+        setLoading(false);
+        return;
+      }
+
+      setSession(parsed);
+      setAnswers((prev) => {
+        const initialAnswers = { ...prev };
+        QUESTIONS.forEach((q) => {
+          if (q.type === "coding" && q.starterCode && !initialAnswers[q.id]) {
+            initialAnswers[q.id] = q.starterCode;
+          }
+        });
+        return initialAnswers;
+      });
+    } catch {
+      router.replace("/exam-login");
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  // ── Request camera + mic ──────────────────────────────
+  const requestMedia = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      streamRef.current = stream;
+      setCamGranted(true);
+      setMicGranted(true);
+      return true;
+    } catch (err: any) {
+      setPermError("Camera and microphone access is required to proceed. Please allow access and refresh.");
+      return false;
+    }
+  }, []);
+
+  // ── Request fullscreen ────────────────────────────────
+  const requestFullscreen = useCallback(async () => {
+    try {
+      const el = document.documentElement;
+      if (el.requestFullscreen) await el.requestFullscreen();
+      else if ((el as any).webkitRequestFullscreen) await (el as any).webkitRequestFullscreen();
+      setFullscreen(true);
+      return true;
+    } catch {
+      setFullscreen(false);
+      return false;
+    }
+  }, []);
+
+  // ── Run setup on mount once session is ready ─────────
+  useEffect(() => {
+    if (!session) return;
+    (async () => {
+      const mediaOk = await requestMedia();
+      if (!mediaOk) return;
+      await requestFullscreen();
+      setSetupDone(true);
+    })();
+  }, [session, requestMedia, requestFullscreen]);
+
+  // ── Initialize proctoring session in DB ────────────────
+  useEffect(() => {
+    if (!setupDone || !session) return;
+
+    const initDBSession = async () => {
+      try {
+        await supabase.from("sessions").upsert({
+          id: session.hallTicketNumber,
+          student: session.candidateName,
+          email: `${session.candidateName.replace(/\s+/g, "").toLowerCase()}@redlix.com`,
+          exam: session.exam.name,
+          flags_count: 0,
+          integrity_score: 100,
+          last_flag_type: "None",
+          severity: "Normal",
+          timestamp: "Just started",
+          avatar: session.candidateName.substring(0, 2).toUpperCase()
+        });
+      } catch (e) {
+        console.error("Failed to initialize session in DB:", e);
+      }
+    };
+
+    initDBSession();
+  }, [setupDone, session]);
+
+  // ── Clean up active proctoring session on submission ──
+  useEffect(() => {
+    if (isSubmitted && session?.hallTicketNumber) {
+      supabase
+        .from("sessions")
+        .delete()
+        .eq("id", session.hallTicketNumber)
+        .then(() => {});
+    }
+  }, [isSubmitted, session]);
+
+  // ── Clean up session on window close/unload ───────────
+  useEffect(() => {
+    if (!session?.hallTicketNumber) return;
+
+    const cleanup = () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      if (!supabaseUrl || !supabaseKey) return;
+
+      const url = `${supabaseUrl}/rest/v1/sessions?id=eq.${session.hallTicketNumber}`;
+      fetch(url, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Prefer": "return=minimal"
+        },
+        keepalive: true
+      }).catch(() => {});
+    };
+
+    window.addEventListener("unload", cleanup);
+    return () => window.removeEventListener("unload", cleanup);
+  }, [session]);
+
+  // ── Webcam Live Feed Frame Uploader ────────────────────
+  useEffect(() => {
+    if (!setupDone || isSubmitted || !session || !videoRef.current) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 180;
+    const ctx = canvas.getContext("2d");
+
+    const uploadFrame = async () => {
+      if (!videoRef.current || !ctx) return;
+      try {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
+
+        await supabase
+          .from("sessions")
+          .update({ live_feed: dataUrl })
+          .eq("id", session.hallTicketNumber);
+      } catch (err) {
+        console.error("Error uploading camera snapshot:", err);
+      }
+    };
+
+    // Upload a frame every 2500ms
+    const interval = setInterval(uploadFrame, 2500);
+    return () => clearInterval(interval);
+  }, [setupDone, isSubmitted, session]);
+
+  // ── Attach stream to video once main UI is rendered ──
+  useEffect(() => {
+    if (!setupDone || !streamRef.current || !videoRef.current) return;
+    videoRef.current.srcObject = streamRef.current;
+  }, [setupDone]);
+
+  // ── Initialize first question status ──────────────────
+  useEffect(() => {
+    if (setupDone) {
+      const firstQId = QUESTIONS[0].id;
+      setQuestionStatuses((prev) => ({
+        ...prev,
+        [firstQId]: "not_answered",
+      }));
+    }
+  }, [setupDone]);
+
+  // ── Fullscreen monitoring ────────────────────────────
+  useEffect(() => {
+    const onFsChange = () => {
+      const isFs = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement
+      );
+      if (!isFs && setupDone && !isSubmitted) {
+        triggerViolation("Exited fullscreen");
+      }
+      setFullscreen(isFs);
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange);
+    };
+  }, [setupDone, isSubmitted, triggerViolation]);
+
+  // ── Strict Proctoring Monitoring (Tab switches, Blur, Copy, Paste, DevTools) ──
+  useEffect(() => {
+    if (!setupDone || isSubmitted) return;
+
+    // Visibility and Tab Switches
+    const onVisibility = () => {
+      if (document.hidden && !isSubmitted) {
+        triggerViolation("Tab switch detected");
+      }
+    };
+
+    // Focus Loss (Window Blur)
+    const onBlur = () => {
+      // Small timeout to confirm the window has indeed lost focus
+      setTimeout(() => {
+        if (!document.hasFocus() && !isSubmitted) {
+          triggerViolation("Window focus lost (navigated away)");
+        }
+      }, 150);
+    };
+
+    // Copy / Paste / Cut / ContextMenu blockers
+    const preventAction = (e: Event) => {
+      e.preventDefault();
+      if (!isSubmitted) {
+        triggerViolation(`Prohibited action detected: ${e.type}`);
+      }
+    };
+
+    // Keyboard Shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. DevTools shortcuts: F12, Ctrl+Shift+I/J/C, Cmd+Option+I (Mac)
+      const isF12 = e.key === "F12";
+      const isCtrlShiftDev = e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase());
+      const isMacDev = e.metaKey && e.altKey && e.key.toLowerCase() === "i";
+      
+      if (isF12 || isCtrlShiftDev || isMacDev) {
+        e.preventDefault();
+        triggerViolation("Developer Tools keyboard shortcut detected");
+        return;
+      }
+
+      // 2. Clipboard shortcuts: Ctrl/Cmd + C, V, X, U (view source)
+      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "u"].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        triggerViolation(`Prohibited shortcut combination: ${e.key.toUpperCase()}`);
+        return;
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("copy", preventAction);
+    document.addEventListener("paste", preventAction);
+    document.addEventListener("cut", preventAction);
+    document.addEventListener("contextmenu", preventAction);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("copy", preventAction);
+      document.removeEventListener("paste", preventAction);
+      document.removeEventListener("cut", preventAction);
+      document.removeEventListener("contextmenu", preventAction);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [setupDone, isSubmitted, triggerViolation]);
+
+  // ── Cleanup on unmount ────────────────────────────────
+  useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  // ── Auto submission trigger ───────────────────────────
+  const triggerAutoSubmit = useCallback(() => {
+    setIsSubmitted(true);
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
+  }, []);
+
+  // ── Countdown timer ───────────────────────────────────
+  useEffect(() => {
+    if (!setupDone || isSubmitted) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          triggerAutoSubmit();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [setupDone, isSubmitted, triggerAutoSubmit]);
+
+  // ── Question navigation and state handlers ────────────
+  const handleQuestionSelect = (index: number) => {
+    const prevQ = QUESTIONS[currentIndex];
+    const prevAns = answers[prevQ.id];
+
+    setQuestionStatuses((prev) => {
+      const currentStatus = prev[prevQ.id] || "not_visited";
+      let nextStatus = currentStatus;
+
+      if (currentStatus !== "marked") {
+        let hasValue = false;
+        if (prevAns && prevAns.trim() !== "") {
+          if (prevQ.type === "coding" && prevQ.starterCode) {
+            hasValue = prevAns.trim() !== prevQ.starterCode.trim();
+          } else {
+            hasValue = true;
+          }
+        }
+
+        if (hasValue) {
+          nextStatus = "answered";
+        } else {
+          nextStatus = "not_answered";
+        }
+      }
+
+      const nextQId = QUESTIONS[index].id;
+      const nextQStatus = prev[nextQId] || "not_visited";
+      let updatedNextQStatus = nextQStatus;
+      if (nextQStatus === "not_visited") {
+        updatedNextQStatus = "not_answered";
+      }
+
+      return {
+        ...prev,
+        [prevQ.id]: nextStatus,
+        [nextQId]: updatedNextQStatus,
+      };
+    });
+
+    setCurrentIndex(index);
+  };
+
+  const handleAnswerChange = (val: string) => {
+    setAnswers((prev) => ({ ...prev, [QUESTIONS[currentIndex].id]: val }));
+  };
+
+  const handleClearResponse = () => {
+    setAnswers((prev) => {
+      const next = { ...prev };
+      const currentQ = QUESTIONS[currentIndex];
+      if (currentQ.type === "coding" && currentQ.starterCode) {
+        next[currentQ.id] = currentQ.starterCode;
+      } else {
+        delete next[currentQ.id];
+      }
+      return next;
+    });
+    setQuestionStatuses((prev) => ({
+      ...prev,
+      [QUESTIONS[currentIndex].id]: "not_answered",
+    }));
+  };
+
+  const handleMarkForReview = () => {
+    setQuestionStatuses((prev) => ({
+      ...prev,
+      [QUESTIONS[currentIndex].id]: "marked",
+    }));
+    if (currentIndex < 19) {
+      handleQuestionSelect(currentIndex + 1);
+    }
+  };
+
+  const handleSaveAndNext = () => {
+    const qId = QUESTIONS[currentIndex].id;
+    const currentQ = QUESTIONS[currentIndex];
+    const currentAns = answers[qId];
+    
+    let hasValue = false;
+    if (currentAns && currentAns.trim() !== "") {
+      if (currentQ.type === "coding" && currentQ.starterCode) {
+        hasValue = currentAns.trim() !== currentQ.starterCode.trim();
+      } else {
+        hasValue = true;
+      }
+    }
+
+    setQuestionStatuses((prev) => ({
+      ...prev,
+      [qId]: hasValue ? "answered" : "not_answered",
+    }));
+
+    if (currentIndex < 19) {
+      handleQuestionSelect(currentIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      handleQuestionSelect(currentIndex - 1);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const getPaletteButtonClass = (status: string, isActive: boolean) => {
+    let base = "border rounded-none ";
+    if (isActive) {
+      base += "ring-2 ring-orange-500 ring-offset-1 z-10 ";
+    }
+
+    if (status === "answered") {
+      base += "bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700";
+    } else if (status === "marked") {
+      base += "bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700";
+    } else if (status === "not_answered") {
+      base += "bg-red-50 border-red-300 text-red-600 hover:bg-red-100";
+    } else {
+      base += "bg-white border-zinc-300 text-zinc-500 hover:bg-zinc-50";
+    }
+    return base;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center font-sans">
+        <div className="w-10 h-10 rounded-full border-2 border-t-orange-500 border-r-zinc-700 border-b-zinc-700 border-l-zinc-700 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) return null;
+
+  const { exam, candidateName, hallTicketNumber } = session;
+
+  // ── Permission error gate ─────────────────────────────
+  if (permError) {
+    return (
+      <div className="min-h-screen bg-zinc-900 flex items-center justify-center font-sans p-6">
+        <div className="bg-zinc-800 border border-zinc-700 p-8 max-w-md text-center space-y-4">
+          <p className="text-2xl">🚫</p>
+          <p className="text-white font-bold text-base">Permission Required</p>
+          <p className="text-zinc-400 text-sm leading-relaxed">{permError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-none cursor-pointer border-none transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Setup in progress ─────────────────────────────────
+  if (!setupDone) {
+    return (
+      <div className="min-h-screen bg-zinc-900 flex flex-col items-center justify-center font-sans gap-6 p-6">
+        <div className="w-10 h-10 rounded-full border-2 border-t-orange-500 border-r-zinc-700 border-b-zinc-700 border-l-zinc-700 animate-spin" />
+        <div className="text-center space-y-1">
+          <p className="text-white font-semibold text-sm">Initialising exam session...</p>
+          <p className="text-zinc-500 text-xs">
+            {!camGranted ? "Requesting camera and microphone..." : "Entering fullscreen..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Violation Screen ──────────────────────────────────
+  if (isViolated) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans p-6 select-none text-zinc-900">
+        <div className="bg-white border border-zinc-200 p-8 max-w-lg w-full text-center space-y-6 shadow-sm">
+          <div className="w-16 h-16 bg-zinc-100 border border-zinc-200 text-zinc-400 rounded-full flex items-center justify-center mx-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-lg font-bold text-zinc-950">Exam session terminated</h1>
+            <p className="text-xs text-zinc-500 leading-relaxed font-sans">
+              Your exam session has been locked and automatically submitted due to a proctoring security violation.
+            </p>
+          </div>
+
+          <div className="bg-zinc-50 border border-zinc-200 p-4 text-left space-y-2.5 font-mono text-xs text-zinc-700">
+            <div className="flex justify-between border-b border-zinc-250 pb-1.5">
+              <span className="text-zinc-450">Candidate:</span>
+              <span className="font-bold text-zinc-800">{candidateName}</span>
+            </div>
+            <div className="flex justify-between border-b border-zinc-250 pb-1.5">
+              <span className="text-zinc-450">Hall Ticket:</span>
+              <span className="font-bold text-zinc-800">{hallTicketNumber}</span>
+            </div>
+            <div className="flex justify-between border-b border-zinc-250 pb-1.5">
+              <span className="text-zinc-450">Violation details:</span>
+              <span className="font-bold text-zinc-800">{violationReason}</span>
+            </div>
+            <div className="flex justify-between text-[10px] text-zinc-400 pt-1 font-sans italic">
+              * This event has been logged with your IP, timestamp, and video frames.
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                sessionStorage.removeItem("exam_session");
+                try {
+                  window.close();
+                  window.open('about:blank', '_self')?.close();
+                } catch(e) {}
+              }}
+              className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs rounded-none cursor-pointer transition-colors w-full"
+            >
+              Close exam window
+            </button>
+            <p className="text-[10px] text-zinc-400 font-sans">
+              If the window does not close automatically, please close this browser tab manually.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Exam finished screen ──────────────────────────────
+  if (isSubmitted) {
+    return (
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans p-6 select-none">
+        <div className="bg-white border border-zinc-200 p-8 max-w-lg w-full text-center space-y-6 shadow-sm">
+          <div className="w-16 h-16 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2.5}
+              stroke="currentColor"
+              className="w-8 h-8"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-zinc-900">Exam Submission Completed</h1>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              Your responses have been securely recorded by the proctoring agent. You may now close this window.
+            </p>
+          </div>
+
+          <div className="bg-zinc-50 border border-zinc-200 p-4 text-left space-y-2.5 font-mono text-xs text-zinc-700">
+            <div className="flex justify-between border-b border-zinc-200 pb-1.5">
+              <span className="text-zinc-500">Candidate:</span>
+              <span className="font-bold text-zinc-900">{candidateName}</span>
+            </div>
+            <div className="flex justify-between border-b border-zinc-200 pb-1.5">
+              <span className="text-zinc-500">Hall Ticket:</span>
+              <span className="font-bold text-zinc-900">{hallTicketNumber}</span>
+            </div>
+            <div className="flex justify-between border-b border-zinc-200 pb-1.5">
+              <span className="text-zinc-500">Questions Answered:</span>
+              <span className="font-bold text-emerald-600">
+                {Object.values(questionStatuses).filter((s) => s === "answered" || s === "marked").length} / 20
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500">Submission Code:</span>
+              <span className="font-bold text-zinc-900">
+                SF-{Math.random().toString(36).substring(2, 11).toUpperCase()}
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              sessionStorage.removeItem("exam_session");
+              router.push("/scheduled-exams");
+            }}
+            className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors w-full"
+          >
+            Return to Scheduled Exams
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = QUESTIONS[currentIndex];
+  const activeAnswer = answers[currentQuestion.id] || "";
+
+  // ── Main active exam UI ───────────────────────────────
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-zinc-50 font-sans text-zinc-900 flex flex-col select-none">
+      {/* ── TOP BAR ── */}
+      <header className="bg-orange-500 px-6 py-3 flex items-center justify-between shrink-0 border-b border-orange-600 shadow-sm">
+        <div className="flex items-center gap-3">
+          {exam.company_logo ? (
+            <img src={exam.company_logo} alt="" className="w-7 h-7 object-contain" />
+          ) : (
+            <img
+              src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+              alt=""
+              className="w-7 h-7 object-contain"
+            />
+          )}
+          <div>
+            <p className="text-white font-bold text-sm leading-tight">{exam.name}</p>
+            <p className="text-orange-100 text-[10px]">{exam.company_name}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-white text-xs font-semibold">{candidateName}</p>
+            <p className="text-orange-100 text-[10px] font-mono">{hallTicketNumber}</p>
+          </div>
+        </div>
+      </header>
+
+      {/* ── BODY ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── MAIN QUESTION AREA (left) ── */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col justify-between relative bg-zinc-50">
+          {/* Watermark Overlay (diagonal repeating lines) */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 flex flex-col justify-between opacity-[0.12] p-12">
+            {[...Array(9)].map((_, i) => (
+              <div
+                key={i}
+                className="text-zinc-950 font-extrabold text-sm tracking-widest whitespace-nowrap font-mono flex justify-between"
+                style={{ transform: `rotate(-18deg) translateX(${i % 2 === 0 ? '-10%' : '10%'})` }}
+              >
+                <span className="px-4">{candidateName} • {hallTicketNumber}</span>
+                <span className="px-4">{candidateName} • {hallTicketNumber}</span>
+                <span className="px-4">{candidateName} • {hallTicketNumber}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative z-10 w-full max-w-3xl mx-auto space-y-6">
+            {/* Header section status */}
+            <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 font-mono">
+                  {currentQuestion.section === "A"
+                    ? "Section A: Multiple Choice Questions"
+                    : "Section B: Coding Challenges"}
+                </span>
+                <h2 className="text-lg font-bold text-zinc-900 mt-0.5">
+                  Question {currentQuestion.number} of 10 ({currentQuestion.type === "mcq" ? "MCQ" : "Coding"})
+                </h2>
+              </div>
+              <span className="text-xs bg-zinc-100 text-zinc-700 px-2.5 py-1 border border-zinc-200 font-mono font-bold">
+                {currentQuestion.marks} Marks
+              </span>
+            </div>
+
+            {/* Question Text */}
+            <div className="bg-white border border-zinc-200 p-6 shadow-sm">
+              <p className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap font-sans">
+                {currentQuestion.questionText}
+              </p>
+            </div>
+
+            {/* Answer Selector */}
+            {currentQuestion.type === "mcq" ? (
+              <div className="space-y-2.5">
+                {currentQuestion.options?.map((opt) => {
+                  const letter = opt.substring(0, 1);
+                  const isSelected = activeAnswer === letter;
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => handleAnswerChange(letter)}
+                      className={`w-full text-left px-5 py-4 border transition-all cursor-pointer flex items-center gap-4 rounded-none ${
+                        isSelected
+                          ? "bg-orange-50/50 border-orange-500 text-orange-950 font-semibold"
+                          : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                      }`}
+                    >
+                      <span
+                        className={`w-5 h-5 flex items-center justify-center text-xs font-mono font-bold border rounded-full ${
+                          isSelected
+                            ? "bg-orange-500 border-orange-500 text-white"
+                            : "border-zinc-300 text-zinc-400 bg-white"
+                        }`}
+                      >
+                        {letter}
+                      </span>
+                      <span className="text-sm font-sans">{opt.substring(3)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+                    Write your solution code below
+                  </label>
+                  <CodeEditor
+                    value={activeAnswer}
+                    onChange={handleAnswerChange}
+                    placeholder="// Write your code or explanation here..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-zinc-100 border border-zinc-200 p-3">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 block">
+                      Sample Input
+                    </span>
+                    <pre className="text-xs font-mono text-zinc-800 whitespace-pre-wrap mt-1">
+                      {currentQuestion.sampleInput}
+                    </pre>
+                  </div>
+                  <div className="bg-zinc-100 border border-zinc-200 p-3">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 block">
+                      Expected Output
+                    </span>
+                    <pre className="text-xs font-mono text-zinc-800 whitespace-pre-wrap mt-1">
+                      {currentQuestion.sampleOutput}
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Violation Alert inside Exam area */}
+            {flags.length > 0 && (
+              <div className="bg-red-50 border border-red-200 p-4 space-y-1 font-mono text-xs">
+                <p className="font-bold text-red-700 uppercase">Proctor Violations Detected</p>
+                {flags.map((f, i) => (
+                  <p key={i} className="text-red-600 flex items-start gap-1.5">
+                    <span>•</span> {f}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="relative z-10 w-full max-w-3xl mx-auto border-t border-zinc-200 pt-6 mt-8 flex items-center justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={handleClearResponse}
+                className="px-4 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+              >
+                Clear Response
+              </button>
+              <button
+                onClick={handleMarkForReview}
+                className="px-4 py-2 border border-indigo-600 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+              >
+                Mark for Review & Next
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className={`px-4 py-2 border border-zinc-300 text-zinc-700 bg-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors ${
+                  currentIndex === 0 ? "opacity-40 cursor-not-allowed" : "hover:bg-zinc-50 cursor-pointer"
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={handleSaveAndNext}
+                className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+              >
+                {currentIndex === 19 ? "Save Response" : "Save & Next"}
+              </button>
+            </div>
+          </div>
+        </main>
+
+        {/* ── CAMERA / STATUS SIDEBAR (right) ── */}
+        <aside className="w-80 shrink-0 bg-white border-l border-zinc-200 flex flex-col justify-between overflow-y-auto">
+          <div>
+            {/* Live Camera Frame */}
+            <div className="p-4 border-b border-zinc-200 bg-zinc-50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                Live Proctoring Feed
+              </p>
+              <div className="w-full aspect-video bg-zinc-900 border border-zinc-300 relative overflow-hidden">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover scale-x-[-1]"
+                  autoPlay
+                  muted
+                  playsInline
+                />
+                <span className="absolute bottom-2 right-2 bg-black/60 px-2 py-0.5 text-[9px] text-white font-mono uppercase">
+                  CAM 01
+                </span>
+              </div>
+            </div>
+
+            {/* Candidate photo / details */}
+            <div className="p-4 border-b border-zinc-200 bg-white space-y-3 shrink-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 font-mono">
+                Candidate Profile
+              </p>
+              <div className="flex items-center gap-4">
+                {session.photoUrl ? (
+                  <img
+                    src={session.photoUrl}
+                    alt="Candidate Profile"
+                    className="w-16 h-16 object-cover border border-zinc-300 shadow-sm shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-zinc-100 flex items-center justify-center border border-zinc-300 text-zinc-400 font-bold text-xs shrink-0">
+                    PHOTO
+                  </div>
+                )}
+                <div className="min-w-0 space-y-1">
+                  <p className="text-sm font-extrabold text-zinc-900 leading-tight">{candidateName}</p>
+                  <p className="text-[11px] font-mono text-zinc-500 font-semibold">{hallTicketNumber}</p>
+                  <div className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5">
+                    <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                    Verified
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Countdown timer */}
+            <div className="px-4 py-3 bg-zinc-900 text-white flex items-center justify-between border-b border-zinc-800">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Time Remaining</span>
+              <span
+                className={`font-mono text-base font-bold ${
+                  timeLeft < 300 ? "text-red-400 animate-pulse" : "text-orange-400"
+                }`}
+              >
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+
+            {/* Palette grid */}
+            <div className="p-4 space-y-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                  Section A: MCQs
+                </p>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {QUESTIONS.slice(0, 10).map((q, idx) => {
+                    const status = questionStatuses[q.id] || "not_visited";
+                    const isActive = currentIndex === idx;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => handleQuestionSelect(idx)}
+                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                          status,
+                          isActive
+                        )}`}
+                      >
+                        {q.number}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                  Section B: Coding
+                </p>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {QUESTIONS.slice(10, 20).map((q, idx) => {
+                    const relativeIdx = idx + 10;
+                    const status = questionStatuses[q.id] || "not_visited";
+                    const isActive = currentIndex === relativeIdx;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => handleQuestionSelect(relativeIdx)}
+                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                          status,
+                          isActive
+                        )}`}
+                      >
+                        Q{q.number}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            {/* Status Legend */}
+            <div className="p-4 border-t border-zinc-200 bg-zinc-50 space-y-2">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Question Legend</p>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px] font-medium text-zinc-600">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 border border-zinc-300 bg-white" />
+                  <span>Not Visited</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 border border-red-300 bg-red-50 text-red-700 flex items-center justify-center text-[8px] font-bold">
+                    ●
+                  </span>
+                  <span>Not Answered</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 bg-emerald-600 border border-emerald-600" />
+                  <span className="text-emerald-700">Answered</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3.5 h-3.5 bg-indigo-600 border border-indigo-600" />
+                  <span className="text-indigo-700">Marked</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Submission triggers */}
+            <div className="p-4 border-t border-zinc-200 bg-white shrink-0">
+              <button
+                onClick={() => setShowSubmitModal(true)}
+                className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors"
+              >
+                Submit Exam
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* ── SUBMIT CONFIRMATION MODAL ── */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans select-none animate-fade-in">
+          <div className="bg-white border border-zinc-300 w-full max-w-md p-6 space-y-4 shadow-xl">
+            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-200 pb-2 font-mono">
+              Confirm Submission
+            </h3>
+
+            <div className="space-y-2 text-xs text-zinc-600">
+              <p>Please review your attempt summary before final submission:</p>
+              <div className="bg-zinc-50 border border-zinc-200 p-3 space-y-1.5 font-mono">
+                <div className="flex justify-between">
+                  <span>Total Questions:</span>
+                  <span className="font-bold">20</span>
+                </div>
+                <div className="flex justify-between text-emerald-600">
+                  <span>Answered:</span>
+                  <span className="font-bold">
+                    {Object.values(questionStatuses).filter((s) => s === "answered").length}
+                  </span>
+                </div>
+                <div className="flex justify-between text-indigo-600">
+                  <span>Marked for Review:</span>
+                  <span className="font-bold">{Object.values(questionStatuses).filter((s) => s === "marked").length}</span>
+                </div>
+                <div className="flex justify-between text-red-600">
+                  <span>Not Answered / Visited:</span>
+                  <span className="font-bold">
+                    {20 -
+                      Object.values(questionStatuses).filter((s) => s === "answered" || s === "marked").length}
+                  </span>
+                </div>
+              </div>
+              <p className="text-red-600 font-semibold pt-1">
+                Warning: Once submitted, you cannot change your answers or return to the exam.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setShowSubmitModal(false)}
+                className="px-4 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowSubmitModal(false);
+                  triggerAutoSubmit();
+                }}
+                className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+              >
+                Submit Exam
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
