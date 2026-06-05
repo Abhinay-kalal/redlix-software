@@ -657,7 +657,8 @@ export default function ExamSessionPage() {
           "Content-Type": "application/json",
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`,
-          "Prefer": "return=minimal"
+          "Prefer": "return=minimal",
+          "x-candidate-hall-ticket": session.hallTicketNumber
         },
         keepalive: true
       }).catch(() => {});
