@@ -15,6 +15,7 @@ interface Exam {
   types_of_qns: string;
   company_name: string;
   custom_fields: Record<string, string>;
+  show_login?: boolean;
 }
 
 export default function ScheduledExams() {
@@ -162,14 +163,18 @@ export default function ScheduledExams() {
 
                   {}
                   <div className="pt-4 border-t border-zinc-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-[10px] text-zinc-400 hidden sm:block">Already registered? Enter your hall ticket to start.</p>
+                    <p className="text-[10px] text-zinc-400 hidden sm:block">
+                      {exam.show_login ? "Already registered? Enter your hall ticket to start." : "Registration is open. Entry opens closer to scheduled time."}
+                    </p>
                     <div className="flex gap-2">
-                      <Link 
-                        href={`/exam-login?examId=${exam.id}`}
-                        className="px-4 py-2 border border-orange-500 text-orange-600 hover:bg-orange-50 font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer text-center inline-block"
-                      >
-                        Enter Exam →
-                      </Link>
+                      {exam.show_login && (
+                        <Link 
+                          href={`/exam-login?examId=${exam.id}`}
+                          className="px-4 py-2 border border-orange-500 text-orange-600 hover:bg-orange-50 font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer text-center inline-block"
+                        >
+                          Enter Exam →
+                        </Link>
+                      )}
                       <Link 
                         href={`/register?examId=${exam.id}`}
                         className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer text-center inline-block"

@@ -30,6 +30,7 @@ interface Exam {
   company_logo?: string;
   custom_fields: Record<string, string>;
   is_started?: boolean;
+  show_login?: boolean;
 }
 
 interface Registration {
@@ -123,6 +124,19 @@ export default function Dashboard() {
     if (!error) {
       setExams((prev) =>
         prev.map((e) => (e.id === exam.id ? { ...e, is_started: newValue } : e))
+      );
+    }
+  };
+
+  const toggleExamShowLogin = async (exam: Exam) => {
+    const newValue = !exam.show_login;
+    const { error } = await supabase
+      .from("exams")
+      .update({ show_login: newValue })
+      .eq("id", exam.id);
+    if (!error) {
+      setExams((prev) =>
+        prev.map((e) => (e.id === exam.id ? { ...e, show_login: newValue } : e))
       );
     }
   };
@@ -1309,14 +1323,33 @@ export default function Dashboard() {
 
                           <div className="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-3 flex-wrap">
                             {}
-                            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 border ${
-                              exam.is_started
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-zinc-50 text-zinc-500 border-zinc-200"
-                            }`}>
-                              {exam.is_started ? "Exam Active" : "Not Started"}
-                            </span>
+                            <div className="flex gap-1.5">
+                              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 border ${
+                                exam.is_started
+                                  ? "bg-green-50 text-green-700 border-green-200"
+                                  : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                              }`}>
+                                {exam.is_started ? "Exam Active" : "Not Started"}
+                              </span>
+                              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 border ${
+                                exam.show_login
+                                  ? "bg-orange-50 text-orange-700 border-orange-200"
+                                  : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                              }`}>
+                                {exam.show_login ? "Entry Open" : "Entry Closed"}
+                              </span>
+                            </div>
                             <div className="flex gap-2">
+                              <button
+                                onClick={() => toggleExamShowLogin(exam)}
+                                className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
+                                  exam.show_login
+                                    ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                    : "bg-orange-500 hover:bg-orange-600 text-white"
+                                }`}
+                              >
+                                {exam.show_login ? "Hide Entry Button" : "Show Entry Button"}
+                              </button>
                               <button
                                 onClick={() => toggleExamStarted(exam)}
                                 className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${

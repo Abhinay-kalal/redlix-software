@@ -11,7 +11,8 @@ CREATE TABLE public.exams (
   description TEXT NOT NULL,
   total_qns INTEGER NOT NULL,
   types_of_qns VARCHAR(100) NOT NULL,
-  is_started BOOLEAN DEFAULT FALSE
+  is_started BOOLEAN DEFAULT FALSE,
+  show_login BOOLEAN DEFAULT FALSE
 );
 
 
