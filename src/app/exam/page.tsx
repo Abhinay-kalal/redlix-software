@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 
 interface ExamData {
   id: number;
@@ -27,7 +26,6 @@ interface ExamSession {
 
 function parseExamDateTime(date: string, time: string): Date | null {
   try {
-    
     const dateStr = date.split("T")[0];
     const combined = `${dateStr}T${to24h(time)}:00`;
     const d = new Date(combined);
@@ -43,7 +41,7 @@ function to24h(t: string): string {
   const period = match[3]?.toUpperCase();
   if (period === "PM" && h !== 12) h += 12;
   if (period === "AM" && h === 12) h = 0;
-  return `${String(h).padStart(2, "0")}:${m}`;
+  return `${String(h).padStart(2, "00")}:${m}`;
 }
 
 function formatCountdown(ms: number) {
@@ -60,21 +58,23 @@ function formatCountdown(ms: number) {
   };
 }
 
+const POLL_INTERVAL = 5; // seconds
+
 export default function ExamPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [session, setSession] = useState<ExamSession | null>(null);
   const [loading, setLoading] = useState(true);
 
-  
   const [countdown, setCountdown] = useState({ h: "00", m: "00", s: "00", total: -1 });
   const examTarget = useRef<Date | null>(null);
 
-  
   const [isStarted, setIsStarted] = useState(false);
+  const [nextCheck, setNextCheck] = useState(POLL_INTERVAL);
+  const [isChecking, setIsChecking] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  
+  // Load session from storage
   useEffect(() => {
     const raw = sessionStorage.getItem("exam_session");
     if (!raw) { router.replace("/exam-login"); return; }
@@ -90,7 +90,7 @@ export default function ExamPage() {
     finally { setLoading(false); }
   }, [router]);
 
-  
+  // Countdown to exam scheduled time
   useEffect(() => {
     if (!session) return;
     const tick = () => {
@@ -103,21 +103,45 @@ export default function ExamPage() {
     return () => clearInterval(id);
   }, [session]);
 
-  
+  // Poll /api/exam/status every 5 seconds
   useEffect(() => {
-    if (!session) return;
-    const check = async () => {
-      const { data } = await supabase
-        .from("exams")
-        .select("is_started")
-        .eq("id", session.exam.id)
-        .single();
-      if (data?.is_started) setIsStarted(true);
+    if (!session || isStarted) return;
+
+    const checkStatus = async () => {
+      setIsChecking(true);
+      try {
+        const res = await fetch(`/api/exam/status?examId=${session.exam.id}`);
+        const data = await res.json();
+        if (data.success && data.isStarted) {
+          setIsStarted(true);
+          // Clear timers once started
+          if (pollRef.current) clearInterval(pollRef.current);
+          if (tickRef.current) clearInterval(tickRef.current);
+        }
+      } catch {
+        // Network error — silently retry next cycle
+      } finally {
+        setIsChecking(false);
+        setNextCheck(POLL_INTERVAL);
+      }
     };
-    check();
-    pollRef.current = setInterval(check, 5000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [session]);
+
+    // Run immediately on mount
+    checkStatus();
+
+    // Poll every 5 seconds
+    pollRef.current = setInterval(checkStatus, POLL_INTERVAL * 1000);
+
+    // Tick down the "next check in Xs" counter every second
+    tickRef.current = setInterval(() => {
+      setNextCheck((prev) => (prev <= 1 ? POLL_INTERVAL : prev - 1));
+    }, 1000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (tickRef.current) clearInterval(tickRef.current);
+    };
+  }, [session, isStarted]);
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
@@ -158,22 +182,27 @@ export default function ExamPage() {
 
           {}
           <div className="shrink-0 text-right">
-            {!isStarted && countdown.total > 0 ? (
+            {isStarted ? (
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <p className="text-white text-xs font-bold">Exam Open</p>
+              </div>
+            ) : !isStarted && countdown.total > 0 ? (
               <div>
                 <p className="text-orange-200 text-[9px] font-bold uppercase tracking-widest mb-1">Starts in</p>
                 <p className="text-white font-bold text-xl tabular-nums tracking-tight">
                   {countdown.h}<span className="text-orange-200 mx-0.5">:</span>{countdown.m}<span className="text-orange-200 mx-0.5">:</span>{countdown.s}
                 </p>
               </div>
-            ) : !isStarted ? (
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-orange-300 animate-pulse" />
-                <p className="text-orange-100 text-xs font-medium">Waiting for admin</p>
-              </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-white text-xs font-bold">Exam Open</p>
+              <div className="flex flex-col items-end gap-1">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${isChecking ? "bg-yellow-300 animate-ping" : "bg-orange-300 animate-pulse"}`} />
+                  <p className="text-orange-100 text-xs font-medium">Waiting for admin</p>
+                </div>
+                <p className="text-orange-200 text-[10px] tabular-nums">
+                  {isChecking ? "Checking..." : `Next check in ${nextCheck}s`}
+                </p>
               </div>
             )}
           </div>
