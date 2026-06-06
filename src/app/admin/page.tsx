@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [securityError, setSecurityError] = useState("");
   
+  const [loginVerified, setLoginVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
 
@@ -26,19 +27,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isLoading && loadingStep < loadingMessages.length - 1) {
-      timer = setTimeout(() => {
-        setLoadingStep((prev) => prev + 1);
-      }, 600);
-    } else if (isLoading && loadingStep === loadingMessages.length - 1) {
-      timer = setTimeout(() => {
-        localStorage.setItem("is_authenticated", "true");
-        localStorage.setItem("user_email", email);
-        router.push("/dashboard");
-      }, 600);
+    if (loginVerified) {
+      if (loadingStep < loadingMessages.length - 1) {
+        timer = setTimeout(() => {
+          setLoadingStep((prev) => prev + 1);
+        }, 600);
+      } else if (loadingStep === loadingMessages.length - 1) {
+        timer = setTimeout(() => {
+          localStorage.setItem("is_authenticated", "true");
+          localStorage.setItem("user_email", email);
+          router.push("/dashboard");
+        }, 600);
+      }
     }
     return () => clearTimeout(timer);
-  }, [isLoading, loadingStep, email, router]);
+  }, [loginVerified, loadingStep, email, router]);
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -66,21 +69,6 @@ export default function LoginPage() {
       setPasswordError("");
     }
 
-    if (!valid) return;
-
-    const expectedEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "admin@redlixsecure.com";
-    const expectedPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin1234";
-
-    if (email !== expectedEmail) {
-      setEmailError("Incorrect administrator email address.");
-      valid = false;
-    }
-
-    if (password !== expectedPassword) {
-      setPasswordError("Incorrect administrator password.");
-      valid = false;
-    }
-
     if (!turnstileToken) {
       setSecurityError("Please complete the security check.");
       valid = false;
@@ -94,23 +82,32 @@ export default function LoginPage() {
     setLoadingStep(0);
 
     try {
-      const res = await fetch("/api/verify-turnstile", {
+      const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token: turnstileToken }),
+        body: JSON.stringify({ email, password, token: turnstileToken }),
       });
       const data = await res.json();
-      if (!data.success) {
-        setSecurityError("Security verification failed. Please try again.");
+      if (res.ok && data.success) {
+        setLoginVerified(true);
+        setLoadingStep(1);
+      } else {
         setIsLoading(false);
-        return;
+        const errorCode = data.error || "unknown";
+        if (errorCode === "invalid_credentials") {
+          setEmailError("Incorrect administrator email or password.");
+          setPasswordError("Incorrect administrator email or password.");
+        } else if (errorCode === "security_check_failed" || errorCode === "missing_security_token") {
+          setSecurityError("Security verification failed. Please try again.");
+        } else {
+          setSecurityError("An error occurred during login. Please try again.");
+        }
       }
     } catch {
-      setSecurityError("Failed to verify security token. Please try again.");
       setIsLoading(false);
-      return;
+      setSecurityError("Failed to connect to the server. Please try again.");
     }
   };
 

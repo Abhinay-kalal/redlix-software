@@ -51,6 +51,7 @@ export async function proxy(request: NextRequest) {
     const host = request.headers.get("host") || "";
     const isLocal = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("[::1]");
     const secretKey = process.env.ADMIN_ACCESS_SECRET || "redlix-admin-secure-passcode-777";
+    const adminToken = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN || "redlix-secure-admin-token-2026";
 
     // A. Check for "secret knocking" parameter
     const secretQuery = url.searchParams.get("secret");
@@ -72,7 +73,7 @@ export async function proxy(request: NextRequest) {
     const bypassCookie = request.cookies.get("admin_bypass_token")?.value;
     const hasValidCookie = bypassCookie === secretKey;
 
-    // C. Deny access if neither localhost nor valid cookie exists
+    // C. Deny access if neither localhost nor valid cookie exists (Stealth gate)
     if (!isLocal && !hasValidCookie) {
       if (path.startsWith("/api/")) {
         return new NextResponse(
@@ -85,6 +86,25 @@ export async function proxy(request: NextRequest) {
       } else {
         // Redirect pages to public scheduled-exams list
         return NextResponse.redirect(new URL("/scheduled-exams", request.url));
+      }
+    }
+
+    // D. Admin Login Session Cookie Gate for /dashboard and /api/admin (except /api/admin/login)
+    if (path.startsWith("/dashboard") || (path.startsWith("/api/admin") && !path.startsWith("/api/admin/login"))) {
+      const sessionCookie = request.cookies.get("admin_session_token")?.value;
+      if (sessionCookie !== adminToken) {
+        if (path.startsWith("/api/")) {
+          return new NextResponse(
+            JSON.stringify({ error: "Unauthorized" }),
+            {
+              status: 401,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        } else {
+          // Redirect to login page
+          return NextResponse.redirect(new URL("/admin", request.url));
+        }
       }
     }
   }

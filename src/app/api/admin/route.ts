@@ -18,7 +18,8 @@ const supabase = createClient(
 
 function isAdminAuthorized(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
-  return token === ADMIN_TOKEN;
+  const cookieToken = req.cookies.get("admin_session_token")?.value;
+  return token === ADMIN_TOKEN || cookieToken === ADMIN_TOKEN;
 }
 
 export async function GET(req: NextRequest) {
@@ -114,6 +115,19 @@ export async function POST(req: NextRequest) {
     const { error } = await supabase.from("sessions").delete().eq("id", sessionId);
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     return NextResponse.json({ success: true });
+  }
+
+  // Logout admin session
+  if (action === "logout") {
+    const res = NextResponse.json({ success: true });
+    res.cookies.set("admin_session_token", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 0,
+    });
+    return res;
   }
 
   return NextResponse.json({ success: false, error: "Unknown action" }, { status: 400 });

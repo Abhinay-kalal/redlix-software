@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 interface Session {
   id: string;
@@ -149,14 +150,23 @@ export default function Dashboard() {
 
   
   useEffect(() => {
-    const auth = localStorage.getItem("is_authenticated");
-    const email = localStorage.getItem("user_email") || "admin@redlixsecure.com";
-    if (auth !== "true") {
-      router.push("/admin");
-    } else {
-      setIsAuthenticated(true);
-      setUserEmail(email);
-    }
+    const checkAuth = async () => {
+      try {
+        const res = await adminFetch("GET", { resource: "exams" });
+        if (!res.success && res.error === "Unauthorized") {
+          localStorage.removeItem("is_authenticated");
+          router.push("/admin");
+        } else {
+          setIsAuthenticated(true);
+          const email = localStorage.getItem("user_email") || "admin@redlixsecure.com";
+          setUserEmail(email);
+        }
+      } catch (err) {
+        localStorage.removeItem("is_authenticated");
+        router.push("/admin");
+      }
+    };
+    checkAuth();
   }, [router]);
 
   
@@ -216,10 +226,69 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isAuthenticated) return;
     fetchSessions();
-    const interval = setInterval(() => {
-      fetchSessions();
-    }, 3000);
-    return () => clearInterval(interval);
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("sessions-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "sessions" },
+        (payload: any) => {
+          if (payload.eventType === "INSERT") {
+            const newItem = payload.new;
+            const mappedNew: Session = {
+              id: newItem.id,
+              student: newItem.student,
+              email: newItem.email,
+              exam: newItem.exam,
+              flagsCount: newItem.flags_count,
+              integrityScore: newItem.integrity_score,
+              lastFlagType: newItem.last_flag_type,
+              severity: newItem.severity as Session["severity"],
+              timestamp: newItem.timestamp,
+              avatar: newItem.avatar,
+              liveFeed: newItem.live_feed,
+            };
+            setSessions((prev) => {
+              if (prev.some((s) => s.id === mappedNew.id)) return prev;
+              return [...prev, mappedNew];
+            });
+          } else if (payload.eventType === "UPDATE") {
+            const updatedItem = payload.new;
+            const mappedUpdated: Partial<Session> = {
+              id: updatedItem.id,
+              student: updatedItem.student,
+              email: updatedItem.email,
+              exam: updatedItem.exam,
+              flagsCount: updatedItem.flags_count,
+              integrityScore: updatedItem.integrity_score,
+              lastFlagType: updatedItem.last_flag_type,
+              severity: updatedItem.severity as Session["severity"],
+              timestamp: updatedItem.timestamp,
+              avatar: updatedItem.avatar,
+              liveFeed: updatedItem.live_feed,
+            };
+            setSessions((prev) =>
+              prev.map((s) => (s.id === mappedUpdated.id ? { ...s, ...mappedUpdated } : s))
+            );
+            setActiveStreamSession((prev) => {
+              if (prev && prev.id === updatedItem.id) {
+                return { ...prev, ...mappedUpdated };
+              }
+              return prev;
+            });
+          } else if (payload.eventType === "DELETE") {
+            const deletedId = payload.old.id;
+            setSessions((prev) => prev.filter((s) => s.id !== deletedId));
+            setActiveStreamSession((prev) => (prev && prev.id === deletedId ? null : prev));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -229,7 +298,12 @@ export default function Dashboard() {
     }
   }, [activeTab, isAuthenticated]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await adminFetch("POST", undefined, { action: "logout" });
+    } catch (err) {
+      console.error("Failed to logout on server:", err);
+    }
     localStorage.removeItem("is_authenticated");
     localStorage.removeItem("user_email");
     router.push("/admin");
