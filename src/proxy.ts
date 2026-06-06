@@ -1,10 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/utils/supabase/middleware";
 
-
 const rateLimitMap = new Map<string, number[]>();
-
-
 const LIMIT_WINDOW = 30000; 
 const MAX_REQUESTS = 60;    
 
@@ -12,13 +9,10 @@ export async function proxy(request: NextRequest) {
   const ip = (request as any).ip || request.headers.get("x-forwarded-for") || "unknown";
   const now = Date.now();
 
-  
+  // 1. Rate Limiting Logic
   let timestamps = rateLimitMap.get(ip) || [];
-  
-  
   timestamps = timestamps.filter((t) => now - t < LIMIT_WINDOW);
 
-  
   if (timestamps.length >= MAX_REQUESTS) {
     return new NextResponse(
       JSON.stringify({
@@ -35,11 +29,9 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  
   timestamps.push(now);
   rateLimitMap.set(ip, timestamps);
 
-  
   if (rateLimitMap.size > 1000) {
     for (const [key, val] of rateLimitMap.entries()) {
       const active = val.filter((t) => now - t < LIMIT_WINDOW);
@@ -51,19 +43,58 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  
+  // 2. Admin Route Protection Logic
+  const url = request.nextUrl.clone();
+  const path = url.pathname;
+
+  if (path.startsWith("/admin") || path.startsWith("/dashboard") || path.startsWith("/api/admin")) {
+    const host = request.headers.get("host") || "";
+    const isLocal = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("[::1]");
+    const secretKey = process.env.ADMIN_ACCESS_SECRET || "redlix-admin-secure-passcode-777";
+
+    // A. Check for "secret knocking" parameter
+    const secretQuery = url.searchParams.get("secret");
+    if (secretQuery === secretKey) {
+      // Set the bypass cookie and redirect to clean URL without secret query param
+      url.searchParams.delete("secret");
+      const redirectRes = NextResponse.redirect(url);
+      redirectRes.cookies.set("admin_bypass_token", secretKey, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      });
+      return redirectRes;
+    }
+
+    // B. Check for existing cookie token
+    const bypassCookie = request.cookies.get("admin_bypass_token")?.value;
+    const hasValidCookie = bypassCookie === secretKey;
+
+    // C. Deny access if neither localhost nor valid cookie exists
+    if (!isLocal && !hasValidCookie) {
+      if (path.startsWith("/api/")) {
+        return new NextResponse(
+          JSON.stringify({ error: "Not Found" }),
+          {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      } else {
+        // Redirect pages to public scheduled-exams list
+        return NextResponse.redirect(new URL("/scheduled-exams", request.url));
+      }
+    }
+  }
+
+  // 3. Supabase SSR Client Session handler
   return createClient(request);
 }
 
 export const config = {
   matcher: [
-    
-
-
-
-
-
-
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
