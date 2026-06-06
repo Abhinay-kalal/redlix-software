@@ -795,7 +795,7 @@ export default function ExamSessionPage() {
   useEffect(() => {
     if (!setupDone || !streamRef.current || !videoRef.current) return;
     videoRef.current.srcObject = streamRef.current;
-  }, [setupDone]);
+  }, [setupDone, fullscreen]);
 
   
   useEffect(() => {
