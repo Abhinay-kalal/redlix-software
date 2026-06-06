@@ -670,7 +670,7 @@ export default function Dashboard() {
                         </td>
                       </tr>
                     ) : (
-                      sessions.slice(0, 5).map((session) => (
+                      sessions.map((session) => (
                         <tr key={session.id} className="hover:bg-zinc-50/50 text-zinc-700">
                           <td className="px-6 py-3">
                             <div className="flex items-center gap-3">
