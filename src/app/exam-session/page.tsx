@@ -470,12 +470,36 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
   );
 }
 
+function seedRandom(seedStr: string) {
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function() {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleQuestions<T>(array: T[], seed: string): T[] {
+  const rng = seedRandom(seed);
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export default function ExamSessionPage() {
   const router = useRouter();
   const supabase = createClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const [questions, setQuestions] = useState<Question[]>(QUESTIONS);
   const [session, setSession] = useState<ExamSession | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -563,9 +587,26 @@ export default function ExamSessionPage() {
       }
 
       setSession(parsed);
+
+      let loadedQuestions = QUESTIONS.map((q) => ({ ...q }));
+      if (parsed.exam.id === 4 || parsed.exam.name.toLowerCase().includes("student forge")) {
+        const sectionA = loadedQuestions.filter((q) => q.section === "A");
+        const sectionB = loadedQuestions.filter((q) => q.section === "B");
+        const shuffledA = shuffleQuestions(sectionA, parsed.hallTicketNumber);
+        const shuffledB = shuffleQuestions(sectionB, parsed.hallTicketNumber + "-B");
+        shuffledA.forEach((q, idx) => {
+          q.number = idx + 1;
+        });
+        shuffledB.forEach((q, idx) => {
+          q.number = idx + 1;
+        });
+        loadedQuestions = [...shuffledA, ...shuffledB];
+      }
+      setQuestions(loadedQuestions);
+
       setAnswers((prev) => {
         const initialAnswers = { ...prev };
-        QUESTIONS.forEach((q) => {
+        loadedQuestions.forEach((q) => {
           if (q.type === "coding" && q.starterCode && !initialAnswers[q.id]) {
             initialAnswers[q.id] = q.starterCode;
           }
@@ -758,14 +799,14 @@ export default function ExamSessionPage() {
 
   
   useEffect(() => {
-    if (setupDone) {
-      const firstQId = QUESTIONS[0].id;
+    if (setupDone && questions.length > 0) {
+      const firstQId = questions[0].id;
       setQuestionStatuses((prev) => ({
         ...prev,
         [firstQId]: "not_answered",
       }));
     }
-  }, [setupDone]);
+  }, [setupDone, questions]);
 
   
   useEffect(() => {
@@ -901,7 +942,7 @@ export default function ExamSessionPage() {
 
   
   const handleQuestionSelect = (index: number) => {
-    const prevQ = QUESTIONS[currentIndex];
+    const prevQ = questions[currentIndex];
     const prevAns = answers[prevQ.id];
 
     setQuestionStatuses((prev) => {
@@ -925,7 +966,7 @@ export default function ExamSessionPage() {
         }
       }
 
-      const nextQId = QUESTIONS[index].id;
+      const nextQId = questions[index].id;
       const nextQStatus = prev[nextQId] || "not_visited";
       let updatedNextQStatus = nextQStatus;
       if (nextQStatus === "not_visited") {
@@ -943,13 +984,13 @@ export default function ExamSessionPage() {
   };
 
   const handleAnswerChange = (val: string) => {
-    setAnswers((prev) => ({ ...prev, [QUESTIONS[currentIndex].id]: val }));
+    setAnswers((prev) => ({ ...prev, [questions[currentIndex].id]: val }));
   };
 
   const handleClearResponse = () => {
     setAnswers((prev) => {
       const next = { ...prev };
-      const currentQ = QUESTIONS[currentIndex];
+      const currentQ = questions[currentIndex];
       if (currentQ.type === "coding" && currentQ.starterCode) {
         next[currentQ.id] = currentQ.starterCode;
       } else {
@@ -959,14 +1000,14 @@ export default function ExamSessionPage() {
     });
     setQuestionStatuses((prev) => ({
       ...prev,
-      [QUESTIONS[currentIndex].id]: "not_answered",
+      [questions[currentIndex].id]: "not_answered",
     }));
   };
 
   const handleMarkForReview = () => {
     setQuestionStatuses((prev) => ({
       ...prev,
-      [QUESTIONS[currentIndex].id]: "marked",
+      [questions[currentIndex].id]: "marked",
     }));
     if (currentIndex < 19) {
       handleQuestionSelect(currentIndex + 1);
@@ -974,8 +1015,8 @@ export default function ExamSessionPage() {
   };
 
   const handleSaveAndNext = () => {
-    const qId = QUESTIONS[currentIndex].id;
-    const currentQ = QUESTIONS[currentIndex];
+    const qId = questions[currentIndex].id;
+    const currentQ = questions[currentIndex];
     const currentAns = answers[qId];
     
     let hasValue = false;
@@ -1218,7 +1259,7 @@ export default function ExamSessionPage() {
     );
   }
 
-  const currentQuestion = QUESTIONS[currentIndex];
+  const currentQuestion = questions[currentIndex];
   const activeAnswer = answers[currentQuestion.id] || "";
 
   
@@ -1471,14 +1512,13 @@ export default function ExamSessionPage() {
               </span>
             </div>
 
-            {}
             <div className="p-4 space-y-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
                   Section A: MCQs
                 </p>
                 <div className="grid grid-cols-5 gap-1.5">
-                  {QUESTIONS.slice(0, 10).map((q, idx) => {
+                  {questions.slice(0, 10).map((q, idx) => {
                     const status = questionStatuses[q.id] || "not_visited";
                     const isActive = currentIndex === idx;
                     return (
@@ -1502,7 +1542,7 @@ export default function ExamSessionPage() {
                   Section B: Coding
                 </p>
                 <div className="grid grid-cols-5 gap-1.5">
-                  {QUESTIONS.slice(10, 20).map((q, idx) => {
+                  {questions.slice(10, 20).map((q, idx) => {
                     const relativeIdx = idx + 10;
                     const status = questionStatuses[q.id] || "not_visited";
                     const isActive = currentIndex === relativeIdx;
