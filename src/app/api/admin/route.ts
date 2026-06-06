@@ -6,7 +6,14 @@ const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secu
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  {
+    global: {
+      headers: {
+        "x-admin-token": ADMIN_TOKEN,
+      },
+    },
+  }
 );
 
 function isAdminAuthorized(req: NextRequest): boolean {

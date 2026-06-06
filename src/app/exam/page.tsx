@@ -105,18 +105,15 @@ export default function ExamPage() {
 
   // Poll /api/exam/status every 5 seconds
   useEffect(() => {
-    if (!session || isStarted) return;
+    if (!session) return;
 
     const checkStatus = async () => {
       setIsChecking(true);
       try {
         const res = await fetch(`/api/exam/status?examId=${session.exam.id}`);
         const data = await res.json();
-        if (data.success && data.isStarted) {
-          setIsStarted(true);
-          // Clear timers once started
-          if (pollRef.current) clearInterval(pollRef.current);
-          if (tickRef.current) clearInterval(tickRef.current);
+        if (data.success) {
+          setIsStarted(data.isStarted ?? false);
         }
       } catch {
         // Network error — silently retry next cycle
@@ -141,7 +138,7 @@ export default function ExamPage() {
       if (pollRef.current) clearInterval(pollRef.current);
       if (tickRef.current) clearInterval(tickRef.current);
     };
-  }, [session, isStarted]);
+  }, [session]);
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">

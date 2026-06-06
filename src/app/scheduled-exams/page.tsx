@@ -23,15 +23,23 @@ export default function ScheduledExams() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [regCounts, setRegCounts] = useState<Record<number, number>>({});
 
   const fetchExams = async () => {
     try {
-      const { data, error } = await supabase.from("exams").select().order("id", { ascending: false });
-      if (!error && data) {
-        setExams(data);
+      const [examsRes, countsRes] = await Promise.all([
+        supabase.from("exams").select().order("id", { ascending: false }),
+        fetch("/api/exam/registrations-count").then(res => res.json())
+      ]);
+
+      if (!examsRes.error && examsRes.data) {
+        setExams(examsRes.data);
+      }
+      if (countsRes.success && countsRes.counts) {
+        setRegCounts(countsRes.counts);
       }
     } catch (err) {
-      console.error("Error loading exams:", err);
+      console.error("Error loading exams and counts:", err);
     } finally {
       setLoading(false);
     }
@@ -116,10 +124,16 @@ export default function ScheduledExams() {
                   <div className="space-y-4">
                     {}
                     <div>
-                      <span className="text-[10px] font-bold tracking-wider uppercase bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-0.5 rounded-none">
-                        {exam.company_name}
-                      </span>
-                      <h3 className="text-xl font-extrabold text-zinc-950 mt-2.5 tracking-tight leading-snug">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-bold tracking-wider uppercase bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-0.5 rounded-none">
+                          {exam.company_name}
+                        </span>
+                        <span className="text-[10px] font-bold tracking-wider uppercase bg-orange-50 text-orange-700 border border-orange-200 px-2.5 py-0.5 rounded-none flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px] leading-none">group</span>
+                          {regCounts[exam.id] || 0} {(regCounts[exam.id] || 0) === 1 ? "Registration" : "Registrations"}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-extrabold text-zinc-955 mt-2.5 tracking-tight leading-snug">
                         {exam.name}
                       </h3>
                     </div>
@@ -129,12 +143,16 @@ export default function ScheduledExams() {
                       <div>
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-1 font-bold">Schedule</p>
                         <p className="text-zinc-900 font-bold">{exam.date}</p>
-                        <p className="text-zinc-600 font-normal">{exam.time} IST</p>
+                        <p className="text-zinc-650 font-normal">{exam.time} IST</p>
                       </div>
                       <div>
                         <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-1 font-bold">Format</p>
                         <p className="text-zinc-900 font-bold">{exam.total_qns} Questions</p>
-                        <p className="text-zinc-600 font-normal leading-relaxed">{exam.types_of_qns}</p>
+                        <p className="text-zinc-650 font-normal leading-relaxed">{exam.types_of_qns}</p>
+                        <p className="text-orange-600 font-bold text-[10px] normal-case mt-1.5 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px] leading-none">group</span>
+                          {regCounts[exam.id] || 0} {(regCounts[exam.id] || 0) === 1 ? "Candidate" : "Candidates"} Registered
+                        </p>
                       </div>
                     </div>
 

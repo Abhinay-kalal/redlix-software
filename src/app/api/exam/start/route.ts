@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Use service-role key for trusted server-side writes
-// Falls back to publishable key if service role key is not yet configured
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -23,6 +15,21 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secure-admin-token-2026";
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      {
+        global: {
+          headers: {
+            "x-admin-token": ADMIN_TOKEN,
+            "x-candidate-hall-ticket": hallTicketNumber,
+          },
+        },
+      }
+    );
 
     // 1. Check if there is an EXISTING active session with a DIFFERENT visitorId
     const { data: existing, error: fetchError } = await supabase

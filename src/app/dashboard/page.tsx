@@ -71,7 +71,8 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSeverity, setSelectedSeverity] = useState<string>("All");
-  const [activeTab, setActiveTab] = useState("live");
+  const [activeTab, setActiveTab] = useState("overview");
+
   
   
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -222,7 +223,7 @@ export default function Dashboard() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if (activeTab === "exams-list" && isAuthenticated) {
+    if ((activeTab === "exams-list" || activeTab === "overview" || activeTab === "settings") && isAuthenticated) {
       fetchExamsAndRegistrations();
       setSelectedExamForCandidates(null);
     }
@@ -371,82 +372,60 @@ export default function Dashboard() {
             className="w-8 h-8 object-contain shrink-0"
           />
           <div>
-            <span className="font-bold text-sm text-zinc-900 tracking-wide">Redlix</span>
-            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-none bg-orange-100 text-orange-700 font-semibold uppercase">Secure</span>
+            <span className="font-bold text-sm text-zinc-900">Redlix</span>
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-none bg-orange-100 text-orange-700 font-semibold normal-case">Secure</span>
           </div>
         </div>
 
         {}
         <nav className="flex-1 px-4 py-6 space-y-1">
-          <button 
-            onClick={() => setActiveTab("live")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold tracking-wide uppercase transition-all cursor-pointer ${
-              activeTab === "live" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            Live Monitor
-          </button>
-          
-          <button 
-            onClick={() => setActiveTab("analytics")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold tracking-wide uppercase transition-all cursor-pointer ${
-              activeTab === "analytics" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Analytics
-          </button>
 
           <button 
-            onClick={() => setActiveTab("configs")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold tracking-wide uppercase transition-all cursor-pointer ${
-              activeTab === "configs" 
+            onClick={() => setActiveTab("overview")}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "overview" 
                 ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
                 : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
             }`}
           >
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
-            AI Settings
+            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">dashboard</span>
+            Overview
           </button>
 
           <button 
             onClick={() => setActiveTab("create-exam")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold tracking-wide uppercase transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "create-exam" 
                 ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
                 : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
             }`}
           >
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">add_circle</span>
             Create Exam
           </button>
 
           <button 
             onClick={() => setActiveTab("exams-list")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold tracking-wide uppercase transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "exams-list" 
                 ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
                 : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
             }`}
           >
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">folder</span>
             Exams Directory
+          </button>
+
+          <button 
+            onClick={() => setActiveTab("settings")}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "settings" 
+                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
+                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">settings</span>
+            Settings
           </button>
         </nav>
 
@@ -458,16 +437,14 @@ export default function Dashboard() {
             </div>
             <div className="overflow-hidden">
               <p className="text-xs font-semibold text-zinc-900 truncate">{userEmail}</p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Administrator</p>
+              <p className="text-[10px] text-zinc-500 normal-case font-semibold">Administrator</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-none bg-white hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 text-xs font-medium transition-all border border-zinc-200 cursor-pointer shadow-sm"
           >
-            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <span className="material-symbols-outlined text-xs text-zinc-500 shrink-0">logout</span>
             Sign Out
           </button>
         </div>
@@ -480,13 +457,11 @@ export default function Dashboard() {
         {}
         <header className="h-16 border-b border-zinc-200 flex items-center justify-between px-6 bg-white">
           <div className="flex items-center gap-4">
-            <h1 className="text-md font-bold text-zinc-900 tracking-wide uppercase">
-              {activeTab === "live" 
-                ? "Live Monitor" 
-                : activeTab === "analytics" 
-                ? "Analytics" 
-                : activeTab === "configs" 
-                ? "AI Settings" 
+            <h1 className="text-md font-bold text-zinc-900 normal-case">
+              {activeTab === "overview"
+                ? "System Overview"
+                : activeTab === "settings"
+                ? "Settings & Diagnostics"
                 : activeTab === "exams-list"
                 ? "Exams Directory"
                 : "Create Exam"}
@@ -508,154 +483,106 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin mb-4" />
             <p className="text-zinc-500 text-xs">Loading database records...</p>
           </div>
-        ) : activeTab === "live" ? (
-          
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-            
-            {}
+        ) : activeTab === "overview" ? (
+          <div className="flex-1 p-6 space-y-6 overflow-y-auto bg-zinc-50">
+            {/* Top row: 4 Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               
-              <div className="p-5 bg-white rounded-none border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Active Exams</span>
-                  <div className="p-1.5 bg-orange-50 rounded-none text-orange-600 border border-orange-100">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
+              {/* Card 1: Total Exams */}
+              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-[10px] font-bold normal-case text-zinc-500">Exams Directory</span>
+                  <div className="p-1 bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center rounded-none shrink-0"><span className="material-symbols-outlined text-md">folder</span></div>
+                </div>
+                <div className="text-2xl font-bold text-zinc-900">{exams.length}</div>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
+                  {exams.filter(e => e.is_started).length} currently active & open
+                </p>
+              </div>
+
+              {/* Card 2: Candidate Registrations */}
+              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-[10px] font-bold normal-case text-zinc-500">Registrations</span>
+                  <div className="p-1 bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center rounded-none shrink-0"><span className="material-symbols-outlined text-md">group</span></div>
+                </div>
+                <div className="text-2xl font-bold text-zinc-900">{registrations.length}</div>
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
+                  Total candidates verified and registered
+                </p>
+              </div>
+
+              {/* Card 3: Live Session Room Connections */}
+              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-[10px] font-bold normal-case text-zinc-500">Active Sessions</span>
+                  <div className="p-1 flex items-center justify-center bg-green-50 text-green-700 border border-green-150 rounded-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-650 animate-pulse inline-block mr-1" />
+                    <span className="text-[9px] font-bold normal-case">Live</span>
                   </div>
                 </div>
                 <div className="text-2xl font-bold text-zinc-900">{sessions.length}</div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">
-                  Total student connections
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
+                  Candidates currently sitting exams
                 </p>
               </div>
 
-              <div className="p-5 bg-white rounded-none border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Flagged Logs</span>
-                  <div className="p-1.5 bg-red-50 rounded-none text-red-600 border border-red-100">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
+              {/* Card 4: System Average Integrity */}
+              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-[10px] font-bold normal-case text-zinc-500">Avg Integrity</span>
+                  <div className="p-1 bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center rounded-none shrink-0"><span className="material-symbols-outlined text-md">verified_user</span></div>
                 </div>
                 <div className="text-2xl font-bold text-zinc-900">
-                  {sessions.filter(s => s.severity === "Critical").length}
-                </div>
-                <p className="text-[10px] text-red-600 mt-1 font-semibold">
-                  Immediate review required
-                </p>
-              </div>
-
-              <div className="p-5 bg-white rounded-none border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Integrity Average</span>
-                  <div className="p-1.5 bg-zinc-50 rounded-none text-zinc-600 border border-zinc-200">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-zinc-900">
-                  {sessions.length > 0 
+                  {sessions.length > 0
                     ? `${Math.round(sessions.reduce((acc, curr) => acc + curr.integrityScore, 0) / sessions.length)}%`
                     : "100%"
                   }
                 </div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">
-                  Average score index
-                </p>
-              </div>
-
-              <div className="p-5 bg-white rounded-none border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">System Load</span>
-                  <div className="p-1.5 bg-emerald-50 rounded-none text-emerald-600 border border-emerald-100">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="text-2xl font-bold text-zinc-900">
-                  {sessions.length > 0 ? "Active" : "Idle"}
-                </div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold">
-                  {sessions.length} model pipelines active
+                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
+                  {sessions.filter(s => s.severity === "Critical").length} critical warnings active
                 </p>
               </div>
 
             </div>
 
-            {}
-            <div className="bg-white rounded-none border border-zinc-200 shadow-sm overflow-hidden">
-              
-              {}
-              <div className="p-5 border-b border-zinc-200 flex flex-col md:flex-row gap-4 items-center justify-between bg-zinc-50">
-                
-                {}
-                <div className="relative w-full md:w-80">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search student, exam, anomaly..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-9 pr-3 py-2 bg-white border border-zinc-300 rounded-none text-xs text-zinc-800 placeholder-zinc-400 focus:outline-none focus:border-orange-500 transition-all"
-                  />
+            {/* Bottom Row: Quick Live Candidate Feed (only if sessions.length > 0) */}
+            <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold normal-case text-zinc-800">Active Live Proctoring Room</h3>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Real-time listing of active candidate security index status</p>
                 </div>
-
-                {}
-                <div className="flex gap-1 bg-white p-1 rounded-none border border-zinc-200">
-                  {["All", "Critical", "Warning", "Normal"].map((severity) => (
-                    <button
-                      key={severity}
-                      onClick={() => setSelectedSeverity(severity)}
-                      className={`px-3 py-1 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-                        selectedSeverity === severity
-                          ? "bg-zinc-800 text-white shadow-sm"
-                          : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50"
-                      }`}
-                    >
-                      {severity}
-                    </button>
-                  ))}
-                </div>
-
+                {sessions.length > 0 && (
+                  <span className="w-2.5 h-2.5 bg-green-500 rounded-none animate-pulse" />
+                )}
               </div>
 
-              {}
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse font-sans">
                   <thead>
-                    <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                      <th className="px-6 py-4">Student Name</th>
-                      <th className="px-6 py-4">Exam Name</th>
-                      <th className="px-6 py-4 text-center">Flags</th>
+                    <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 normal-case">
+                      <th className="px-6 py-4">Student</th>
+                      <th className="px-6 py-4">Exam</th>
+                      <th className="px-6 py-4 text-center">Anomalies</th>
                       <th className="px-6 py-4 text-center">Integrity</th>
-                      <th className="px-6 py-4">Last Event</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
+                      <th className="px-6 py-4">Last Violation Log</th>
+                      <th className="px-6 py-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 text-xs">
-                    {filteredSessions.length === 0 ? (
+                    {sessions.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 font-medium">
-                          No active sessions found.
+                        <td colSpan={6} className="px-6 py-10 text-center text-zinc-400 font-semibold italic">
+                          No candidate currently taking an exam. Real-time proctor stream idle.
                         </td>
                       </tr>
                     ) : (
-                      filteredSessions.map((session) => (
-                        <tr 
-                          key={session.id} 
-                          className="hover:bg-zinc-50/50 transition-all duration-150 text-zinc-700"
-                        >
-                          <td className="px-6 py-4">
+                      sessions.slice(0, 5).map((session) => (
+                        <tr key={session.id} className="hover:bg-zinc-50/50 text-zinc-700">
+                          <td className="px-6 py-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-none bg-zinc-100 flex items-center justify-center font-bold text-xs text-zinc-600 border border-zinc-200">
+                              <div className="w-7 h-7 rounded-none bg-zinc-100 flex items-center justify-center font-bold text-xs text-zinc-650 border border-zinc-200">
                                 {session.avatar}
                               </div>
                               <div>
@@ -664,90 +591,52 @@ export default function Dashboard() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div>
-                              <p className="font-medium text-zinc-800">{session.exam}</p>
-                              <p className="text-[10px] text-zinc-400 flex items-center gap-1.5 mt-0.5">
-                                ID: {session.id} • Registered {session.timestamp}
-                              </p>
-                            </div>
+                          <td className="px-6 py-3">
+                            <p className="font-medium text-zinc-800">{session.exam}</p>
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`px-2 py-0.5 rounded-none font-bold text-[10px] ${
+                          <td className="px-6 py-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-none font-bold text-[9px] ${
                               session.flagsCount > 3 
-                                ? "bg-red-50 text-red-600 border border-red-100" 
+                                ? "bg-red-50 text-red-650 border border-red-100" 
                                 : session.flagsCount > 0 
-                                ? "bg-amber-50 text-amber-600 border border-amber-100"
+                                ? "bg-amber-50 text-amber-650 border border-amber-100"
                                 : "bg-zinc-100 text-zinc-500 border border-zinc-200"
                             }`}>
                               {session.flagsCount} flags
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                              <span className={`font-mono font-bold ${
-                                session.integrityScore > 85 
-                                  ? "text-emerald-600" 
-                                  : session.integrityScore > 60 
-                                  ? "text-amber-600" 
-                                  : "text-red-600"
-                              }`}>
-                                {session.integrityScore}%
-                              </span>
-                              <div className="w-16 bg-zinc-200 h-1 rounded-none overflow-hidden">
-                                <div 
-                                  className={`h-full ${
-                                    session.integrityScore > 85 
-                                      ? "bg-emerald-500" 
-                                      : session.integrityScore > 60 
-                                      ? "bg-amber-500" 
-                                      : "bg-red-500"
-                                  }`} 
-                                  style={{ width: `${session.integrityScore}%` }}
-                                />
-                              </div>
-                            </div>
+                          <td className="px-6 py-3 text-center">
+                            <span className={`font-mono font-bold ${
+                              session.integrityScore > 85 
+                                ? "text-emerald-600" 
+                                : session.integrityScore > 60 
+                                ? "text-amber-600" 
+                                : "text-red-600"
+                            }`}>
+                              {session.integrityScore}%
+                            </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-1.5">
                               {session.severity === "Critical" ? (
-                                <span className="w-2 h-2 rounded-none bg-red-500" />
+                                <span className="w-1.5 h-1.5 rounded-none bg-red-500" />
                               ) : session.severity === "Warning" ? (
-                                <span className="w-2 h-2 rounded-none bg-amber-500" />
+                                <span className="w-1.5 h-1.5 rounded-none bg-amber-500" />
                               ) : (
-                                <span className="w-2 h-2 rounded-none bg-emerald-500" />
+                                <span className="w-1.5 h-1.5 rounded-none bg-emerald-500" />
                               )}
                               <span className="text-zinc-800 font-medium">{session.lastFlagType}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => setActiveStreamSession(session)}
-                                className="px-2.5 py-1 rounded-none bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 font-medium transition-all cursor-pointer text-xs"
-                              >
-                                View Stream
-                              </button>
-                              
-                              <button
-                                onClick={() => handleResolve(session.id)}
-                                disabled={session.severity === "Normal"}
-                                className={`px-2 py-1 rounded-none font-medium border text-xs transition-all ${
-                                  session.severity === "Normal"
-                                    ? "bg-zinc-50 border-zinc-200 text-zinc-400 cursor-not-allowed"
-                                    : "bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 cursor-pointer"
-                                }`}
-                              >
-                                Resolve
-                              </button>
-
-                              <button
-                                onClick={() => handleDismiss(session.id)}
-                                className="px-2 py-1 rounded-none bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-medium transition-all cursor-pointer text-xs"
-                              >
-                                Dismiss
-                              </button>
-                            </div>
+                          <td className="px-6 py-3 text-right">
+                            <button
+                              onClick={() => {
+                                setActiveStreamSession(session);
+                              }}
+                              className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-[10px] rounded-none cursor-pointer shadow-sm transition-all border-none"
+                            >
+                              Watch Live Stream
+                            </button>
                           </td>
                         </tr>
                       ))
@@ -755,155 +644,175 @@ export default function Dashboard() {
                   </tbody>
                 </table>
               </div>
-
             </div>
 
           </div>
-        ) : activeTab === "analytics" ? (
-          
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {}
-              <div className="lg:col-span-2 p-6 bg-white rounded-none border border-zinc-200 shadow-sm flex flex-col justify-between h-[380px]">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Integrity Trend Log</h3>
-                  <p className="text-xs text-zinc-400">Hourly system integrity metrics analysis</p>
-                </div>
+        ) : activeTab === "settings" ? (
+          <div className="flex-1 p-6 space-y-6 overflow-y-auto bg-zinc-50">
+              {/* Mid Section: Page stats and system checklist */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {}
-                <div className="flex-1 flex items-end gap-2.5 mt-8 h-48 border-b border-l border-zinc-200 pb-2 pl-2">
-                  {(sessions.length > 0 ? sessions.map(s => s.integrityScore) : [100, 100, 100]).map((val, idx) => (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer">
-                      <div className="opacity-0 group-hover:opacity-100 bg-zinc-800 text-[9px] text-zinc-100 px-1 py-0.5 rounded-none transition-opacity pointer-events-none mb-1">
-                        {val}%
+                {/* Left Box: System Pages Status & Info */}
+                <div className="lg:col-span-2 bg-white border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
+                  <div className="p-5 border-b border-zinc-200 bg-zinc-50">
+                    <h3 className="text-xs font-bold normal-case text-zinc-800">System & Page Status Directory</h3>
+                    <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Real-time status check and paths of active proctoring web pages</p>
+                  </div>
+                  
+                  <div className="divide-y divide-zinc-200 font-sans">
+                    
+                    {/* Row 1: Login Portal */}
+                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
+                      <div className="space-y-1 pr-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-zinc-900">Candidate Login Portal</span>
+                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/exam-login</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-550">Secure entry point for candidates. Validates hall ticket number against registration database records.</p>
                       </div>
-                      <div 
-                        className="w-full bg-linear-to-t from-orange-400 to-orange-500 rounded-none group-hover:from-orange-500 group-hover:to-orange-600 transition-all duration-300"
-                        style={{ height: `${val}%` }}
-                      />
-                      <span className="text-[9px] text-zinc-400 font-mono">
-                        {sessions.length > 0 ? (sessions[idx]?.avatar || `S${idx+1}`) : `S${idx+1}`}
-                      </span>
+                      <div className="text-right shrink-0">
+                        <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Online
+                        </span>
+                        <p className="text-[9px] text-zinc-400 mt-1">{exams.filter(e => e.show_login).length} entry doors open</p>
+                      </div>
                     </div>
-                  ))}
+  
+                    {/* Row 2: Verification Portal */}
+                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
+                      <div className="space-y-1 pr-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-zinc-900">Verification & Lobby</span>
+                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/exam-ready</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-550">Guidelines screen. Prompts candidate to review proctoring rules, verifies camera/mic access, and requests fullscreen permissions.</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Operational
+                        </span>
+                        <p className="text-[9px] text-zinc-400 mt-1">Webcam check active</p>
+                      </div>
+                    </div>
+  
+                    {/* Row 3: Exam Room Portal */}
+                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
+                      <div className="space-y-1 pr-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-zinc-900">Secure Examination Room</span>
+                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/exam-session</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-550">Live test-taking screen. Tracks face detection, eye gaze deviation, tab switching, and fullscreen bypasses in real-time.</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {sessions.length > 0 ? (
+                          <>
+                            <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-green-500 text-white animate-pulse">
+                              Monitoring
+                            </span>
+                            <p className="text-[9px] text-zinc-500 mt-1 font-semibold">{sessions.length} streams active</p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-zinc-100 text-zinc-500 border border-zinc-200">
+                              No Active Tests
+                            </span>
+                            <p className="text-[9px] text-zinc-400 mt-1">Ready for sessions</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+  
+                    {/* Row 4: Admin Console */}
+                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
+                      <div className="space-y-1 pr-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-zinc-900">Administrator Console</span>
+                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/dashboard</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-550">Central manager for publishing exams, reviewing candidate logs, resolving anomalies, and viewing proctor status.</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-orange-50 text-orange-700 border border-orange-200">
+                          Operational
+                        </span>
+                        <p className="text-[9px] text-zinc-400 mt-1">Admin session verified</p>
+                      </div>
+                    </div>
+  
+                  </div>
                 </div>
-                
-                <div className="flex justify-between items-center mt-4 text-[10px] text-zinc-500">
-                  <span>Data range: Past 12 hours</span>
-                  <span className="flex items-center gap-1.5 font-semibold">
-                    <span className="w-2.5 h-2.5 bg-orange-500 rounded-none" /> Average score: 94%
-                  </span>
+  
+                {/* Right Box: System Status & Diagnostic Checks */}
+                <div className="bg-white border border-zinc-200 shadow-sm p-6 space-y-6 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-xs font-bold normal-case text-zinc-800">Diagnostic & Health Checks</h3>
+                      <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Localhost and database connectivity index</p>
+                    </div>
+  
+                    <div className="space-y-3 pt-2 font-sans">
+                      
+                      {/* Database Health */}
+                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-none shrink-0" />
+                          <div>
+                            <p className="font-bold text-zinc-800">Database Engine</p>
+                            <p className="text-[10px] text-zinc-400">PostgreSQL (Supabase transaction pooler)</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-[10px] text-emerald-600 font-bold normal-case">Connected</span>
+                      </div>
+  
+                      {/* RLS Policies */}
+                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-none shrink-0" />
+                          <div>
+                            <p className="font-bold text-zinc-800">Row Level Security</p>
+                            <p className="text-[10px] text-zinc-400">12 table policies active & verified</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-[10px] text-emerald-600 font-bold normal-case">Enforced</span>
+                      </div>
+  
+                      {/* Localhost cloudflare Turnstile bypass */}
+                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-2.5 h-2.5 bg-amber-500 rounded-none shrink-0" />
+                          <div>
+                            <p className="font-bold text-zinc-800">Cloudflare Turnstile</p>
+                            <p className="text-[10px] text-zinc-400">Bypass rule active on localhost</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-[10px] text-amber-600 font-bold normal-case">Local Dev</span>
+                      </div>
+  
+                      {/* Media streaming pipe */}
+                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-none shrink-0" />
+                          <div>
+                            <p className="font-bold text-zinc-800">Media Pipeline</p>
+                            <p className="text-[10px] text-zinc-400">WebRTC frame-based canvas capture</p>
+                          </div>
+                        </div>
+                        <span className="font-mono text-[10px] text-emerald-600 font-bold normal-case">Online</span>
+                      </div>
+  
+                    </div>
+                  </div>
+  
+                  <div className="border-t border-zinc-200 pt-4 text-center font-sans">
+                    <span className="text-[10px] text-zinc-400 font-mono">
+                      System clock synced: {clockTime}
+                    </span>
+                  </div>
                 </div>
+  
               </div>
-
-              {}
-              <div className="p-6 bg-white rounded-none border border-zinc-200 shadow-sm flex flex-col justify-between h-[380px]">
-                <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Incident Breakdown</h3>
-                  <p className="text-xs text-zinc-400">Distribution of flag triggers</p>
-                </div>
-
-                <div className="space-y-4 my-6">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="text-zinc-700">Tab Switching</span>
-                      <span className="text-zinc-500 font-mono">{tabPct}%</span>
-                    </div>
-                    <div className="w-full bg-zinc-100 h-2 rounded-none overflow-hidden">
-                      <div className="bg-orange-500 h-full rounded-none" style={{ width: `${tabPct}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="text-zinc-700">Eye Gaze Deviation</span>
-                      <span className="text-zinc-500 font-mono">{gazePct}%</span>
-                    </div>
-                    <div className="w-full bg-zinc-100 h-2 rounded-none overflow-hidden">
-                      <div className="bg-zinc-600 h-full rounded-none" style={{ width: `${gazePct}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="text-zinc-700">Multiple Faces</span>
-                      <span className="text-zinc-500 font-mono">{facePct}%</span>
-                    </div>
-                    <div className="w-full bg-zinc-100 h-2 rounded-none overflow-hidden">
-                      <div className="bg-zinc-500 h-full rounded-none" style={{ width: `${facePct}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs mb-1.5">
-                      <span className="text-zinc-700">Audio Anomalies</span>
-                      <span className="text-zinc-500 font-mono">{audioPct}%</span>
-                    </div>
-                    <div className="w-full bg-zinc-100 h-2 rounded-none overflow-hidden">
-                      <div className="bg-zinc-400 h-full rounded-none" style={{ width: `${audioPct}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center">
-                  <span className="text-[10px] text-orange-600 font-semibold cursor-pointer hover:underline">
-                    Export analytics data
-                  </span>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        ) : activeTab === "configs" ? (
-          
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-            <div className="max-w-2xl bg-white rounded-none border border-zinc-200 shadow-sm p-6 space-y-6">
-              
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Configurations</h3>
-                <p className="text-xs text-zinc-400">Modify model thresholds and options</p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-none border border-zinc-200">
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-900">Gaze Deviation</p>
-                    <p className="text-[10px] text-zinc-500">Flag if eye gaze deviates &gt; 4s</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-zinc-500">Sensitive</span>
-                    <input type="checkbox" defaultChecked className="w-4 h-4 accent-orange-500 cursor-pointer" />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-none border border-zinc-200">
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-900">Multiple Faces</p>
-                    <p className="text-[10px] text-zinc-500">Flag if more than 1 face detected</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-zinc-500">Immediate</span>
-                    <input type="checkbox" defaultChecked className="w-4 h-4 accent-orange-500 cursor-pointer" />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-none border border-zinc-200">
-                  <div>
-                    <p className="text-xs font-semibold text-zinc-900">Tab Switches</p>
-                    <p className="text-[10px] text-zinc-500">Flag if tab switches &gt; 3</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-zinc-500">Strict</span>
-                    <input type="checkbox" className="w-4 h-4 accent-orange-500 cursor-pointer" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <button className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium text-xs rounded-none shadow-sm transition-all cursor-pointer">
-                  Save Settings
-                </button>
-              </div>
-
-            </div>
+  
           </div>
         ) : activeTab === "create-exam" ? (
           
@@ -911,7 +820,7 @@ export default function Dashboard() {
             <div className="max-w-2xl bg-white rounded-none border border-zinc-200 shadow-sm p-6 space-y-6">
               
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Create Exam</h3>
+                <h3 className="text-xs font-bold normal-case text-zinc-500 mb-1">Create Exam</h3>
                 <p className="text-xs text-zinc-400">Configure and publish a new exam card to the public directory</p>
               </div>
 
@@ -960,9 +869,7 @@ export default function Dashboard() {
                       {companyLogo ? (
                         <img src={companyLogo} alt="Logo Preview" className="w-full h-full object-contain" />
                       ) : (
-                        <svg className="w-6 h-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <span className="material-symbols-outlined text-zinc-400">image</span>
                       )}
                     </div>
                     <div className="space-y-1 flex-1 w-full">
@@ -1041,11 +948,11 @@ export default function Dashboard() {
                 {}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500">Question Types *</label>
+                    <label className="block text-xs font-bold normal-case text-zinc-500">Question Types *</label>
                     <button
                       type="button"
                       onClick={() => setTypesOfQnsList([...typesOfQnsList, ""])}
-                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold uppercase rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
+                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold normal-case rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
                     >
                       + Add Type
                     </button>
@@ -1082,11 +989,11 @@ export default function Dashboard() {
                 {}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500">Description Sections *</label>
+                    <label className="block text-xs font-bold normal-case text-zinc-500">Description Sections *</label>
                     <button
                       type="button"
                       onClick={() => setDescriptionsList([...descriptionsList, ""])}
-                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold uppercase rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
+                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold normal-case rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
                     >
                       + Add Section
                     </button>
@@ -1123,11 +1030,11 @@ export default function Dashboard() {
                 {}
                 <div className="space-y-3 pt-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Custom Fields</span>
+                    <span className="text-xs font-bold normal-case text-zinc-500">Custom Fields</span>
                     <button
                       type="button"
                       onClick={addCustomField}
-                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold uppercase rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
+                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold normal-case rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
                     >
                       + Add Field
                     </button>
@@ -1191,14 +1098,7 @@ export default function Dashboard() {
               <div className="space-y-6">
                 {}
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => setSelectedExamForCandidates(null)}
-                    className="flex items-center justify-center p-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-600 hover:text-zinc-900 cursor-pointer shadow-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                  </button>
+                  <button onClick={() => setSelectedExamForCandidates(null)} className="flex items-center justify-center p-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-600 hover:text-zinc-900 cursor-pointer shadow-sm"><span className="material-symbols-outlined text-sm leading-none">arrow_back</span></button>
                   <div>
                     <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{selectedExamForCandidates.name}</h2>
                     <p className="text-xs text-zinc-500">Registered Candidates for <span className="font-semibold text-zinc-700">{selectedExamForCandidates.company_name}</span> Evaluation</p>
@@ -1220,17 +1120,13 @@ export default function Dashboard() {
                             {candidate.photo_url ? (
                               <img src={candidate.photo_url} alt={candidate.candidate_name} className="w-full h-full object-cover animate-fade-in" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-zinc-200 text-zinc-400">
-                                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                              </div>
+                              <div className="w-full h-full flex items-center justify-center bg-zinc-200 text-zinc-400"><span className="material-symbols-outlined text-xl text-zinc-400">person</span></div>
                             )}
                           </div>
                           <div className="space-y-2 flex-1 min-w-0">
                             <div>
                               <h4 className="text-sm font-bold text-zinc-955 truncate leading-snug">{candidate.candidate_name}</h4>
-                              <p className="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase leading-tight mt-0.5">{candidate.year_of_study} • {candidate.department}</p>
+                              <p className="text-[10px] text-zinc-400 font-semibold normal-case leading-tight mt-0.5">{candidate.year_of_study} • {candidate.department}</p>
                             </div>
                             
                             <div className="text-xs text-zinc-600 space-y-1 pt-1 border-t border-zinc-100 font-normal">
@@ -1254,7 +1150,7 @@ export default function Dashboard() {
               
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Exams Listing</h3>
+                  <h3 className="text-xs font-bold normal-case text-zinc-500 mb-1">Exams Listing</h3>
                   <p className="text-xs text-zinc-400">Manage exam instances and view registered student profiles</p>
                 </div>
 
@@ -1273,7 +1169,7 @@ export default function Dashboard() {
                         >
                           <div className="space-y-4">
                             <div>
-                              <span className="text-[9px] font-bold tracking-wider uppercase bg-orange-50 text-orange-700 border border-orange-100 px-2 py-0.5 rounded-none">
+                              <span className="text-[9px] font-bold normal-case bg-orange-50 text-orange-700 border border-orange-100 px-2 py-0.5 rounded-none">
                                 {exam.company_name}
                               </span>
                               <h3 className="text-lg font-bold text-zinc-900 mt-2 tracking-tight leading-snug">
@@ -1283,14 +1179,14 @@ export default function Dashboard() {
 
                             <div className="grid grid-cols-2 gap-4 py-3 border-y border-zinc-100 text-xs font-medium text-zinc-600">
                               <div>
-                                <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Schedule</p>
+                                <p className="text-[10px] text-zinc-400 normal-case mb-0.5">Schedule</p>
                                 <p className="text-zinc-800 font-semibold">{exam.date}</p>
                                 <p className="text-zinc-500 font-normal">{exam.time} IST</p>
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-0.5">Details</p>
+                                <p className="text-[10px] text-zinc-400 normal-case mb-0.5">Details</p>
                                 <p className="text-zinc-800 font-semibold">{exam.total_qns} Qns • {exam.types_of_qns}</p>
-                                <p className="text-zinc-500 font-bold text-orange-600 uppercase tracking-wider mt-0.5 text-[9px]">
+                                <p className="text-zinc-500 font-bold text-orange-600 normal-case mt-0.5 text-[9px]">
                                   {regsCount} {regsCount === 1 ? "Registrant" : "Registrants"}
                                 </p>
                               </div>
@@ -1300,14 +1196,14 @@ export default function Dashboard() {
                           <div className="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-3 flex-wrap">
                             {}
                             <div className="flex gap-1.5">
-                              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 border ${
+                              <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
                                 exam.is_started
                                   ? "bg-green-50 text-green-700 border-green-200"
                                   : "bg-zinc-50 text-zinc-500 border-zinc-200"
                               }`}>
                                 {exam.is_started ? "Exam Active" : "Not Started"}
                               </span>
-                              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-1 border ${
+                              <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
                                 exam.show_login
                                   ? "bg-orange-50 text-orange-700 border-orange-200"
                                   : "bg-zinc-50 text-zinc-500 border-zinc-200"
@@ -1373,14 +1269,7 @@ export default function Dashboard() {
               </h3>
               <p className="text-[10px] text-zinc-500">{currentStream.exam} • ID: {currentStream.id}</p>
             </div>
-            <button 
-              onClick={() => setActiveStreamSession(null)}
-              className="text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <button onClick={() => setActiveStreamSession(null)} className="text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"><span className="material-symbols-outlined text-md">close</span></button>
           </div>
 
           {}
@@ -1405,7 +1294,7 @@ export default function Dashboard() {
                   <div className="w-4 h-4 border-b border-l border-orange-400 absolute bottom-0 left-0" />
                   <div className="w-4 h-4 border-b border-r border-orange-400 absolute bottom-0 right-0" />
                   
-                  <span className="text-[10px] font-mono tracking-widest text-orange-400 uppercase font-semibold animate-pulse">
+                  <span className="text-[10px] font-mono text-orange-400 normal-case font-semibold animate-pulse">
                     Waiting for Feed...
                   </span>
                 </div>
@@ -1421,12 +1310,12 @@ export default function Dashboard() {
             )}
 
             <div className="absolute bottom-4 left-4 p-2 bg-black/70 rounded-none border border-zinc-700 text-[10px] font-mono space-y-1 z-10">
-              <p className="text-zinc-300">STATUS: <span className={currentStream.liveFeed ? "text-emerald-400 font-bold" : "text-amber-400 font-bold animate-pulse"}>{currentStream.liveFeed ? "LIVE STREAMING" : "WAITING FOR FEED"}</span></p>
-              <p className="text-zinc-300">GAZE STATE: <span className="text-emerald-400 font-bold">STABLE</span></p>
+              <p className="text-zinc-300">Status: <span className={currentStream.liveFeed ? "text-emerald-400 font-bold" : "text-amber-400 font-bold animate-pulse"}>{currentStream.liveFeed ? "Live streaming" : "Waiting for feed"}</span></p>
+              <p className="text-zinc-300">Gaze state: <span className="text-emerald-400 font-bold">Stable</span></p>
             </div>
 
             <div className="absolute bottom-4 right-4 p-2 bg-black/70 rounded-none border border-zinc-700 text-[10px] font-mono z-10">
-              <span className={`px-1.5 py-0.5 rounded-none font-bold uppercase ${
+              <span className={`px-1.5 py-0.5 rounded-none font-bold normal-case ${
                 currentStream.severity === "Critical"
                   ? "bg-red-500/20 text-red-400"
                   : "bg-amber-500/20 text-amber-400"

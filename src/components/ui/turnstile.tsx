@@ -18,6 +18,17 @@ export function Turnstile({ onSuccess, onError, onExpire }: TurnstileProps) {
   });
 
   useEffect(() => {
+    // On localhost, skip Cloudflare entirely and auto-pass with a bypass token
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+
+    if (isLocalhost) {
+      callbacksRef.current.onSuccess("LOCALHOST_BYPASS_TOKEN");
+      return;
+    }
+
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     if (!siteKey) {
       return;

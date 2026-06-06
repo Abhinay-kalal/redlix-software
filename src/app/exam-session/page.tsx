@@ -1168,6 +1168,30 @@ export default function ExamSessionPage() {
     );
   }
 
+  if (setupDone && !fullscreen) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center font-sans gap-6 p-6 select-none">
+        <div className="w-16 h-16 bg-orange-500/10 border border-orange-500/20 text-orange-500 rounded-full flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9m5.25 11.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+          </svg>
+        </div>
+        <div className="text-center space-y-2 max-w-md">
+          <h1 className="text-white font-bold text-lg">Full Screen Mode Required</h1>
+          <p className="text-zinc-400 text-xs leading-relaxed">
+            This examination must be conducted in full screen mode to ensure security and prevent unauthorized access.
+          </p>
+        </div>
+        <button
+          onClick={requestFullscreen}
+          className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-none shadow-sm transition-colors cursor-pointer border-none"
+        >
+          Enter Full Screen Mode
+        </button>
+      </div>
+    );
+  }
+
   const currentQuestion = QUESTIONS[currentIndex];
   const activeAnswer = answers[currentQuestion.id] || "";
 

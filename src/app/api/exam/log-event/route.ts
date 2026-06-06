@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -23,6 +17,19 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      {
+        global: {
+          headers: {
+            "x-candidate-hall-ticket": sessionId,
+          },
+        },
+      }
+    );
 
     await supabase.from("security_logs").insert({
       session_id: sessionId,
