@@ -710,18 +710,44 @@ export default function ExamSessionPage() {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL("image/jpeg", 0.5);
 
-        await supabase
-          .from("sessions")
-          .update({ live_feed: dataUrl })
-          .eq("id", session.hallTicketNumber);
+        await fetch("/api/exam/upload-feed", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: session.hallTicketNumber,
+            image: dataUrl,
+          }),
+        });
       } catch (err) {
         console.error("Error uploading camera snapshot:", err);
       }
     };
 
-    
     const interval = setInterval(uploadFrame, 2500);
     return () => clearInterval(interval);
+  }, [setupDone, isSubmitted, session]);
+
+  useEffect(() => {
+    if (!setupDone || isSubmitted || !session) return;
+
+    const presenceChannel = supabase.channel("exam-presence-global");
+
+    presenceChannel
+      .subscribe(async (status: any) => {
+        if (status === "SUBSCRIBED") {
+          await presenceChannel.track({
+            online_at: new Date().toISOString(),
+            student_id: session.hallTicketNumber,
+            student_name: session.candidateName,
+          });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
   }, [setupDone, isSubmitted, session]);
 
   

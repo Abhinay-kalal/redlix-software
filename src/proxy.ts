@@ -5,11 +5,58 @@ const rateLimitMap = new Map<string, number[]>();
 const LIMIT_WINDOW = 30000; 
 const MAX_REQUESTS = 60;    
 
+const strictRateLimitMap = new Map<string, number[]>();
+const STRICT_LIMIT_WINDOW = 60000; 
+const STRICT_MAX_REQUESTS = 6;     
+
 export async function proxy(request: NextRequest) {
   const ip = (request as any).ip || request.headers.get("x-forwarded-for") || "unknown";
   const now = Date.now();
+  const url = request.nextUrl.clone();
+  const path = url.pathname;
 
-  // 1. Rate Limiting Logic
+  // 1. Strict Rate Limiting for Public Candidate Endpoints
+  if (
+    path === "/api/exam/verify" ||
+    path === "/api/exam/start" ||
+    path === "/api/register" ||
+    path === "/api/register/edit"
+  ) {
+    let strictTimestamps = strictRateLimitMap.get(ip) || [];
+    strictTimestamps = strictTimestamps.filter((t) => now - t < STRICT_LIMIT_WINDOW);
+
+    if (strictTimestamps.length >= STRICT_MAX_REQUESTS) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "Too Many Requests",
+          message: "Too many verification or access attempts. Please try again after a minute.",
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(Math.ceil(STRICT_LIMIT_WINDOW / 1000)),
+          },
+        }
+      );
+    }
+
+    strictTimestamps.push(now);
+    strictRateLimitMap.set(ip, strictTimestamps);
+
+    if (strictRateLimitMap.size > 1000) {
+      for (const [key, val] of strictRateLimitMap.entries()) {
+        const active = val.filter((t) => now - t < STRICT_LIMIT_WINDOW);
+        if (active.length === 0) {
+          strictRateLimitMap.delete(key);
+        } else {
+          strictRateLimitMap.set(key, active);
+        }
+      }
+    }
+  }
+
+  // 2. Global Rate Limiting Logic
   let timestamps = rateLimitMap.get(ip) || [];
   timestamps = timestamps.filter((t) => now - t < LIMIT_WINDOW);
 
@@ -44,9 +91,6 @@ export async function proxy(request: NextRequest) {
   }
 
   // 2. Admin Route Protection Logic
-  const url = request.nextUrl.clone();
-  const path = url.pathname;
-
   if (path.startsWith("/admin") || path.startsWith("/dashboard") || path.startsWith("/api/admin")) {
     const host = request.headers.get("host") || "";
     const isLocal = host.includes("localhost") || host.includes("127.0.0.1") || host.includes("[::1]");

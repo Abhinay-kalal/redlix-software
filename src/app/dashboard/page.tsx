@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [onlineStudents, setOnlineStudents] = useState<Set<string>>(new Set());
   const [selectedSeverity, setSelectedSeverity] = useState<string>("All");
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -286,8 +287,25 @@ export default function Dashboard() {
       )
       .subscribe();
 
+    const presenceChannel = supabase.channel("exam-presence-global");
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState();
+        const onlineIds = new Set<string>();
+        Object.values(state).forEach((presences: any) => {
+          presences.forEach((presence: any) => {
+            if (presence.student_id) {
+              onlineIds.add(presence.student_id);
+            }
+          });
+        });
+        setOnlineStudents(onlineIds);
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(presenceChannel);
     };
   }, [isAuthenticated]);
 
@@ -660,7 +678,20 @@ export default function Dashboard() {
                                 {session.avatar}
                               </div>
                               <div>
-                                <p className="font-semibold text-zinc-900">{session.student}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold text-zinc-900">{session.student}</p>
+                                  {onlineStudents.has(session.id) ? (
+                                    <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-250 font-bold uppercase rounded-none shrink-0 scale-90">
+                                      <span className="w-1 h-1 rounded-full bg-emerald-600 animate-pulse" />
+                                      Online
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-[9px] bg-red-50 text-red-650 px-1 border border-red-150 font-bold uppercase rounded-none shrink-0 scale-90">
+                                      <span className="w-1 h-1 rounded-full bg-red-500" />
+                                      Offline
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-[10px] text-zinc-400">{session.email}</p>
                               </div>
                             </div>
@@ -1338,8 +1369,17 @@ export default function Dashboard() {
           <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
             <div>
               <h3 className="text-sm font-bold text-zinc-950 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-none bg-red-600 animate-pulse" />
-                Active Stream: {currentStream.student}
+                {onlineStudents.has(currentStream.id) ? (
+                  <>
+                    <span className="w-2 h-2 rounded-none bg-emerald-600 animate-pulse" />
+                    Active Stream: {currentStream.student} (Online)
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 rounded-none bg-red-600 animate-pulse" />
+                    Active Stream: {currentStream.student} (Offline)
+                  </>
+                )}
               </h3>
               <p className="text-[10px] text-zinc-500">{currentStream.exam} • ID: {currentStream.id}</p>
             </div>
