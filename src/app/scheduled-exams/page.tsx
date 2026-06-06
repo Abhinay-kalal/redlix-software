@@ -60,20 +60,13 @@ export default function ScheduledExams() {
       
       {}
       <header className="bg-orange-500 border-b border-orange-600 py-3.5 px-6 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex items-center justify-start">
           {}
           <nav className="text-xs text-orange-100 font-semibold flex items-center gap-1.5">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-orange-200">/</span>
             <span className="text-white">Scheduled Exams</span>
           </nav>
-          <Link 
-            href="/register/edit" 
-            className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold py-1.5 px-3 border border-orange-400 rounded-none shadow-sm transition-all flex items-center gap-1 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[12px] leading-none">edit</span>
-            Edit Registration
-          </Link>
         </div>
       </header>
 
