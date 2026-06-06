@@ -116,7 +116,11 @@ export default function ScheduledExams() {
               >
                 {}
                 <div className="w-full md:w-56 h-48 md:h-auto bg-zinc-100 shrink-0 relative overflow-hidden border-b md:border-b-0 md:border-r border-zinc-200">
-                  <img src="/exam-cover.png" alt="Exam Cover" className="w-full h-full object-cover" />
+                  <img 
+                    src={exam.name.toLowerCase().includes("data analytics") ? "/analytics-cover.png" : "/exam-cover.png"} 
+                    alt="Exam Cover" 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
 
                 {}
