@@ -60,13 +60,20 @@ export default function ScheduledExams() {
       
       {}
       <header className="bg-orange-500 border-b border-orange-600 py-3.5 px-6 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-start">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           {}
           <nav className="text-xs text-orange-100 font-semibold flex items-center gap-1.5">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-orange-200">/</span>
             <span className="text-white">Scheduled Exams</span>
           </nav>
+          <Link 
+            href="/register/edit" 
+            className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-bold py-1.5 px-3 border border-orange-400 rounded-none shadow-sm transition-all flex items-center gap-1 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[12px] leading-none">edit</span>
+            Edit Registration
+          </Link>
         </div>
       </header>
 
@@ -185,6 +192,12 @@ export default function ScheduledExams() {
                       {exam.show_login ? "Already registered? Enter your hall ticket to start." : "Registration is open. Entry opens closer to scheduled time."}
                     </p>
                     <div className="flex gap-2">
+                      <Link 
+                        href="/register/edit"
+                        className="px-4 py-2 border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer text-center inline-block"
+                      >
+                        Edit Details
+                      </Link>
                       {exam.show_login && (
                         <Link 
                           href={`/exam-login?examId=${exam.id}`}
