@@ -149,16 +149,6 @@ export default function ExamPage() {
 
   const { exam, candidateName, hallTicketNumber, registrationNumber, photoUrl } = session;
 
-  const formattedDate = exam.date
-    ? new Date(exam.date).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })
-    : exam.date;
-
-  const descriptions = typeof exam.description === "string"
-    ? exam.description.split("\n").filter((d) => d.trim())
-    : [];
-
-  const examStarted = countdown.total <= 0 && countdown.total !== -1;
-
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 flex flex-col">
 
@@ -248,52 +238,6 @@ export default function ExamPage() {
             </button>
           </div>
         )}
-
-        {}
-        <div className="bg-white border border-zinc-200 shadow-sm p-4 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-zinc-100 pb-3">
-            <div>
-              <span className="text-[10px] font-bold tracking-widest uppercase text-orange-600">Examination Details</span>
-              <h1 className="text-base font-bold text-zinc-900 mt-0.5">{exam.name}</h1>
-              <p className="text-xs text-zinc-500 mt-0.5">{exam.company_name}</p>
-            </div>
-            <span className="bg-orange-50 text-orange-700 border border-orange-100 text-[10px] font-bold uppercase tracking-wider px-3 py-1 shrink-0">
-              Upcoming
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div><p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Date</p><p className="text-xs font-medium text-zinc-800">{formattedDate}</p></div>
-            <div><p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Time</p><p className="text-xs font-medium text-zinc-800">{exam.time}</p></div>
-            <div><p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Questions</p><p className="text-xs font-medium text-zinc-800">{exam.total_qns}</p></div>
-            <div><p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Question Types</p><p className="text-xs font-medium text-zinc-800">{exam.types_of_qns}</p></div>
-          </div>
-
-          {descriptions.length > 0 && (
-            <div className="border-t border-zinc-100 pt-3 space-y-1.5">
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Exam Description</p>
-              {descriptions.map((line, i) => <p key={i} className="text-xs text-zinc-700 leading-relaxed">{line}</p>)}
-            </div>
-          )}
-
-          <div className="border-t border-zinc-100 pt-3 space-y-1.5">
-            <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Important Instructions</p>
-            <ul className="space-y-1">
-              {[
-                "Do not close or switch tabs during the examination.",
-                "Ensure your camera and microphone are enabled before starting.",
-                "Any suspicious activity may result in disqualification.",
-                "Read each question carefully before answering.",
-                "Submit your exam before the time limit expires.",
-              ].map((inst, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-zinc-600">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0 mt-1.5" />
-                  {inst}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
 
       </main>
 
