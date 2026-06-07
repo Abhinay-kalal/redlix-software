@@ -330,7 +330,7 @@ export default function ExamSessionPage() {
         if (parsed.exam.id === 4 || parsed.exam.name.toLowerCase().includes("student forge")) {
           const sectionA = loadedQuestions.filter((q) => q.section === "A");
           const sectionB = loadedQuestions.filter((q) => q.section === "B");
-          const shuffledA = shuffleQuestions(sectionA, parsed.hallTicketNumber);
+          const shuffledA = shuffleQuestions(sectionA, parsed.hallTicketNumber).slice(0, 30);
           const shuffledB = shuffleQuestions(sectionB, parsed.hallTicketNumber + "-B");
           shuffledA.forEach((q, idx) => {
             q.number = idx + 1;
@@ -930,7 +930,7 @@ export default function ExamSessionPage() {
       ...prev,
       [questions[currentIndex].id]: "marked",
     }));
-    if (currentIndex < 19) {
+    if (currentIndex < questions.length - 1) {
       handleQuestionSelect(currentIndex + 1);
     }
   };
@@ -954,7 +954,7 @@ export default function ExamSessionPage() {
       [qId]: hasValue ? "answered" : "not_answered",
     }));
 
-    if (currentIndex < 19) {
+    if (currentIndex < questions.length - 1) {
       handleQuestionSelect(currentIndex + 1);
     }
   };
@@ -1378,7 +1378,7 @@ export default function ExamSessionPage() {
                 onClick={handleSaveAndNext}
                 className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
               >
-                {currentIndex === 19 ? "Save Response" : "Save & Next"}
+                {currentIndex === questions.length - 1 ? "Save Response" : "Save & Next"}
               </button>
             </div>
           </div>

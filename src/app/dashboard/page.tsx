@@ -1519,7 +1519,7 @@ export default function Dashboard() {
         const sectionA = candidateQuestions.filter((q) => q.section === "A");
         const sectionB = candidateQuestions.filter((q) => q.section === "B");
         if (candidate.hall_ticket_number) {
-          const shuffledA = shuffleQuestions(sectionA, candidate.hall_ticket_number);
+          const shuffledA = shuffleQuestions(sectionA, candidate.hall_ticket_number).slice(0, 30);
           const shuffledB = shuffleQuestions(sectionB, candidate.hall_ticket_number + "-B");
           shuffledA.forEach((q, idx) => {
             q.number = idx + 1;
