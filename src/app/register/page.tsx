@@ -16,6 +16,7 @@ interface ExamDetails {
   time: string;
   total_qns: number;
   types_of_qns: string;
+  registration_closed?: boolean;
 }
 
 function RegisterFormContent() {
@@ -57,7 +58,7 @@ function RegisterFormContent() {
       try {
         const { data, error } = await supabase
           .from("exams")
-          .select("id, name, company_name, date, time, total_qns, types_of_qns, company_logo")
+          .select("id, name, company_name, date, time, total_qns, types_of_qns, company_logo, registration_closed")
           .eq("id", Number(examId))
           .single();
         
@@ -195,6 +196,21 @@ function RegisterFormContent() {
       <div className="py-16 text-center max-w-md mx-auto bg-white border border-zinc-200 p-8 shadow-sm">
         <p className="text-red-600 text-sm font-bold mb-4">Invalid Examination ID</p>
         <p className="text-zinc-500 text-xs mb-6">The exam publication reference is missing or invalid. Please check the public schedule list again.</p>
+        <Link 
+          href="/scheduled-exams"
+          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-900 text-white font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none"
+        >
+          Back to Directory
+        </Link>
+      </div>
+    );
+  }
+
+  if (exam && exam.registration_closed) {
+    return (
+      <div className="py-16 text-center max-w-md mx-auto bg-white border border-zinc-200 p-8 shadow-sm">
+        <p className="text-red-655 text-sm font-bold mb-4">Registration Closed</p>
+        <p className="text-zinc-500 text-xs mb-6">Registrations for this examination have been closed. No new candidate entries are being accepted.</p>
         <Link 
           href="/scheduled-exams"
           className="px-4 py-2 bg-zinc-800 hover:bg-zinc-900 text-white font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none"

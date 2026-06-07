@@ -16,6 +16,7 @@ interface Exam {
   company_name: string;
   custom_fields: Record<string, string>;
   show_login?: boolean;
+  registration_closed?: boolean;
 }
 
 export default function ScheduledExams() {
@@ -202,12 +203,18 @@ export default function ScheduledExams() {
                           Enter Exam →
                         </Link>
                       )}
-                      <Link 
-                        href={`/register?examId=${exam.id}`}
-                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer text-center inline-block"
-                      >
-                        Register for Exam
-                      </Link>
+                      {exam.registration_closed ? (
+                        <span className="px-4 py-2 bg-zinc-300 text-zinc-500 font-bold text-xs rounded-none cursor-not-allowed text-center inline-block">
+                          Registration Closed
+                        </span>
+                      ) : (
+                        <Link 
+                          href={`/register?examId=${exam.id}`}
+                          className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer text-center inline-block"
+                        >
+                          Register for Exam
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
