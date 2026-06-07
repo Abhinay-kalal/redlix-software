@@ -77,10 +77,23 @@ export default function StudentRegisterPage() {
         return;
       }
 
+      // Check for existing registration
+      const { data: existingReg, error: checkError } = await supabase
+        .from("student_registrations")
+        .select("id")
+        .eq("email", email.trim())
+        .maybeSingle();
+
+      if (existingReg) {
+        setErrorMsg("A candidate with this email address has already registered.");
+        setIsSubmitting(false);
+        return;
+      }
+
       // 2. Insert into database
       const { error } = await supabase.from("student_registrations").insert({
         full_name: fullName,
-        email,
+        email: email.trim(),
         phone,
         address,
         dob,

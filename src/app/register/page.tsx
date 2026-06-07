@@ -137,13 +137,27 @@ function RegisterFormContent() {
     }
 
     try {
+      // Check for existing registration for this exam
+      const { data: existingReg, error: checkError } = await supabase
+        .from("registrations")
+        .select("id")
+        .eq("exam_id", Number(examId))
+        .eq("email", email.trim())
+        .maybeSingle();
+
+      if (existingReg) {
+        setErrorMsg("You have already registered for this examination.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const regNum = String(Math.floor(100000 + Math.random() * 900000));
       const htNum = "26AI" + String(Math.floor(100000 + Math.random() * 900000));
 
       const { error } = await supabase.from("registrations").insert({
         exam_id: Number(examId),
         candidate_name: name,
-        email,
+        email: email.trim(),
         phone,
         college,
         department,
