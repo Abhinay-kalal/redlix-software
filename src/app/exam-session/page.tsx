@@ -24,6 +24,7 @@ interface ExamSession {
 }
 
 import { QUESTIONS, Question } from "./questions";
+import { TEST_SUITE } from "./testCases";
 
 interface CodeEditorProps {
   value: string;
@@ -261,6 +262,149 @@ export default function ExamSessionPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isViolated, setIsViolated] = useState(false);
   const [violationReason, setViolationReason] = useState("");
+
+  const [testResults, setTestResults] = useState<Record<number, { name: string; success: boolean; message: string }[] | null>>({});
+  const [isRunningTests, setIsRunningTests] = useState(false);
+
+  const handleRunCode = async () => {
+    setIsRunningTests(true);
+    const currentQuestion = questions[currentIndex];
+    const qid = currentQuestion.id;
+    const userCode = answers[qid] || "";
+
+    // Reset previous results for this question
+    setTestResults((prev) => ({ ...prev, [qid]: null }));
+
+    // Mock Buffer for base64 / base64url encoding & decoding
+    const BufferMock = {
+      from: (data: any, encoding?: string) => {
+        let internalStr = "";
+        if (typeof data === "string") {
+          if (encoding === "base64url" || encoding === "base64") {
+            let b64 = data.replace(/-/g, "+").replace(/_/g, "/");
+            while (b64.length % 4) b64 += "=";
+            try {
+              internalStr = decodeURIComponent(escape(atob(b64)));
+            } catch {
+              internalStr = data; // fallback
+            }
+          } else {
+            internalStr = data;
+          }
+        } else {
+          internalStr = String(data);
+        }
+        return {
+          toString: (enc?: string) => {
+            if (enc === "base64url" || enc === "base64") {
+              const b64 = btoa(unescape(encodeURIComponent(internalStr)));
+              if (enc === "base64url") {
+                return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+              }
+              return b64;
+            }
+            return internalStr;
+          },
+        };
+      },
+    };
+
+    // Mock require('crypto') for JWT signing/verification
+    const requireMock = (moduleName: string) => {
+      if (moduleName === "crypto") {
+        return {
+          createHmac: (algorithm: string, key: string) => {
+            let buffer = "";
+            return {
+              update: (data: string) => {
+                buffer += data;
+                return {
+                  digest: (encoding?: string) => {
+                    let hash = 0;
+                    const combined = key + ":" + buffer;
+                    for (let i = 0; i < combined.length; i++) {
+                      hash = (hash << 5) - hash + combined.charCodeAt(i);
+                      hash |= 0;
+                    }
+                    const signature = Math.abs(hash).toString(36);
+                    if (encoding === "base64url" || encoding === "base64") {
+                      const b64 = btoa(signature);
+                      if (encoding === "base64url") {
+                        return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+                      }
+                      return b64;
+                    }
+                    return signature;
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+      throw new Error("Module not found: " + moduleName);
+    };
+
+    try {
+      // Create execution sandbox
+      const userFunc = new Function(
+        "Buffer",
+        "require",
+        `
+        ${userCode}
+        return {
+          debounce: typeof debounce !== 'undefined' ? debounce : null,
+          deepDiff: typeof deepDiff !== 'undefined' ? deepDiff : null,
+          promisePool: typeof promisePool !== 'undefined' ? promisePool : null,
+          LRUCache: typeof LRUCache !== 'undefined' ? LRUCache : null,
+          findBuildOrder: typeof findBuildOrder !== 'undefined' ? findBuildOrder : null,
+          buildWhereClause: typeof buildWhereClause !== 'undefined' ? buildWhereClause : null,
+          createStore: typeof createStore !== 'undefined' ? createStore : null,
+          EventEmitter: typeof EventEmitter !== 'undefined' ? EventEmitter : null,
+          signJWT: typeof signJWT !== 'undefined' ? signJWT : null,
+          verifyJWT: typeof verifyJWT !== 'undefined' ? verifyJWT : null,
+          validateSchema: typeof validateSchema !== 'undefined' ? validateSchema : null
+        };
+        `
+      );
+
+      const exports = userFunc(BufferMock, requireMock);
+      const testCases = TEST_SUITE[qid] || [];
+
+      const results: { name: string; success: boolean; message: string }[] = [];
+      for (const tc of testCases) {
+        try {
+          const res = await tc.run(exports);
+          results.push({
+            name: tc.name,
+            success: res.success,
+            message: res.message,
+          });
+        } catch (err: any) {
+          results.push({
+            name: tc.name,
+            success: false,
+            message: err.message || "Runtime Error",
+          });
+        }
+      }
+
+      setTestResults((prev) => ({ ...prev, [qid]: results }));
+    } catch (err: any) {
+      setTestResults((prev) => ({
+        ...prev,
+        [qid]: [
+          {
+            name: "Compilation check",
+            success: false,
+            message: err.message || "Syntax Error",
+          },
+        ],
+      }));
+    } finally {
+      setIsRunningTests(false);
+    }
+  };
 
   const triggerViolation = useCallback((reason: string) => {
     setIsViolated(true);
@@ -1320,6 +1464,56 @@ export default function ExamSessionPage() {
                     placeholder="// Write your code or explanation here..."
                   />
                 </div>
+
+                {/* Run Code Button */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={handleRunCode}
+                    disabled={isRunningTests}
+                    className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-mono text-xs uppercase tracking-wider rounded-none cursor-pointer border border-zinc-700 flex items-center gap-2 transition-colors disabled:opacity-50"
+                  >
+                    {isRunningTests ? (
+                      <>
+                        <div className="w-3.5 h-3.5 rounded-full border border-t-orange-500 border-r-zinc-450 border-b-zinc-450 border-l-zinc-450 animate-spin" />
+                        <span>Running Tests...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Run Code &amp; Test</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Test Results Output */}
+                {testResults[currentQuestion.id] && (
+                  <div className="bg-[#18181b] border border-zinc-800/80 p-4 font-mono text-xs text-zinc-300 space-y-2">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 block">
+                      Test Suite Output
+                    </span>
+                    <div className="space-y-2 mt-2">
+                      {testResults[currentQuestion.id]?.map((res, idx) => (
+                        <div key={idx} className="flex flex-col gap-1 border-b border-zinc-900 pb-2 last:border-0 last:pb-0">
+                          <div className="flex items-center gap-2">
+                            {res.success ? (
+                              <span className="text-emerald-500 font-bold">✓ PASSED</span>
+                            ) : (
+                              <span className="text-red-500 font-bold">✗ FAILED</span>
+                            )}
+                            <span className="font-semibold text-zinc-200">{res.name}</span>
+                          </div>
+                          <span className={`text-[11px] ${res.success ? "text-zinc-500" : "text-red-400 font-medium"}`}>
+                            {res.message}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-zinc-100 border border-zinc-200 p-3">
