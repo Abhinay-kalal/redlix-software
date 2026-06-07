@@ -111,9 +111,8 @@ export default function StudentRegisterPage() {
           </div>
         </header>
 
-        <main className="flex-1 w-full max-w-4xl mx-auto p-6 flex flex-col justify-center">
-          <div className="bg-white border border-zinc-200 p-8 shadow-md rounded-none text-left space-y-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
+        <main className="flex-1 w-full max-w-6xl mx-auto p-6 flex flex-col justify-center">
+          <div className="bg-white border border-zinc-200 p-10 sm:p-12 py-12 sm:py-16 shadow-md rounded-none text-left space-y-8 relative overflow-hidden min-h-[550px] flex flex-col justify-between">
             
             <div className="flex flex-col items-center text-center space-y-3 pb-6 border-b border-zinc-200">
               <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
@@ -213,13 +212,19 @@ export default function StudentRegisterPage() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-4xl mx-auto p-6 flex flex-col justify-center">
-        <div className="bg-white border border-zinc-200 shadow-md p-6 sm:p-8 space-y-6 relative">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
+      <main className="flex-1 w-full max-w-6xl mx-auto p-6 flex flex-col justify-center">
+        <div className="bg-white border border-zinc-200 shadow-md p-8 sm:p-12 py-12 sm:py-16 space-y-10 relative min-h-[750px] flex flex-col justify-between">
           
-          <div className="border-b border-zinc-100 pb-4">
-            <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Student Registration</h1>
-            <p className="text-xs text-zinc-500 mt-1">Submit your profile and choose your fields of interest to join evaluations.</p>
+          <div className="border-b border-zinc-100 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-extrabold text-zinc-900 tracking-tight">Student Registration</h1>
+              <p className="text-xs text-zinc-500 mt-1">Submit your profile and choose your fields of interest to join evaluations.</p>
+            </div>
+            <img 
+              src="https://ik.imagekit.io/dypkhqxip/picsihoriz?updatedAt=1778919009480" 
+              alt="Logo" 
+              className="h-24 w-auto object-contain shrink-0"
+            />
           </div>
 
           {errorMsg && (
@@ -228,7 +233,7 @@ export default function StudentRegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-8 font-normal">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-8 font-normal flex-1">
             {/* Left Column: Photo Upload, Interests & Turnstile */}
             <div className="md:col-span-5 space-y-6">
               {/* Section 1: Verification Photograph */}
