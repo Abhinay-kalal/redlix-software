@@ -19,9 +19,10 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { hallTicketNumber, candidateName } = body as {
+    const { hallTicketNumber, candidateName, examId } = body as {
       hallTicketNumber?: string;
       candidateName?: string;
+      examId?: number;
     };
 
     if (!hallTicketNumber || !candidateName) {
@@ -52,6 +53,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "not_found" },
         { status: 404 }
+      );
+    }
+
+    // Check if candidate is registered for this specific exam
+    if (examId && reg.exam_id !== examId) {
+      return NextResponse.json(
+        { success: false, error: "not_registered_for_this_exam" },
+        { status: 403 }
       );
     }
 

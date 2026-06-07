@@ -103,6 +103,7 @@ function ExamLoginContent() {
         body: JSON.stringify({
           hallTicketNumber: hallTicket.trim(),
           candidateName: name.trim(),
+          examId: examIdParam ? Number(examIdParam) : null,
         }),
       });
       const verifyCredData = await verifyCredRes.json();
@@ -114,6 +115,8 @@ function ExamLoginContent() {
           setNameError("Name does not match our records for this hall ticket.");
         } else if (verifyCredData.error === "exam_not_found") {
           setHtError("Could not fetch exam details. Please contact the exam administrator.");
+        } else if (verifyCredData.error === "not_registered_for_this_exam") {
+          setHtError("Your hall ticket number is not registered for this exam.");
         } else {
           setHtError("Verification failed. Please try again.");
         }
