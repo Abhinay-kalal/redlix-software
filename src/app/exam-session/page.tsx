@@ -232,6 +232,8 @@ export default function ExamSessionPage() {
   const supabase = createClient();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [questions, setQuestions] = useState<Question[]>(QUESTIONS);
   const [session, setSession] = useState<ExamSession | null>(null);
@@ -571,6 +573,115 @@ export default function ExamSessionPage() {
     if (!setupDone || !streamRef.current || !videoRef.current) return;
     videoRef.current.srcObject = streamRef.current;
   }, [setupDone, fullscreen]);
+
+  useEffect(() => {
+    if (!setupDone || !streamRef.current) return;
+
+    let audioContext: AudioContext | null = null;
+    let source: MediaStreamAudioSourceNode | null = null;
+    let analyser: AnalyserNode | null = null;
+    let animationId: number;
+    let resizeTimer: NodeJS.Timeout;
+
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      audioContext = new AudioCtx();
+      source = audioContext.createMediaStreamSource(streamRef.current!);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      source.connect(analyser);
+    } catch (err) {
+      console.error("Failed to initialize AudioContext:", err);
+    }
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resizeCanvas = () => {
+      canvas.width = canvas.clientWidth || 320;
+      canvas.height = canvas.clientHeight || 48;
+    };
+    resizeCanvas();
+
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resizeCanvas, 100);
+    };
+    window.addEventListener("resize", handleResize);
+
+    const bufferLength = analyser ? analyser.fftSize : 0;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      animationId = requestAnimationFrame(draw);
+
+      if (!analyser || !ctx || !canvas) return;
+
+      analyser.getByteTimeDomainData(dataArray);
+
+      let maxDeviation = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const dev = Math.abs(dataArray[i] - 128);
+        if (dev > maxDeviation) {
+          maxDeviation = dev;
+        }
+      }
+
+      if (maxDeviation > 6) {
+        setIsSpeaking(true);
+      } else {
+        setIsSpeaking(false);
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.12)";
+      ctx.beginPath();
+      let sliceWidth = canvas.width / bufferLength;
+      let x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * canvas.height) / 2;
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+        x += sliceWidth;
+      }
+      ctx.stroke();
+
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.85)";
+      ctx.beginPath();
+      x = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * canvas.height) / 2;
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+        x += sliceWidth;
+      }
+      ctx.stroke();
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(resizeTimer);
+      if (audioContext) {
+        audioContext.close().catch(() => {});
+      }
+    };
+  }, [setupDone]);
 
   
   useEffect(() => {
@@ -1274,10 +1385,11 @@ export default function ExamSessionPage() {
         </main>
 
         {}
-        <aside className="w-80 shrink-0 bg-white border-l border-zinc-200 flex flex-col justify-between overflow-y-auto">
-          <div>
-            {}
-            <div className="p-4 border-b border-zinc-200 bg-zinc-50">
+        <aside className="w-80 shrink-0 bg-white border-l border-zinc-200 flex flex-col h-full overflow-hidden select-none">
+          {/* Sticky Top: Camera feed + Candidate Profile + Timer */}
+          <div className="shrink-0 flex flex-col">
+            {/* Live Proctoring Feed */}
+            <div className="p-4 border-b border-zinc-200 bg-zinc-50 relative">
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 Live Proctoring Feed
@@ -1290,14 +1402,24 @@ export default function ExamSessionPage() {
                   muted
                   playsInline
                 />
-                <span className="absolute bottom-2 right-2 bg-black/60 px-2 py-0.5 text-[9px] text-white font-mono uppercase">
+                {/* Audio Wave Visualizer Overlay */}
+                <canvas
+                  ref={canvasRef}
+                  className="absolute bottom-0 left-0 w-full h-12 pointer-events-none z-10"
+                />
+                <span className="absolute bottom-2 right-2 bg-black/60 px-2 py-0.5 text-[9px] text-white font-mono uppercase z-20">
                   CAM 01
                 </span>
+                {/* Visual Speaking Indicator */}
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-none text-[8px] font-mono text-white tracking-wider uppercase z-20">
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? "bg-orange-500 animate-pulse" : "bg-zinc-500"}`} />
+                  {isSpeaking ? "Speaking" : "Silent"}
+                </div>
               </div>
             </div>
 
-            {}
-            <div className="p-4 border-b border-zinc-200 bg-white space-y-3 shrink-0">
+            {/* Candidate Profile */}
+            <div className="p-4 border-b border-zinc-200 bg-white space-y-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 font-mono">
                 Candidate Profile
               </p>
@@ -1324,7 +1446,7 @@ export default function ExamSessionPage() {
               </div>
             </div>
 
-            {}
+            {/* Time Remaining */}
             <div className="px-4 py-3 bg-zinc-900 text-white flex items-center justify-between border-b border-zinc-800">
               <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Time Remaining</span>
               <span
@@ -1335,63 +1457,65 @@ export default function ExamSessionPage() {
                 {formatTime(timeLeft)}
               </span>
             </div>
+          </div>
 
-            <div className="p-4 space-y-4">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
-                  Section A: MCQs
-                </p>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {questions.filter(q => q.type === "mcq").map((q) => {
-                    const idx = questions.findIndex(x => x.id === q.id);
-                    const status = questionStatuses[q.id] || "not_visited";
-                    const isActive = currentIndex === idx;
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => handleQuestionSelect(idx)}
-                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
-                          status,
-                          isActive
-                        )}`}
-                      >
-                        {q.number}
-                      </button>
-                    );
-                  })}
-                </div>
+          {/* Scrollable Middle: Questions Grid */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                Section A: MCQs
+              </p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {questions.filter(q => q.type === "mcq").map((q) => {
+                  const idx = questions.findIndex(x => x.id === q.id);
+                  const status = questionStatuses[q.id] || "not_visited";
+                  const isActive = currentIndex === idx;
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => handleQuestionSelect(idx)}
+                      className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                        status,
+                        isActive
+                      )}`}
+                    >
+                      {q.number}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
-                  Section B: Coding
-                </p>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {questions.filter(q => q.type === "coding").map((q) => {
-                    const idx = questions.findIndex(x => x.id === q.id);
-                    const status = questionStatuses[q.id] || "not_visited";
-                    const isActive = currentIndex === idx;
-                    return (
-                      <button
-                        key={q.id}
-                        onClick={() => handleQuestionSelect(idx)}
-                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
-                          status,
-                          isActive
-                        )}`}
-                      >
-                        Q{q.number}
-                      </button>
-                    );
-                  })}
-                </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                Section B: Coding
+              </p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {questions.filter(q => q.type === "coding").map((q) => {
+                  const idx = questions.findIndex(x => x.id === q.id);
+                  const status = questionStatuses[q.id] || "not_visited";
+                  const isActive = currentIndex === idx;
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => handleQuestionSelect(idx)}
+                      className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                        status,
+                        isActive
+                      )}`}
+                    >
+                      Q{q.number}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <div>
-            {}
-            <div className="p-4 border-t border-zinc-200 bg-zinc-50 space-y-2">
+          {/* Locked Bottom: Question Legend + Submit button */}
+          <div className="shrink-0 border-t border-zinc-200 bg-zinc-50">
+            {/* Question Legend */}
+            <div className="p-4 border-b border-zinc-200 space-y-2">
               <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Question Legend</p>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px] font-medium text-zinc-600">
                 <div className="flex items-center gap-1.5">
@@ -1415,8 +1539,8 @@ export default function ExamSessionPage() {
               </div>
             </div>
 
-            {}
-            <div className="p-4 border-t border-zinc-200 bg-white shrink-0">
+            {/* Submit button container */}
+            <div className="p-4 bg-white">
               <button
                 onClick={() => setShowSubmitModal(true)}
                 className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors"
