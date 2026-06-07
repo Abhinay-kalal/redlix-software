@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import Script from "next/script";
 
 interface ExamSession {
   candidateName: string;
@@ -1248,8 +1249,32 @@ export default function ExamSessionPage() {
     if (isFullySubmitted) {
       return (
         <div className="min-h-screen bg-zinc-100 flex items-center justify-center font-sans p-6 select-none text-zinc-900">
-          <div className="bg-white border border-zinc-200 p-8 max-w-md w-full text-center space-y-4 shadow-sm">
-            <p className="text-sm font-semibold text-zinc-700">Thank you for taking the exam</p>
+          <div className="bg-white border border-zinc-200 p-10 max-w-md w-full text-center space-y-6 shadow-sm">
+            {/* Lottie animation */}
+            <Script
+              src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js"
+              type="module"
+              strategy="afterInteractive"
+            />
+            <div className="flex justify-center">
+              {/* @ts-ignore */}
+              <dotlottie-wc
+                src="https://lottie.host/41df1d4a-e726-48b9-8c63-95896d087232/he0C1Dd3Ne.lottie"
+                style={{ width: "180px", height: "180px" }}
+                autoplay
+                loop
+              />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-lg font-bold text-zinc-900">Thank You!</h1>
+              <p className="text-xs text-zinc-500">Your exam has been submitted successfully. You may close this window.</p>
+            </div>
+            <button
+              onClick={() => { window.location.href = "/exam-login"; }}
+              className="px-6 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+            >
+              ← Back
+            </button>
           </div>
         </div>
       );
@@ -1257,50 +1282,41 @@ export default function ExamSessionPage() {
 
     return (
       <div className="min-h-screen bg-zinc-100 flex flex-col justify-between font-sans p-6 text-zinc-900">
-        <main className="max-w-3xl w-full mx-auto bg-white border border-zinc-200 p-8 shadow-sm space-y-6 mt-6">
-          <div className="border-b border-zinc-200 pb-4">
-            <h1 className="text-lg font-bold text-zinc-900 font-sans">Examination Attempts Review</h1>
-            <p className="text-xs text-zinc-555 mt-1 font-sans">Review the status of your questions before finalizing submission.</p>
+        <main className="max-w-2xl w-full mx-auto bg-white border border-zinc-200 p-8 shadow-sm space-y-6 mt-6">
+          <div className="border-b border-zinc-200 pb-4 text-center">
+            <h1 className="text-base font-bold text-zinc-900 font-sans">Review Your Answers</h1>
+            <p className="text-xs text-zinc-500 mt-1 font-sans">Confirm your submission by clicking Submit below.</p>
           </div>
 
-          <div className="overflow-x-auto border border-zinc-200">
-            <table className="w-full text-left border-collapse text-xs font-sans">
-              <thead>
-                <tr className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-600">
-                  <th className="px-4 py-2.5">Question No</th>
-                  <th className="px-4 py-2.5">Section</th>
-                  <th className="px-4 py-2.5">Type</th>
-                  <th className="px-4 py-2.5 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200">
-                {questions.map((q) => {
-                  const ans = answers[q.id];
-                  let isAttempted = false;
-                  if (ans && ans.trim() !== "") {
-                    if (q.type === "coding" && q.starterCode) {
-                      isAttempted = ans.trim() !== q.starterCode.trim();
-                    } else {
-                      isAttempted = true;
-                    }
-                  }
-
-                  return (
-                    <tr key={q.id} className="hover:bg-zinc-50/50">
-                      <td className="px-4 py-2.5 font-semibold">Question {q.number}</td>
-                      <td className="px-4 py-2.5">Section {q.section}</td>
-                      <td className="px-4 py-2.5 font-mono">{q.type.toUpperCase()}</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-zinc-700">
-                        {isAttempted ? "Attempted" : "Not Attempted"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Horizontal question number grid */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            {questions.map((q) => {
+              const ans = answers[q.id];
+              let isAttempted = false;
+              if (ans && ans.trim() !== "") {
+                if (q.type === "coding" && q.starterCode) {
+                  isAttempted = ans.trim() !== q.starterCode.trim();
+                } else {
+                  isAttempted = true;
+                }
+              }
+              return (
+                <span
+                  key={q.id}
+                  title={isAttempted ? "Answered" : "Not Answered"}
+                  className={`w-9 h-9 flex items-center justify-center text-xs font-bold border ${
+                    isAttempted
+                      ? "bg-emerald-500 text-white border-emerald-600"
+                      : "bg-zinc-100 text-zinc-500 border-zinc-300"
+                  }`}
+                >
+                  {q.number}
+                </span>
+              );
+            })}
           </div>
 
-          <div className="pt-4 flex justify-end">
+          <div className="pt-2 flex justify-center">
             <button
               onClick={async () => {
                 if (session?.hallTicketNumber) {
@@ -1309,7 +1325,7 @@ export default function ExamSessionPage() {
                 sessionStorage.removeItem("exam_session");
                 setIsFullySubmitted(true);
               }}
-              className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+              className="px-8 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
             >
               Submit
             </button>
@@ -1744,7 +1760,7 @@ export default function ExamSessionPage() {
             {/* Submit button container */}
             <div className="p-4 bg-white">
               <button
-                onClick={() => setShowSubmitModal(true)}
+                onClick={() => triggerAutoSubmit()}
                 className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors"
               >
                 Submit Exam
@@ -1755,63 +1771,6 @@ export default function ExamSessionPage() {
       </div>
 
       {}
-      {showSubmitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-sans select-none animate-fade-in">
-          <div className="bg-white border border-zinc-300 w-full max-w-md p-6 space-y-4 shadow-xl">
-            <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider border-b border-zinc-200 pb-2 font-mono">
-              Confirm Submission
-            </h3>
-
-            <div className="space-y-2 text-xs text-zinc-600">
-              <p>Please review your attempt summary before final submission:</p>
-              <div className="bg-zinc-50 border border-zinc-200 p-3 space-y-1.5 font-mono">
-                <div className="flex justify-between">
-                  <span>Total Questions:</span>
-                  <span className="font-bold">{questions.length}</span>
-                </div>
-                <div className="flex justify-between text-emerald-600">
-                  <span>Answered:</span>
-                  <span className="font-bold">
-                    {Object.values(questionStatuses).filter((s) => s === "answered").length}
-                  </span>
-                </div>
-                <div className="flex justify-between text-indigo-600">
-                  <span>Marked for Review:</span>
-                  <span className="font-bold">{Object.values(questionStatuses).filter((s) => s === "marked").length}</span>
-                </div>
-                <div className="flex justify-between text-red-600">
-                  <span>Not Answered / Visited:</span>
-                  <span className="font-bold">
-                    {questions.length -
-                      Object.values(questionStatuses).filter((s) => s === "answered" || s === "marked").length}
-                  </span>
-                </div>
-              </div>
-              <p className="text-red-600 font-semibold pt-1">
-                Warning: Once submitted, you cannot change your answers or return to the exam.
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => setShowSubmitModal(false)}
-                className="px-4 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowSubmitModal(false);
-                  triggerAutoSubmit();
-                }}
-                className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
-              >
-                Submit Exam
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
