@@ -521,6 +521,7 @@ export default function ExamSessionPage() {
   >({});
   const [timeLeft, setTimeLeft] = useState(7200); 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isFullySubmitted, setIsFullySubmitted] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [isViolated, setIsViolated] = useState(false);
   const [violationReason, setViolationReason] = useState("");
@@ -1171,66 +1172,77 @@ export default function ExamSessionPage() {
         </div>
       </div>
     );
-  }
-
-  
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans p-6 select-none">
-        <div className="bg-white border border-zinc-200 p-8 max-w-lg w-full text-center space-y-6 shadow-sm">
-          <div className="w-16 h-16 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              stroke="currentColor"
-              className="w-8 h-8"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
+  }  if (isSubmitted) {
+    if (isFullySubmitted) {
+      return (
+        <div className="min-h-screen bg-zinc-100 flex items-center justify-center font-sans p-6 select-none text-zinc-900">
+          <div className="bg-white border border-zinc-200 p-8 max-w-md w-full text-center space-y-4 shadow-sm">
+            <p className="text-sm font-semibold text-zinc-700">Thank you for taking the exam</p>
           </div>
-
-          <div className="space-y-2">
-            <h1 className="text-xl font-bold text-zinc-900">Exam Submission Completed</h1>
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              Your responses have been securely recorded by the proctoring agent. You may now close this window.
-            </p>
-          </div>
-
-          <div className="bg-zinc-50 border border-zinc-200 p-4 text-left space-y-2.5 font-mono text-xs text-zinc-700">
-            <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-              <span className="text-zinc-500">Candidate:</span>
-              <span className="font-bold text-zinc-900">{candidateName}</span>
-            </div>
-            <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-              <span className="text-zinc-500">Hall Ticket:</span>
-              <span className="font-bold text-zinc-900">{hallTicketNumber}</span>
-            </div>
-            <div className="flex justify-between border-b border-zinc-200 pb-1.5">
-              <span className="text-zinc-500">Questions Answered:</span>
-              <span className="font-bold text-emerald-600">
-                {Object.values(questionStatuses).filter((s) => s === "answered" || s === "marked").length} / 20
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Submission Code:</span>
-              <span className="font-bold text-zinc-900">
-                SF-{Math.random().toString(36).substring(2, 11).toUpperCase()}
-              </span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              sessionStorage.removeItem("exam_session");
-              router.push("/scheduled-exams");
-            }}
-            className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors w-full"
-          >
-            Return to Scheduled Exams
-          </button>
         </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-zinc-100 flex flex-col justify-between font-sans p-6 text-zinc-900">
+        <main className="max-w-3xl w-full mx-auto bg-white border border-zinc-200 p-8 shadow-sm space-y-6 mt-6">
+          <div className="border-b border-zinc-200 pb-4">
+            <h1 className="text-lg font-bold text-zinc-900 font-sans">Examination Attempts Review</h1>
+            <p className="text-xs text-zinc-555 mt-1 font-sans">Review the status of your questions before finalizing submission.</p>
+          </div>
+
+          <div className="overflow-x-auto border border-zinc-200">
+            <table className="w-full text-left border-collapse text-xs font-sans">
+              <thead>
+                <tr className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-600">
+                  <th className="px-4 py-2.5">Question No</th>
+                  <th className="px-4 py-2.5">Section</th>
+                  <th className="px-4 py-2.5">Type</th>
+                  <th className="px-4 py-2.5 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200">
+                {questions.map((q) => {
+                  const ans = answers[q.id];
+                  let isAttempted = false;
+                  if (ans && ans.trim() !== "") {
+                    if (q.type === "coding" && q.starterCode) {
+                      isAttempted = ans.trim() !== q.starterCode.trim();
+                    } else {
+                      isAttempted = true;
+                    }
+                  }
+
+                  return (
+                    <tr key={q.id} className="hover:bg-zinc-50/50">
+                      <td className="px-4 py-2.5 font-semibold">Question {q.number}</td>
+                      <td className="px-4 py-2.5">Section {q.section}</td>
+                      <td className="px-4 py-2.5 font-mono">{q.type.toUpperCase()}</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-zinc-700">
+                        {isAttempted ? "Attempted" : "Not Attempted"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="pt-4 flex justify-end">
+            <button
+              onClick={() => {
+                sessionStorage.removeItem("exam_session");
+                setIsFullySubmitted(true);
+              }}
+              className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+            >
+              Submit
+            </button>
+          </div>
+        </main>
+        <footer className="text-center text-[10px] text-zinc-400 py-4 font-sans">
+          © 2026 Redlix Secure. Secure Examination System.
+        </footer>
       </div>
     );
   }
