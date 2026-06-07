@@ -111,7 +111,7 @@ export default function StudentRegisterPage() {
           </div>
         </header>
 
-        <main className="flex-1 w-full max-w-2xl mx-auto p-6 flex flex-col justify-center">
+        <main className="flex-1 w-full max-w-4xl mx-auto p-6 flex flex-col justify-center">
           <div className="bg-white border border-zinc-200 p-8 shadow-md rounded-none text-left space-y-6 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
             
@@ -166,7 +166,7 @@ export default function StudentRegisterPage() {
               </div>
 
               <div className="flex flex-col items-center justify-center gap-2 border-t md:border-t-0 md:border-l border-zinc-200 pt-6 md:pt-0 md:pl-6 shrink-0">
-                <div className="w-28 h-32 bg-zinc-50 border border-zinc-200 overflow-hidden shrink-0 shadow-xs">
+                <div className="w-40 h-24 bg-zinc-50 border border-zinc-200 overflow-hidden shrink-0 shadow-xs">
                   <img src={photo} alt="Student" className="w-full h-full object-cover" />
                 </div>
                 <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Uploaded Photo</span>
@@ -213,7 +213,7 @@ export default function StudentRegisterPage() {
         </div>
       </header>
 
-      <main className="flex-1 w-full max-w-2xl mx-auto p-6 flex flex-col justify-center">
+      <main className="flex-1 w-full max-w-4xl mx-auto p-6 flex flex-col justify-center">
         <div className="bg-white border border-zinc-200 shadow-md p-6 sm:p-8 space-y-6 relative">
           <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
           
@@ -228,212 +228,218 @@ export default function StudentRegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6 font-normal">
-            {/* Section 1: Verification Photograph */}
-            <div className="space-y-2.5">
-              <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">Candidate Photo *</label>
-              <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-zinc-50 border border-zinc-200">
-                <div className="w-24 h-28 bg-zinc-200 flex items-center justify-center overflow-hidden border border-zinc-300 relative shrink-0">
-                  {photo ? (
-                    <img src={photo} alt="Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <Camera className="w-8 h-8 text-zinc-400" />
-                  )}
-                </div>
-                <div className="space-y-2 text-center sm:text-left flex-1">
-                  <p className="text-[10px] text-zinc-500">Upload a clear passport-sized portrait photograph for verification.</p>
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-semibold text-red-500">
-                      Maximum file size allowed: <span className="font-bold">2 MB</span>
-                    </p>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-8 font-normal">
+            {/* Left Column: Photo Upload, Interests & Turnstile */}
+            <div className="md:col-span-5 space-y-6">
+              {/* Section 1: Verification Photograph */}
+              <div className="space-y-2.5">
+                <label className="block text-xs font-bold text-zinc-700 uppercase tracking-wider">Candidate Photo *</label>
+                <div className="flex flex-col gap-4 p-4 bg-zinc-50 border border-zinc-200">
+                  <div className="w-40 h-24 bg-zinc-200 flex items-center justify-center overflow-hidden border border-zinc-300 relative shrink-0">
+                    {photo ? (
+                      <img src={photo} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-8 h-8 text-zinc-400" />
+                    )}
                   </div>
-                  <input
-                    id="photo-upload-input"
-                    type="file"
-                    accept="image/*"
-                    required
-                    onChange={handlePhotoUpload}
-                    className="text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-none file:border file:border-zinc-300 file:text-xs file:font-semibold file:bg-white file:text-zinc-700 hover:file:bg-zinc-50 cursor-pointer w-full"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Personal Details */}
-            <div className="space-y-4 pt-2 border-t border-zinc-100">
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Personal Details</p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label htmlFor="reg-name" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                    <User className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    Full Name *
-                  </label>
-                  <input
-                    id="reg-name"
-                    type="text"
-                    required
-                    placeholder="e.g. Marcus Aurelius"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="reg-email" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                    <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    Email Address *
-                  </label>
-                  <input
-                    id="reg-email"
-                    type="email"
-                    required
-                    placeholder="e.g. marcus@academy.edu"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="reg-phone" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                    <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    Phone Number *
-                  </label>
-                  <input
-                    id="reg-phone"
-                    type="tel"
-                    required
-                    placeholder="e.g. +91 9876543210"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="reg-dob" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    Date of Birth *
-                  </label>
-                  <input
-                    id="reg-dob"
-                    type="date"
-                    required
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
-                  />
+                  <div className="space-y-2 text-left flex-1">
+                    <p className="text-[10px] text-zinc-500">Upload a clear landscape (horizontal rectangle) photograph for verification.</p>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-semibold text-red-500">
+                        Maximum file size allowed: <span className="font-bold">2 MB</span>
+                      </p>
+                    </div>
+                    <input
+                      id="photo-upload-input"
+                      type="file"
+                      accept="image/*"
+                      required
+                      onChange={handlePhotoUpload}
+                      className="text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-none file:border file:border-zinc-300 file:text-xs file:font-semibold file:bg-white file:text-zinc-700 hover:file:bg-zinc-50 cursor-pointer w-full"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label htmlFor="reg-address" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  Residential Address *
-                </label>
-                <textarea
-                  id="reg-address"
-                  required
-                  rows={2}
-                  placeholder="Enter your complete residential address..."
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors resize-none"
+              {/* Section 4: Dropdown Interests */}
+              <div className="space-y-4 pt-4 border-t border-zinc-100">
+                <div className="space-y-1">
+                  <label htmlFor="reg-interests" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                    <Heart className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    Your Interests *
+                  </label>
+                  <select
+                    id="reg-interests"
+                    value={interests}
+                    onChange={(e) => setInterests(e.target.value)}
+                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-semibold cursor-pointer"
+                  >
+                    <option value="Web Development with AI">Web Development with AI</option>
+                    <option value="Full Stack Development">Full Stack Development</option>
+                    <option value="Marketing Intern">Marketing Intern</option>
+                    <option value="Data Science & ML">Data Science & ML</option>
+                    <option value="Cybersecurity">Cybersecurity</option>
+                    <option value="Product Management">Product Management</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Section 5: Security Captcha */}
+              <div className="border-t border-zinc-200 pt-4 flex flex-col items-start">
+                <Turnstile
+                  onSuccess={(token) => {
+                    setTurnstileToken(token);
+                    setErrorMsg("");
+                  }}
+                  onError={() => setErrorMsg("Security verification encountered an error.")}
+                  onExpire={() => setTurnstileToken("")}
                 />
               </div>
             </div>
 
-            {/* Section 3: Academic Details */}
-            <div className="space-y-4 pt-4 border-t border-zinc-100">
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Academic Details</p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label htmlFor="reg-college" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                    <BookOpen className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    College Name *
-                  </label>
-                  <input
-                    id="reg-college"
-                    type="text"
-                    required
-                    placeholder="e.g. Cambridge University"
-                    value={collegeName}
-                    onChange={(e) => setCollegeName(e.target.value)}
-                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
-                  />
+            {/* Right Column: Personal & Academic Details, Action Buttons */}
+            <div className="md:col-span-7 space-y-6 border-t md:border-t-0 md:border-l border-zinc-200 pt-6 md:pt-0 md:pl-8">
+              {/* Section 2: Personal Details */}
+              <div className="space-y-4">
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Personal Details</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label htmlFor="reg-name" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                      <User className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      Full Name *
+                    </label>
+                    <input
+                      id="reg-name"
+                      type="text"
+                      required
+                      placeholder="e.g. Marcus Aurelius"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="reg-email" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      Email Address *
+                    </label>
+                    <input
+                      id="reg-email"
+                      type="email"
+                      required
+                      placeholder="e.g. marcus@academy.edu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="reg-phone" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      Phone Number *
+                    </label>
+                    <input
+                      id="reg-phone"
+                      type="tel"
+                      required
+                      placeholder="e.g. +91 9876543210"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="reg-dob" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      Date of Birth *
+                    </label>
+                    <input
+                      id="reg-dob"
+                      type="date"
+                      required
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="reg-branch" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                    <Layers className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                    Branch / Department *
+                  <label htmlFor="reg-address" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    Residential Address *
                   </label>
-                  <input
-                    id="reg-branch"
-                    type="text"
+                  <textarea
+                    id="reg-address"
                     required
-                    placeholder="e.g. Computer Science"
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    rows={2}
+                    placeholder="Enter your complete residential address..."
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors resize-none"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Section 4: Dropdown Interests */}
-            <div className="space-y-4 pt-4 border-t border-zinc-100">
-              <div className="space-y-1">
-                <label htmlFor="reg-interests" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
-                  <Heart className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  Your Interests *
-                </label>
-                <select
-                  id="reg-interests"
-                  value={interests}
-                  onChange={(e) => setInterests(e.target.value)}
-                  className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-semibold cursor-pointer"
+              {/* Section 3: Academic Details */}
+              <div className="space-y-4 pt-4 border-t border-zinc-100">
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Academic Details</p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label htmlFor="reg-college" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                      <BookOpen className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      College Name *
+                    </label>
+                    <input
+                      id="reg-college"
+                      type="text"
+                      required
+                      placeholder="e.g. Cambridge University"
+                      value={collegeName}
+                      onChange={(e) => setCollegeName(e.target.value)}
+                      className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label htmlFor="reg-branch" className="text-xs font-semibold text-zinc-750 flex items-center gap-1">
+                      <Layers className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      Branch / Department *
+                    </label>
+                    <input
+                      id="reg-branch"
+                      type="text"
+                      required
+                      placeholder="e.g. Computer Science"
+                      value={branch}
+                      onChange={(e) => setBranch(e.target.value)}
+                      className="text-xs w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-medium transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 flex gap-4">
+                <Link
+                  href="/scheduled-exams"
+                  className="flex-1 py-2.5 border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs rounded-none shadow-sm transition-colors text-center cursor-pointer uppercase tracking-wider"
                 >
-                  <option value="Web Development with AI">Web Development with AI</option>
-                  <option value="Full Stack Development">Full Stack Development</option>
-                  <option value="Marketing Intern">Marketing Intern</option>
-                  <option value="Data Science & ML">Data Science & ML</option>
-                  <option value="Cybersecurity">Cybersecurity</option>
-                  <option value="Product Management">Product Management</option>
-                </select>
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none uppercase tracking-wider"
+                >
+                  {isSubmitting ? "Submitting..." : "Submit Registration"}
+                </button>
               </div>
-            </div>
-
-            {/* Section 5: Security Captcha */}
-            <div className="border-t border-zinc-200 pt-4 flex flex-col items-start">
-              <Turnstile
-                onSuccess={(token) => {
-                  setTurnstileToken(token);
-                  setErrorMsg("");
-                }}
-                onError={() => setErrorMsg("Security verification encountered an error.")}
-                onExpire={() => setTurnstileToken("")}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-4 flex gap-4">
-              <Link
-                href="/scheduled-exams"
-                className="flex-1 py-2.5 border border-zinc-300 hover:bg-zinc-50 text-zinc-700 font-semibold text-xs rounded-none shadow-sm transition-colors text-center cursor-pointer uppercase tracking-wider"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-400 text-white font-bold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none uppercase tracking-wider"
-              >
-                {isSubmitting ? "Submitting..." : "Submit Registration"}
-              </button>
             </div>
           </form>
         </div>
