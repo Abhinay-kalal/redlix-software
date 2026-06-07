@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
 import { getVisitorId } from "@/utils/fingerprint";
+import Script from "next/script";
 
 function ExamLoginContent() {
   const router = useRouter();
@@ -264,10 +265,17 @@ function ExamLoginContent() {
               Enter your registered name and hall ticket number to access your assigned examination.
             </p>
             <div className="flex justify-center pt-2">
-              <img
-                src="https://ik.imagekit.io/dypkhqxip/Online%20test-bro.svg"
-                alt="Online Test Illustration"
-                className="w-full max-w-[220px] h-auto object-contain select-none pointer-events-none"
+              <Script
+                src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js"
+                type="module"
+                strategy="afterInteractive"
+              />
+              {/* @ts-ignore */}
+              <dotlottie-wc
+                src="https://lottie.host/e6e11b63-fa23-46e2-8a7c-d5f6ec2d193f/Y5lstf8SOf.lottie"
+                style={{ width: "260px", height: "260px" }}
+                autoplay
+                loop
               />
             </div>
           </div>
