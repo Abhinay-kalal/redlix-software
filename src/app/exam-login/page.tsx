@@ -210,40 +210,33 @@ function ExamLoginContent() {
 
   if (isUnsupportedDevice) {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-6 text-white font-sans selection:bg-orange-500 selection:text-white">
-        <div className="max-w-md w-full border border-zinc-800 bg-zinc-950 p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
-          {/* Top glowing accent line */}
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 animate-pulse" />
-
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center animate-bounce">
-              <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
+      <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900">
+        <div className="w-full max-w-md bg-white border border-zinc-200 p-8 text-center space-y-6 shadow-md">
+          <div className="w-16 h-16 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-xl font-bold tracking-tight text-white uppercase">Desktop Access Only</h1>
-            <p className="text-sm text-zinc-400 leading-relaxed">
-              This examination environment requires professional AI proctoring features that are unsupported on handheld or mobile systems.
+            <h1 className="text-xl font-bold tracking-tight text-zinc-800 uppercase">Desktop Access Only</h1>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              This exam is proctored and must be taken on a laptop or desktop computer. Access from mobile phones and tablets is blocked.
             </p>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800/80 p-4 space-y-3 text-left">
-            <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider">Restricted Devices:</p>
-            <ul className="text-xs text-zinc-400 space-y-1.5 list-disc pl-4">
-              <li>Mobile Smart Phones (iOS, Android, etc.)</li>
-              <li>Handheld Tablet Devices (iPad, Galaxy Tab, Kindle, etc.)</li>
-              <li>Devices with screens smaller than 1024px</li>
+          <div className="bg-zinc-50 border border-zinc-200 p-4 space-y-2 text-left">
+            <p className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">Restricted Devices:</p>
+            <ul className="text-xs text-zinc-650 space-y-1 list-disc pl-4">
+              <li>Mobile Smart Phones (iOS, Android)</li>
+              <li>Tablet Devices (iPad, Android Tablets)</li>
+              <li>Devices with screen width below 1024px</li>
             </ul>
           </div>
 
-          <div className="pt-2">
-            <p className="text-xs text-zinc-500 leading-relaxed">
-              Please switch to a laptop or desktop computer to register and start your examination session.
-            </p>
-          </div>
+          <p className="text-xs text-zinc-500 leading-relaxed pt-2 border-t border-zinc-150">
+            Please log in from a laptop or desktop computer to take this exam.
+          </p>
         </div>
       </div>
     );
