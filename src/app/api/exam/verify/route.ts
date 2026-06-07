@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     const { data: reg, error: regError } = await supabase
       .from("registrations")
       .select(
-        "id, candidate_name, exam_id, photo_url, registration_number, hall_ticket_number"
+        "id, candidate_name, exam_id, photo_url, registration_number, hall_ticket_number, blocked"
       )
       .ilike("hall_ticket_number", hallTicketNumber.trim())
       .maybeSingle();
@@ -53,6 +53,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "not_found" },
         { status: 404 }
+      );
+    }
+
+    // Check if candidate is blocked due to proctoring violation
+    if (reg.blocked) {
+      return NextResponse.json(
+        { success: false, error: "blocked" },
+        { status: 403 }
       );
     }
 

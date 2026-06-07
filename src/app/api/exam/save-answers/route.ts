@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await supabase
       .from("registrations")
-      .select("answers")
+      .select("answers, blocked")
       .ilike("hall_ticket_number", hallTicketNumber.trim())
       .maybeSingle();
 
@@ -42,7 +42,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, answers: data?.answers ?? {} });
+    return NextResponse.json({
+      success: true,
+      answers: data?.answers ?? {},
+      blocked: data?.blocked ?? false,
+    });
   } catch (err: any) {
     console.error("Unexpected error in GET save-answers API:", err);
     return NextResponse.json(

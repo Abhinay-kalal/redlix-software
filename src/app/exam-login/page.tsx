@@ -117,6 +117,8 @@ function ExamLoginContent() {
           setHtError("Could not fetch exam details. Please contact the exam administrator.");
         } else if (verifyCredData.error === "not_registered_for_this_exam") {
           setHtError("Your hall ticket number is not registered for this exam.");
+        } else if (verifyCredData.error === "blocked") {
+          setHtError("Your exam session has been locked due to a proctoring violation. Please contact the administrator.");
         } else {
           setHtError("Verification failed. Please try again.");
         }
@@ -125,6 +127,13 @@ function ExamLoginContent() {
       }
 
       const { candidate, exam } = verifyCredData;
+
+      // Clear client-side violation lock on successful validation (re-enabled candidates)
+      try {
+        localStorage.removeItem(`exam_violated_${candidate.hallTicketNumber}`);
+      } catch (err) {
+        console.error("Failed to clear localStorage lockout:", err);
+      }
 
       // Ensure fingerprint is collected (may already be set from background effect)
       if (!visitorIdRef.current) {

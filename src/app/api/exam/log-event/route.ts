@@ -40,6 +40,16 @@ export async function POST(req: NextRequest) {
       user_agent: req.headers.get("user-agent") ?? "unknown",
     });
 
+    if (eventType === "PROCTORING_VIOLATION") {
+      const { error: blockError } = await supabase
+        .from("registrations")
+        .update({ blocked: true })
+        .eq("hall_ticket_number", sessionId);
+      if (blockError) {
+        console.error("Failed to block registration:", blockError.message);
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Error logging security event:", err);

@@ -315,14 +315,35 @@ export default function ExamSessionPage() {
     const loadSession = async () => {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed.hallTicketNumber && localStorage.getItem(`exam_violated_${parsed.hallTicketNumber}`)) {
+
+        let dbAnswers: Record<number, string> = {};
+        let dbBlocked = false;
+        try {
+          const res = await fetch(`/api/exam/save-answers?hallTicketNumber=${encodeURIComponent(parsed.hallTicketNumber)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              if (data.answers) {
+                dbAnswers = data.answers;
+              }
+              dbBlocked = !!data.blocked;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch initial saved answers:", e);
+        }
+
+        if (dbBlocked) {
           setIsViolated(true);
-          setViolationReason("Proctoring violation detected in a previous session.");
+          setViolationReason("Proctoring violation detected. The exam has been locked.");
           setIsSubmitted(true);
           setSession(parsed);
           setLoading(false);
           return;
         }
+
+        // Clear local storage lock since the database says it's active and allowed
+        localStorage.removeItem(`exam_violated_${parsed.hallTicketNumber}`);
 
         setSession(parsed);
 
@@ -341,19 +362,6 @@ export default function ExamSessionPage() {
           loadedQuestions = [...shuffledA, ...shuffledB];
         }
         setQuestions(loadedQuestions);
-
-        let dbAnswers: Record<number, string> = {};
-        try {
-          const res = await fetch(`/api/exam/save-answers?hallTicketNumber=${encodeURIComponent(parsed.hallTicketNumber)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.answers) {
-              dbAnswers = data.answers;
-            }
-          }
-        } catch (e) {
-          console.error("Failed to fetch initial saved answers:", e);
-        }
 
         setAnswers((prev) => {
           const initialAnswers = { ...prev, ...dbAnswers };

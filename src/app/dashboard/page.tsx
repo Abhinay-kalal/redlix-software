@@ -48,6 +48,18 @@ interface Registration {
   registration_number?: string;
   hall_ticket_number?: string;
   answers?: Record<string | number, string>;
+  blocked?: boolean;
+}
+
+interface SecurityLog {
+  id: number;
+  session_id: string;
+  visitor_id: string;
+  event_type: string;
+  details: string;
+  ip_address: string;
+  user_agent: string;
+  created_at: string;
 }
 
 function seedRandom(seedStr: string) {
@@ -146,6 +158,45 @@ export default function Dashboard() {
       console.error("Error loading exams and registrations:", err);
     } finally {
       setLoadingExamsTab(false);
+    }
+  };
+
+  const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
+  const [loadingSecurityLogs, setLoadingSecurityLogs] = useState(false);
+  const [reEnablingId, setReEnablingId] = useState<string | null>(null);
+
+  const fetchSecurityLogs = async () => {
+    setLoadingSecurityLogs(true);
+    try {
+      const res = await adminFetch("GET", { resource: "security_logs" });
+      if (res.success) {
+        setSecurityLogs(res.data);
+      }
+    } catch (err) {
+      console.error("Error loading security logs:", err);
+    } finally {
+      setLoadingSecurityLogs(false);
+    }
+  };
+
+  const handleReEnableExam = async (hallTicketNumber: string) => {
+    setReEnablingId(hallTicketNumber);
+    try {
+      const res = await adminFetch("POST", undefined, {
+        action: "re_enable_exam",
+        hallTicketNumber,
+      });
+      if (res.success) {
+        await Promise.all([fetchSecurityLogs(), fetchExamsAndRegistrations()]);
+        alert(`Successfully re-enabled exam for candidate with Hall Ticket: ${hallTicketNumber}`);
+      } else {
+        alert("Failed to re-enable the exam: " + (res.error || "Unknown error"));
+      }
+    } catch (err: any) {
+      console.error("Failed to re-enable exam:", err);
+      alert("Unexpected error occurred while re-enabling exam.");
+    } finally {
+      setReEnablingId(null);
     }
   };
 
@@ -339,6 +390,10 @@ export default function Dashboard() {
     if ((activeTab === "exams-list" || activeTab === "overview" || activeTab === "settings") && isAuthenticated) {
       fetchExamsAndRegistrations();
       setSelectedExamForCandidates(null);
+    }
+    if (activeTab === "security-logs" && isAuthenticated) {
+      fetchSecurityLogs();
+      fetchExamsAndRegistrations();
     }
   }, [activeTab, isAuthenticated]);
 
@@ -545,6 +600,18 @@ export default function Dashboard() {
             <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">settings</span>
             Settings
           </button>
+
+          <button 
+            onClick={() => setActiveTab("security-logs")}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "security-logs" 
+                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
+                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">policy</span>
+            IP Security Logs
+          </button>
         </nav>
 
         {}
@@ -582,6 +649,8 @@ export default function Dashboard() {
                 ? "Settings & Diagnostics"
                 : activeTab === "exams-list"
                 ? "Exams Directory"
+                : activeTab === "security-logs"
+                ? "IP Security Logs"
                 : "Create Exam"}
             </h1>
             <div className="flex items-center gap-2 bg-emerald-50 px-2 py-0.5 rounded-none text-[10px] text-emerald-700 font-semibold border border-emerald-200">
@@ -1390,6 +1459,131 @@ export default function Dashboard() {
                 )}
               </div>
             )}
+          </div>
+        ) : activeTab === "security-logs" ? (
+          <div className="space-y-6 p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="text-sm font-bold normal-case text-zinc-800">IP & Proctoring Security Logs</h3>
+                <p className="text-xs text-zinc-400">Review real-time proctoring violations, user agents, IP logs, and manage exam locks</p>
+              </div>
+              <button
+                onClick={fetchSecurityLogs}
+                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase rounded-none cursor-pointer transition-all border-none"
+              >
+                Refresh Logs
+              </button>
+            </div>
+
+            {/* Quick stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="bg-white border border-zinc-200 p-5 shadow-sm">
+                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Security Events</p>
+                <p className="text-lg font-bold text-zinc-800 mt-1">{securityLogs.length}</p>
+              </div>
+              <div className="bg-white border border-zinc-200 p-5 shadow-sm">
+                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Active Lockouts / Blocks</p>
+                <p className="text-lg font-bold text-red-650 mt-1">
+                  {registrations.filter((r) => r.blocked).length} Candidates Blocked
+                </p>
+              </div>
+            </div>
+
+            {/* Logs Table */}
+            <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs font-sans">
+                  <thead>
+                    <tr className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-650">
+                      <th className="px-6 py-3">Timestamp</th>
+                      <th className="px-6 py-3">Candidate Details</th>
+                      <th className="px-6 py-3">IP & User Agent</th>
+                      <th className="px-6 py-3">Event Type</th>
+                      <th className="px-6 py-3">Violation Details</th>
+                      <th className="px-6 py-3 text-right">Status / Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200">
+                    {loadingSecurityLogs ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 italic">
+                          Querying security logs database records, please wait...
+                        </td>
+                      </tr>
+                    ) : securityLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 italic">
+                          No security events or violations logged in the database.
+                        </td>
+                      </tr>
+                    ) : (
+                      securityLogs.map((log) => {
+                        const candidate = registrations.find(
+                          (r) => r.hall_ticket_number?.toLowerCase() === log.session_id?.toLowerCase()
+                        );
+                        const isCandidateBlocked = candidate?.blocked ?? false;
+
+                        return (
+                          <tr key={log.id} className="hover:bg-zinc-50/50">
+                            <td className="px-6 py-3.5 whitespace-nowrap text-zinc-500 font-mono text-[10px]">
+                              {new Date(log.created_at).toLocaleString()}
+                            </td>
+                            <td className="px-6 py-3.5">
+                              {candidate ? (
+                                <div>
+                                  <p className="font-semibold text-zinc-900">{candidate.candidate_name}</p>
+                                  <p className="text-[10px] text-zinc-400 font-mono leading-tight">{log.session_id}</p>
+                                </div>
+                              ) : (
+                                <p className="font-mono text-zinc-750">{log.session_id}</p>
+                              )}
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <p className="font-mono text-zinc-805">{log.ip_address}</p>
+                              <p className="text-[9px] text-zinc-400 truncate max-w-[180px]" title={log.user_agent}>
+                                {log.user_agent}
+                              </p>
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <span className={`px-2 py-0.5 font-bold tracking-wider text-[9px] border uppercase rounded-none ${
+                                log.event_type === "PROCTORING_VIOLATION"
+                                  ? "bg-red-50 text-red-700 border-red-200"
+                                  : "bg-orange-50 text-orange-700 border-orange-200"
+                              }`}>
+                                {log.event_type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-3.5 text-zinc-700 max-w-[200px] truncate" title={log.details}>
+                              {log.details || "None"}
+                            </td>
+                            <td className="px-6 py-3.5 text-right whitespace-nowrap">
+                              {isCandidateBlocked ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  <span className="px-1.5 py-0.5 bg-red-105 text-red-800 text-[9px] font-bold border border-red-200 uppercase rounded-none">
+                                    Locked
+                                  </span>
+                                  <button
+                                    onClick={() => handleReEnableExam(log.session_id)}
+                                    disabled={reEnablingId === log.session_id}
+                                    className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] rounded-none cursor-pointer border-none transition-all uppercase tracking-wider disabled:opacity-50"
+                                  >
+                                    {reEnablingId === log.session_id ? "Re-enabling..." : "Re-enable Exam"}
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-250 uppercase rounded-none">
+                                  Allowed
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         ) : null}
 

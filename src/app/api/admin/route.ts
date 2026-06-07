@@ -57,6 +57,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data });
   }
 
+  if (resource === "security_logs") {
+    const { data, error } = await supabase
+      .from("security_logs")
+      .select()
+      .order("created_at", { ascending: false });
+    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, data });
+  }
+
   return NextResponse.json({ success: false, error: "Unknown resource" }, { status: 400 });
 }
 
@@ -114,6 +123,21 @@ export async function POST(req: NextRequest) {
     const { sessionId } = body;
     const { error } = await supabase.from("sessions").delete().eq("id", sessionId);
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
+  // Re-enable blocked exam
+  if (action === "re_enable_exam") {
+    const { hallTicketNumber } = body;
+    const { error } = await supabase
+      .from("registrations")
+      .update({ blocked: false, answers: {} })
+      .eq("hall_ticket_number", hallTicketNumber);
+    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+
+    // Also delete any existing session to ensure a clean login
+    await supabase.from("sessions").delete().eq("id", hallTicketNumber);
+
     return NextResponse.json({ success: true });
   }
 
