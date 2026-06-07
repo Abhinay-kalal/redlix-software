@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { QUESTIONS } from "@/app/exam-session/questions";
 
 interface Session {
   id: string;
@@ -46,6 +47,30 @@ interface Registration {
   created_at: string;
   registration_number?: string;
   hall_ticket_number?: string;
+  answers?: Record<string | number, string>;
+}
+
+function seedRandom(seedStr: string) {
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function() {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleQuestions<T>(array: T[], seed: string): T[] {
+  const rng = seedRandom(seed);
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
 }
 
 export default function Dashboard() {
@@ -105,6 +130,7 @@ export default function Dashboard() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [selectedExamForCandidates, setSelectedExamForCandidates] = useState<Exam | null>(null);
+  const [selectedCandidateForAnswers, setSelectedCandidateForAnswers] = useState<Registration | null>(null);
   const [loadingExamsTab, setLoadingExamsTab] = useState(false);
 
   const fetchExamsAndRegistrations = async () => {
@@ -1245,6 +1271,18 @@ export default function Dashboard() {
                               <p className="truncate"><span className="text-zinc-400">Phone:</span> {candidate.phone}</p>
                               <p className="truncate"><span className="text-zinc-400">College:</span> {candidate.college}</p>
                             </div>
+                            <div className="pt-2 border-t border-zinc-100 flex justify-between items-center">
+                              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider font-mono">
+                                {Object.keys(candidate.answers ?? {}).length} Saved
+                              </span>
+                              <button
+                                onClick={() => setSelectedCandidateForAnswers(candidate)}
+                                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-xs leading-none">visibility</span>
+                                Show
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1467,6 +1505,205 @@ export default function Dashboard() {
               </div>
             </div>
 
+          </div>
+        </div>
+      );
+    })()}
+
+    {selectedCandidateForAnswers && (() => {
+      const candidate = selectedCandidateForAnswers;
+      const exam = exams.find((e) => e.id === candidate.exam_id);
+      
+      let candidateQuestions = QUESTIONS.map((q) => ({ ...q }));
+      if (candidate.exam_id === 4 || (exam && exam.name.toLowerCase().includes("student forge"))) {
+        const sectionA = candidateQuestions.filter((q) => q.section === "A");
+        const sectionB = candidateQuestions.filter((q) => q.section === "B");
+        if (candidate.hall_ticket_number) {
+          const shuffledA = shuffleQuestions(sectionA, candidate.hall_ticket_number);
+          const shuffledB = shuffleQuestions(sectionB, candidate.hall_ticket_number + "-B");
+          shuffledA.forEach((q, idx) => {
+            q.number = idx + 1;
+          });
+          shuffledB.forEach((q, idx) => {
+            q.number = idx + 1;
+          });
+          candidateQuestions = [...shuffledA, ...shuffledB];
+        }
+      }
+
+      const mcqQuestions = candidateQuestions.filter(q => q.type === "mcq");
+      const codingQuestions = candidateQuestions.filter(q => q.type === "coding");
+
+      const isQuestionAttempted = (q: typeof QUESTIONS[0]) => {
+        const ans = candidate.answers?.[q.id];
+        if (!ans || ans.trim() === "") return false;
+        if (q.type === "coding" && q.starterCode) {
+          return ans.trim() !== q.starterCode.trim();
+        }
+        return true;
+      };
+
+      const mcqAttempted = mcqQuestions.filter(isQuestionAttempted).length;
+      const codingAttempted = codingQuestions.filter(isQuestionAttempted).length;
+
+      return (
+        <div className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in select-text">
+          <div className="relative w-full max-w-4xl bg-white border border-zinc-250 rounded-none overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            
+            {}
+            <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
+              <div>
+                <h3 className="text-sm font-bold text-zinc-950 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-orange-600 leading-none">assignment_ind</span>
+                  Answers Review: {candidate.candidate_name}
+                </h3>
+                <p className="text-[11px] text-zinc-500">
+                  Hall Ticket: <span className="font-mono font-bold text-zinc-700">{candidate.hall_ticket_number}</span> • Exam: <span className="font-semibold text-zinc-700">{exam?.name || "Technical Assessment"}</span>
+                </p>
+              </div>
+              <button 
+                onClick={() => setSelectedCandidateForAnswers(null)} 
+                className="text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer border-none bg-transparent"
+              >
+                <span className="material-symbols-outlined text-md">close</span>
+              </button>
+            </div>
+
+            {}
+            <div className="grid grid-cols-3 border-b border-zinc-200 bg-zinc-50/50 shrink-0 divide-x divide-zinc-200 text-center py-2.5">
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase font-bold">Total Progress</p>
+                <p className="text-sm font-bold text-zinc-800 mt-0.5">
+                  {mcqAttempted + codingAttempted} / {candidateQuestions.length} Attempted
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase font-bold">Section A: MCQs</p>
+                <p className="text-sm font-bold text-emerald-600 mt-0.5">
+                  {mcqAttempted} / {mcqQuestions.length} Answered
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-zinc-400 uppercase font-bold">Section B: Coding</p>
+                <p className="text-sm font-bold text-indigo-600 mt-0.5">
+                  {codingAttempted} / {codingQuestions.length} Attempted
+                </p>
+              </div>
+            </div>
+
+            {}
+            <div className="flex-1 overflow-y-auto p-5 space-y-6">
+              {}
+              <div className="space-y-4">
+                <h4 className="text-xs font-extrabold uppercase tracking-widest text-orange-600 border-b border-zinc-200 pb-1 flex items-center justify-between">
+                  <span>Section A: Multiple Choice Questions ({mcqQuestions.length})</span>
+                  <span className="text-[10px] text-zinc-400 normal-case font-normal">(Shuffled in student's view)</span>
+                </h4>
+                <div className="space-y-3">
+                  {mcqQuestions.map((q) => {
+                    const selectedLetter = candidate.answers?.[q.id];
+                    const attempted = isQuestionAttempted(q);
+
+                    return (
+                      <div key={q.id} className="p-3.5 border border-zinc-200 bg-white space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <h5 className="text-xs font-bold text-zinc-800 leading-relaxed">
+                            Question {q.number}: <span className="font-normal text-zinc-650 whitespace-pre-wrap">{q.questionText}</span>
+                          </h5>
+                          <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 border ${
+                            attempted 
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-250" 
+                              : "bg-red-50 text-red-700 border-red-250"
+                          }`}>
+                            {attempted ? "Attempted" : "Not Attempted"}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-3">
+                          {q.options?.map((opt) => {
+                            const letter = opt.substring(0, 1);
+                            const isSelected = selectedLetter === letter;
+                            return (
+                              <div 
+                                key={opt}
+                                className={`p-2 border text-xs flex items-center gap-2 ${
+                                  isSelected 
+                                    ? "bg-orange-50/30 border-orange-400 font-semibold text-orange-950" 
+                                    : "bg-zinc-50 border-zinc-200 text-zinc-600"
+                                }`}
+                              >
+                                <span className={`w-4 h-4 flex items-center justify-center text-[9px] font-bold border rounded-full ${
+                                  isSelected 
+                                    ? "bg-orange-500 border-orange-500 text-white" 
+                                    : "border-zinc-300 text-zinc-400 bg-white"
+                                }`}>
+                                  {letter}
+                                </span>
+                                <span className="font-sans leading-none">{opt.substring(3)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {}
+              <div className="space-y-4 pt-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-widest text-indigo-600 border-b border-zinc-200 pb-1 flex items-center justify-between">
+                  <span>Section B: Coding Challenges ({codingQuestions.length})</span>
+                  <span className="text-[10px] text-zinc-400 normal-case font-normal">(Shuffled in student's view)</span>
+                </h4>
+                <div className="space-y-4">
+                  {codingQuestions.map((q) => {
+                    const solutionCode = candidate.answers?.[q.id];
+                    const attempted = isQuestionAttempted(q);
+
+                    return (
+                      <div key={q.id} className="p-3.5 border border-zinc-200 bg-white space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <h5 className="text-xs font-bold text-zinc-800 leading-relaxed">
+                            Coding Challenge {q.number}: <span className="font-normal text-zinc-600">{q.questionText.split("\n")[0]}</span>
+                          </h5>
+                          <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 border ${
+                            attempted 
+                              ? "bg-indigo-50 text-indigo-700 border-indigo-250" 
+                              : "bg-red-50 text-red-700 border-red-250"
+                          }`}>
+                            {attempted ? "Attempted" : "Not Attempted"}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-450 font-mono">Candidate Submission</p>
+                          {attempted && solutionCode ? (
+                            <pre className="bg-zinc-950 text-zinc-300 font-mono text-[11px] p-3.5 border border-zinc-800 overflow-x-auto whitespace-pre rounded-none max-h-72">
+                              {solutionCode}
+                            </pre>
+                          ) : (
+                            <div className="p-3 bg-zinc-50 border border-zinc-200 text-zinc-400 text-xs italic font-sans">
+                              No solution submitted for this challenge.
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {}
+            <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex justify-end shrink-0">
+              <button
+                onClick={() => setSelectedCandidateForAnswers(null)}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+              >
+                Close View
+              </button>
+            </div>
           </div>
         </div>
       );

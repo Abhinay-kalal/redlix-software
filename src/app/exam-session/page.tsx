@@ -310,49 +310,89 @@ export default function ExamSessionPage() {
       router.replace("/exam-login");
       return;
     }
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed.hallTicketNumber && localStorage.getItem(`exam_violated_${parsed.hallTicketNumber}`)) {
-        setIsViolated(true);
-        setViolationReason("Proctoring violation detected in a previous session.");
-        setIsSubmitted(true);
+    const loadSession = async () => {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.hallTicketNumber && localStorage.getItem(`exam_violated_${parsed.hallTicketNumber}`)) {
+          setIsViolated(true);
+          setViolationReason("Proctoring violation detected in a previous session.");
+          setIsSubmitted(true);
+          setSession(parsed);
+          setLoading(false);
+          return;
+        }
+
         setSession(parsed);
-        setLoading(false);
-        return;
-      }
 
-      setSession(parsed);
+        let loadedQuestions = QUESTIONS.map((q) => ({ ...q }));
+        if (parsed.exam.id === 4 || parsed.exam.name.toLowerCase().includes("student forge")) {
+          const sectionA = loadedQuestions.filter((q) => q.section === "A");
+          const sectionB = loadedQuestions.filter((q) => q.section === "B");
+          const shuffledA = shuffleQuestions(sectionA, parsed.hallTicketNumber);
+          const shuffledB = shuffleQuestions(sectionB, parsed.hallTicketNumber + "-B");
+          shuffledA.forEach((q, idx) => {
+            q.number = idx + 1;
+          });
+          shuffledB.forEach((q, idx) => {
+            q.number = idx + 1;
+          });
+          loadedQuestions = [...shuffledA, ...shuffledB];
+        }
+        setQuestions(loadedQuestions);
 
-      let loadedQuestions = QUESTIONS.map((q) => ({ ...q }));
-      if (parsed.exam.id === 4 || parsed.exam.name.toLowerCase().includes("student forge")) {
-        const sectionA = loadedQuestions.filter((q) => q.section === "A");
-        const sectionB = loadedQuestions.filter((q) => q.section === "B");
-        const shuffledA = shuffleQuestions(sectionA, parsed.hallTicketNumber);
-        const shuffledB = shuffleQuestions(sectionB, parsed.hallTicketNumber + "-B");
-        shuffledA.forEach((q, idx) => {
-          q.number = idx + 1;
-        });
-        shuffledB.forEach((q, idx) => {
-          q.number = idx + 1;
-        });
-        loadedQuestions = [...shuffledA, ...shuffledB];
-      }
-      setQuestions(loadedQuestions);
-
-      setAnswers((prev) => {
-        const initialAnswers = { ...prev };
-        loadedQuestions.forEach((q) => {
-          if (q.type === "coding" && q.starterCode && !initialAnswers[q.id]) {
-            initialAnswers[q.id] = q.starterCode;
+        let dbAnswers: Record<number, string> = {};
+        try {
+          const res = await fetch(`/api/exam/save-answers?hallTicketNumber=${encodeURIComponent(parsed.hallTicketNumber)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.answers) {
+              dbAnswers = data.answers;
+            }
           }
+        } catch (e) {
+          console.error("Failed to fetch initial saved answers:", e);
+        }
+
+        setAnswers((prev) => {
+          const initialAnswers = { ...prev, ...dbAnswers };
+          loadedQuestions.forEach((q) => {
+            if (q.type === "coding" && q.starterCode && !initialAnswers[q.id]) {
+              initialAnswers[q.id] = q.starterCode;
+            }
+          });
+          return initialAnswers;
         });
-        return initialAnswers;
-      });
-    } catch {
-      router.replace("/exam-login");
-    } finally {
-      setLoading(false);
-    }
+
+        setQuestionStatuses((prev) => {
+          const statuses = { ...prev };
+          loadedQuestions.forEach((q) => {
+            const ans = dbAnswers[q.id];
+            if (ans && ans.trim() !== "") {
+              if (q.type === "coding" && q.starterCode) {
+                statuses[q.id] = ans.trim() !== q.starterCode.trim() ? "answered" : "not_answered";
+              } else {
+                statuses[q.id] = "answered";
+              }
+            } else {
+              statuses[q.id] = "not_visited";
+            }
+          });
+          if (loadedQuestions.length > 0) {
+            const firstQId = loadedQuestions[0].id;
+            if (!statuses[firstQId] || statuses[firstQId] === "not_visited") {
+              statuses[firstQId] = "not_answered";
+            }
+          }
+          return statuses;
+        });
+      } catch {
+        router.replace("/exam-login");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSession();
   }, [router]);
 
   
@@ -536,10 +576,15 @@ export default function ExamSessionPage() {
   useEffect(() => {
     if (setupDone && questions.length > 0) {
       const firstQId = questions[0].id;
-      setQuestionStatuses((prev) => ({
-        ...prev,
-        [firstQId]: "not_answered",
-      }));
+      setQuestionStatuses((prev) => {
+        if (prev[firstQId] === "answered" || prev[firstQId] === "marked") {
+          return prev;
+        }
+        return {
+          ...prev,
+          [firstQId]: "not_answered",
+        };
+      });
     }
   }, [setupDone, questions]);
 
@@ -643,23 +688,54 @@ export default function ExamSessionPage() {
     };
   }, [setupDone, isSubmitted, triggerViolation]);
 
-  
+  const saveAnswersToDb = useCallback(async (currentAnswers: Record<number, string>) => {
+    if (!session?.hallTicketNumber) return;
+    try {
+      const res = await fetch("/api/exam/save-answers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          hallTicketNumber: session.hallTicketNumber,
+          answers: currentAnswers,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Failed to auto-save answers");
+      }
+    } catch (err) {
+      console.error("Error in auto-saving answers:", err);
+    }
+  }, [session?.hallTicketNumber]);
+
+  useEffect(() => {
+    if (!setupDone || isSubmitted || !session?.hallTicketNumber) return;
+
+    const timer = setTimeout(() => {
+      saveAnswersToDb(answers);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [answers, setupDone, isSubmitted, session?.hallTicketNumber, saveAnswersToDb]);
+
   useEffect(() => {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
 
-  
   const triggerAutoSubmit = useCallback(() => {
+    if (session?.hallTicketNumber) {
+      saveAnswersToDb(answers);
+    }
     setIsSubmitted(true);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     if (document.exitFullscreen) {
       document.exitFullscreen().catch(() => {});
     }
-  }, []);
+  }, [answers, session?.hallTicketNumber, saveAnswersToDb]);
 
-  
   useEffect(() => {
     if (!setupDone || isSubmitted) return;
     const interval = setInterval(() => {
@@ -675,7 +751,6 @@ export default function ExamSessionPage() {
     return () => clearInterval(interval);
   }, [setupDone, isSubmitted, triggerAutoSubmit]);
 
-  
   const handleQuestionSelect = (index: number) => {
     const prevQ = questions[currentIndex];
     const prevAns = answers[prevQ.id];
@@ -964,7 +1039,10 @@ export default function ExamSessionPage() {
 
           <div className="pt-4 flex justify-end">
             <button
-              onClick={() => {
+              onClick={async () => {
+                if (session?.hallTicketNumber) {
+                  await saveAnswersToDb(answers);
+                }
                 sessionStorage.removeItem("exam_session");
                 setIsFullySubmitted(true);
               }}
