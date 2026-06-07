@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { ArrowLeft, CheckCircle, Camera, User, Mail, Phone, MapPin, Calendar, BookOpen, Layers, Heart } from "lucide-react";
+import { CheckCircle, Camera, User, Mail, Phone, MapPin, Calendar, BookOpen, Layers, Heart } from "lucide-react";
 import Link from "next/link";
 import { Turnstile } from "@/components/ui/turnstile";
 
@@ -205,10 +205,6 @@ export default function StudentRegisterPage() {
             <span className="text-orange-200">/</span>
             <span className="text-white">Student Registration</span>
           </nav>
-          <Link href="/scheduled-exams" className="text-xs text-orange-100 hover:text-white flex items-center gap-1 font-semibold">
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Exams List
-          </Link>
         </div>
       </header>
 

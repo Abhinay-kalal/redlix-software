@@ -66,12 +66,6 @@ export default function ScheduledExams() {
             <span className="text-orange-200">/</span>
             <span className="text-white">Scheduled Exams</span>
           </nav>
-          <Link 
-            href="/student-register" 
-            className="text-xs text-orange-100 hover:text-white font-bold transition-colors"
-          >
-            General Registration
-          </Link>
         </div>
       </header>
 
