@@ -60,13 +60,18 @@ export default function ScheduledExams() {
       
       {}
       <header className="bg-orange-500 border-b border-orange-600 py-3.5 px-6 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-start">
-          {}
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <nav className="text-xs text-orange-100 font-semibold flex items-center gap-1.5">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <span className="text-orange-200">/</span>
             <span className="text-white">Scheduled Exams</span>
           </nav>
+          <Link 
+            href="/student-register" 
+            className="text-xs text-orange-100 hover:text-white font-bold transition-colors"
+          >
+            General Registration
+          </Link>
         </div>
       </header>
 
