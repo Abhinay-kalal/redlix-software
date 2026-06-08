@@ -73,6 +73,11 @@ export default function ResultsPage() {
   const [codingTestResults, setCodingTestResults] = useState<Record<number, { name: string; success: boolean; message: string }[] | null>>({});
   const [isEvaluatingCode, setIsEvaluatingCode] = useState(false);
 
+  // Candidate lookup state variables
+  const [lookupHallTicket, setLookupHallTicket] = useState("");
+  const [searchedCandidate, setSearchedCandidate] = useState<Candidate | null>(null);
+  const [searchedError, setSearchedError] = useState("");
+
   // Fetch exams on mount
   useEffect(() => {
     setLoading(true);
@@ -86,11 +91,34 @@ export default function ResultsPage() {
     setSelectedExam(exam);
     setView("candidates");
     setSearchQuery("");
+    setLookupHallTicket("");
+    setSearchedCandidate(null);
+    setSearchedError("");
     setLoading(true);
     const res = await fetch(`/api/results?resource=candidates&examId=${exam.id}`);
     const d = await res.json();
     if (d.success) setCandidates(d.data);
     setLoading(false);
+  };
+
+  const handleLookupSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchedError("");
+    setSearchedCandidate(null);
+
+    const code = lookupHallTicket.trim().toUpperCase();
+    if (!code) {
+      setSearchedError("Please enter a hall ticket number.");
+      return;
+    }
+
+    const found = candidates.find((c) => c.hall_ticket_number.trim().toUpperCase() === code);
+    if (!found) {
+      setSearchedError(`No candidate found with Hall Ticket Number: "${lookupHallTicket}" for this exam.`);
+      return;
+    }
+
+    setSearchedCandidate(found);
   };
 
   const evaluateAllCodingChallenges = async (answers: Record<string | number, string>) => {
@@ -259,6 +287,9 @@ export default function ResultsPage() {
       setView("exams");
       setSelectedExam(null);
       setCandidates([]);
+      setLookupHallTicket("");
+      setSearchedCandidate(null);
+      setSearchedError("");
     }
   };
 
@@ -372,102 +403,91 @@ export default function ResultsPage() {
               <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wider">{selectedExam.company_name}</p>
               <h2 className="text-xl font-bold text-zinc-900 mt-0.5">{selectedExam.name}</h2>
               <p className="text-xs text-zinc-500 mt-1">
-                Click a hall ticket number to view that candidate&apos;s answers
+                Enter a candidate&apos;s valid hall ticket number to show their result and paper they have attempted.
               </p>
             </div>
 
-            {/* Search */}
-            <input
-              type="text"
-              placeholder="Search by name or hall ticket..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full py-2.5 px-4 border border-zinc-200 bg-white text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-orange-400 focus:border-orange-400 transition-all"
-            />
+            <div className="bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
+              <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider">Candidate Result Lookup</h3>
+              
+              <form onSubmit={handleLookupSubmit} className="flex flex-col md:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Enter Hall Ticket Number (e.g., 26AI123456)..."
+                  value={lookupHallTicket}
+                  onChange={(e) => setLookupHallTicket(e.target.value)}
+                  className="flex-grow py-2.5 px-4 border border-zinc-200 bg-white text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-orange-400 focus:border-orange-400 font-mono transition-all"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold tracking-wide transition-colors cursor-pointer"
+                >
+                  Verify & Show
+                </button>
+              </form>
+
+              {searchedError && (
+                <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-100 p-3 rounded animate-pulse">
+                  {searchedError}
+                </p>
+              )}
+            </div>
 
             {loading ? (
-              <div className="flex justify-center py-20">
+              <div className="flex justify-center py-10">
                 <div className="w-8 h-8 rounded-full border-2 border-t-orange-500 border-zinc-200 animate-spin" />
               </div>
-            ) : (
-              <div className="bg-white border border-zinc-200 overflow-hidden">
-                {/* Stats bar */}
-                <div className="flex items-center gap-6 px-5 py-3 bg-zinc-50 border-b border-zinc-200 text-xs font-semibold text-zinc-500">
-                  <span>Total: <strong className="text-zinc-800">{candidates.length}</strong></span>
-                  <span>Submitted: <strong className="text-green-700">{candidates.filter(c => c.attempted).length}</strong></span>
-                  <span>No Attempt: <strong className="text-red-600">{candidates.filter(c => !c.attempted).length}</strong></span>
-                </div>
+            ) : searchedCandidate ? (
+              (() => {
+                const mcqScore = searchedCandidate.answers ? gradeMCQ(searchedCandidate.answers) : null;
+                return (
+                  <div className="bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
+                    <div className="border-b border-zinc-100 pb-3 flex items-center justify-between">
+                      <div>
+                        <h4 className="text-base font-bold text-zinc-900">{searchedCandidate.candidate_name}</h4>
+                        <p className="text-xs text-zinc-500 font-mono mt-0.5">{searchedCandidate.hall_ticket_number} · {searchedCandidate.email}</p>
+                      </div>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 border ${
+                        searchedCandidate.attempted
+                          ? "bg-green-50 text-green-700 border-green-200"
+                          : "bg-zinc-50 text-zinc-400 border-zinc-200"
+                      }`}>
+                        {searchedCandidate.attempted ? "Attempted" : "Not Attempted"}
+                      </span>
+                    </div>
 
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-zinc-100 text-[10px] uppercase tracking-wider text-zinc-400 font-bold">
-                      <th className="px-5 py-3 text-left">#</th>
-                      <th className="px-5 py-3 text-left">Name</th>
-                      <th className="px-5 py-3 text-left">Hall Ticket</th>
-                      <th className="px-5 py-3 text-center">MCQ Score</th>
-                      <th className="px-5 py-3 text-center">Coding</th>
-                      <th className="px-5 py-3 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-50">
-                    {filteredCandidates.map((c, i) => {
-                      const mcqScore = c.answers ? gradeMCQ(c.answers) : null;
-                      return (
-                        <tr
-                          key={c.id}
-                          className={`transition-colors ${c.attempted ? "hover:bg-orange-50/50 cursor-pointer" : "opacity-50"}`}
-                          onClick={() => c.attempted && openCandidate(c.hall_ticket_number)}
-                        >
-                          <td className="px-5 py-3.5 text-xs text-zinc-400">{i + 1}</td>
-                          <td className="px-5 py-3.5 font-semibold text-zinc-800 text-xs">{c.candidate_name}</td>
-                          <td className="px-5 py-3.5">
-                            {c.attempted ? (
-                              <span className="font-mono text-xs font-bold text-orange-600 hover:underline cursor-pointer">
-                                {c.hall_ticket_number}
-                              </span>
-                            ) : (
-                              <span className="font-mono text-xs text-zinc-400">{c.hall_ticket_number}</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3.5 text-center">
-                            {c.attempted && mcqScore ? (
-                              <div>
-                                <span className="font-mono text-xs font-bold text-green-700">{mcqScore.marksObtained} / 90 pts</span>
-                                <span className="text-[10px] text-zinc-400 block font-sans">({mcqScore.correct} / 30 correct)</span>
-                              </div>
-                            ) : (
-                              <span className="font-mono text-xs text-zinc-400">0 / 90 pts</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3.5 text-center">
-                            {c.attempted ? (
-                              <div>
-                                <span className="font-mono text-xs font-semibold text-purple-700">{c.coding_answered} / 10</span>
-                                <span className="text-[10px] text-zinc-400 block">attempted</span>
-                              </div>
-                            ) : (
-                              <span className="font-mono text-xs text-zinc-400">0 / 10</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            <span className={`text-[9px] font-bold px-2 py-0.5 border ${
-                              c.attempted
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-zinc-50 text-zinc-400 border-zinc-200"
-                            }`}>
-                              {c.attempted ? "Submitted" : "Not Attempted"}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                {filteredCandidates.length === 0 && (
-                  <p className="text-center text-zinc-400 text-sm py-10">No candidates match your search.</p>
-                )}
-              </div>
-            )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-zinc-50 border border-zinc-100 p-4 rounded text-center">
+                        <p className="text-lg font-bold text-green-700 font-mono font-bold">
+                          {searchedCandidate.attempted && mcqScore ? `${mcqScore.marksObtained} / 90 pts` : "0 / 90 pts"}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">MCQ Score</p>
+                      </div>
+
+                      <div className="bg-zinc-50 border border-zinc-100 p-4 rounded text-center">
+                        <p className="text-lg font-bold text-purple-700 font-mono font-bold">
+                          {searchedCandidate.attempted ? `${searchedCandidate.coding_answered} / 10` : "0 / 10"}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Coding Attempted</p>
+                      </div>
+                    </div>
+
+                    {searchedCandidate.attempted ? (
+                      <button
+                        onClick={() => openCandidate(searchedCandidate.hall_ticket_number)}
+                        className="w-full py-3 bg-zinc-900 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        View Full Response Sheet & Code Evaluator
+                      </button>
+                    ) : (
+                      <p className="text-xs text-zinc-400 italic text-center py-2">
+                        This candidate registered but did not save or submit any answers.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()
+            ) : null}
           </div>
         )}
 
