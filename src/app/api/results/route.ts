@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
         mcq_answered: mcqAnswered,
         coding_answered: codingAnswered,
         attempted,
+        answers: r.answers || {},
       };
     });
 
