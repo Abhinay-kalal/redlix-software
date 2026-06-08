@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const databaseUrl = process.env.DATABASE_URL || "postgresql://postgres.vcbxrdwomptrsxghtkpw:proctorsystemsredlix@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
+const databaseUrl = "postgresql://postgres.vcbxrdwomptrsxghtkpw:proctorsystemsredlix@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
 
 async function run() {
   const client = new Client({
@@ -10,36 +10,47 @@ async function run() {
 
   try {
     await client.connect();
-    console.log("Connected to database.");
+    console.log("Connected to database.\n");
 
-    // 1. Remove duplicates from public.registrations
-    console.log("Removing duplicates from public.registrations table (matching email + exam_id)...");
-    const resReg = await client.query(`
-      DELETE FROM public.registrations a
-      WHERE ctid < (
-        SELECT max(b.ctid)
-        FROM public.registrations b
-        WHERE a.exam_id = b.exam_id
-          AND LOWER(TRIM(a.email)) = LOWER(TRIM(b.email))
-      );
+    // Delete older duplicates (by email + exam_id), keeping only the latest (max id)
+    const res = await client.query(`
+      DELETE FROM public.registrations
+      WHERE id NOT IN (
+        SELECT MAX(id)
+        FROM public.registrations
+        GROUP BY email, exam_id
+      )
+      RETURNING id, email, exam_id, candidate_name;
     `);
-    console.log(`Deleted ${resReg.rowCount} duplicate row(s) from public.registrations.`);
 
-    // 2. Remove duplicates from public.student_registrations
-    console.log("Removing duplicates from public.student_registrations table (matching email)...");
-    const resStudent = await client.query(`
-      DELETE FROM public.student_registrations a
-      WHERE ctid < (
-        SELECT max(b.ctid)
-        FROM public.student_registrations b
-        WHERE LOWER(TRIM(a.email)) = LOWER(TRIM(b.email))
-      );
+    if (res.rows.length === 0) {
+      console.log("No duplicates found to delete.");
+    } else {
+      console.log(`Deleted ${res.rows.length} duplicate registration(s):`);
+      res.rows.forEach(row => {
+        console.log(`  ID: ${row.id} | ${row.candidate_name} | ${row.email} | Exam ID: ${row.exam_id}`);
+      });
+    }
+
+    // Verify final count
+    const total = await client.query(`SELECT COUNT(*) as total FROM public.registrations;`);
+    console.log(`\nTotal registrations remaining: ${total.rows[0].total}`);
+
+    // Verify no more duplicates
+    const check = await client.query(`
+      SELECT email, exam_id, COUNT(*) as count
+      FROM public.registrations
+      GROUP BY email, exam_id
+      HAVING COUNT(*) > 1;
     `);
-    console.log(`Deleted ${resStudent.rowCount} duplicate row(s) from public.student_registrations.`);
+    if (check.rows.length === 0) {
+      console.log("✓ No more duplicate registrations.");
+    } else {
+      console.log("Still found duplicates:", check.rows);
+    }
 
-    console.log("Cleanup script completed successfully.");
   } catch (err) {
-    console.error("Error executing cleanup script:", err);
+    console.error("Error:", err);
     process.exit(1);
   } finally {
     await client.end();
