@@ -107,6 +107,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // Generate (or clear) 6-digit submit code
+  if (action === "generate_submit_code") {
+    const { examId } = body;
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const { error } = await supabase
+      .from("exams")
+      .update({ submit_code: code })
+      .eq("id", examId);
+    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true, code });
+  }
+
+  // Clear submit code (make it null so exam ends without code gate)
+  if (action === "clear_submit_code") {
+    const { examId } = body;
+    const { error } = await supabase
+      .from("exams")
+      .update({ submit_code: null })
+      .eq("id", examId);
+    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   // Resolve session flags
   if (action === "resolve_session") {
     const { sessionId } = body;

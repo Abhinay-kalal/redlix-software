@@ -264,6 +264,12 @@ export default function ExamSessionPage() {
   const [isViolated, setIsViolated] = useState(false);
   const [violationReason, setViolationReason] = useState("");
 
+  // Submit code gate
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [submitCodeInput, setSubmitCodeInput] = useState("");
+  const [submitCodeError, setSubmitCodeError] = useState("");
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+
   const [testResults, setTestResults] = useState<Record<number, { name: string; success: boolean; message: string }[] | null>>({});
   const [isRunningTests, setIsRunningTests] = useState(false);
 
@@ -1760,7 +1766,7 @@ export default function ExamSessionPage() {
             {/* Submit button container */}
             <div className="p-4 bg-white">
               <button
-                onClick={() => triggerAutoSubmit()}
+                onClick={() => setShowCodeModal(true)}
                 className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors"
               >
                 Submit Exam
@@ -1771,6 +1777,79 @@ export default function ExamSessionPage() {
       </div>
 
       {}
+
+      {/* 6-digit submit code modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans select-none">
+          <div className="bg-white border border-zinc-200 w-full max-w-sm p-6 space-y-5 shadow-xl">
+            <div>
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider font-mono">Enter Submit Code</h3>
+              <p className="text-xs text-zinc-500 mt-1">Ask your exam invigilator for the 6-digit submission code to finalise your exam.</p>
+            </div>
+
+            <div className="space-y-2">
+              <input
+                type="text"
+                maxLength={6}
+                placeholder="000000"
+                value={submitCodeInput}
+                onChange={(e) => {
+                  setSubmitCodeInput(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  if (submitCodeError) setSubmitCodeError("");
+                }}
+                className={`w-full text-center text-2xl font-mono tracking-[0.5em] py-3 border rounded-none bg-white text-zinc-900 placeholder-zinc-300 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  submitCodeError ? "border-red-500 focus:ring-red-400" : "border-zinc-300"
+                }`}
+                autoFocus
+              />
+              {submitCodeError && (
+                <p className="text-red-500 text-xs text-center font-semibold">{submitCodeError}</p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowCodeModal(false); setSubmitCodeInput(""); setSubmitCodeError(""); }}
+                className="flex-1 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={submitCodeInput.length !== 6 || isVerifyingCode}
+                onClick={async () => {
+                  if (!session?.exam?.id) return;
+                  setIsVerifyingCode(true);
+                  setSubmitCodeError("");
+                  try {
+                    const res = await fetch("/api/exam/verify-submit-code", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ examId: session.exam.id, code: submitCodeInput }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      setShowCodeModal(false);
+                      setSubmitCodeInput("");
+                      triggerAutoSubmit();
+                    } else if (data.error === "invalid_code") {
+                      setSubmitCodeError("Incorrect code. Please ask your invigilator.");
+                    } else {
+                      setSubmitCodeError("Verification failed. Please try again.");
+                    }
+                  } catch {
+                    setSubmitCodeError("Network error. Please try again.");
+                  } finally {
+                    setIsVerifyingCode(false);
+                  }
+                }}
+                className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+              >
+                {isVerifyingCode ? "Verifying..." : "Confirm Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

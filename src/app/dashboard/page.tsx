@@ -32,6 +32,7 @@ interface Exam {
   custom_fields: Record<string, string>;
   is_started?: boolean;
   show_login?: boolean;
+  submit_code?: string | null;
 }
 
 interface Registration {
@@ -222,6 +223,38 @@ export default function Dashboard() {
       // Revert on failure
       setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, show_login: !newValue } : e)));
       console.error("Failed to toggle show login:", res.error);
+    }
+  };
+
+  const [generatingCodeId, setGeneratingCodeId] = useState<number | null>(null);
+
+  const handleGenerateCode = async (exam: Exam) => {
+    setGeneratingCodeId(exam.id);
+    try {
+      const res = await adminFetch("POST", undefined, { action: "generate_submit_code", examId: exam.id });
+      if (res.success) {
+        setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, submit_code: res.code } : e)));
+      } else {
+        alert("Failed to generate code: " + (res.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Unexpected error generating code.");
+    } finally {
+      setGeneratingCodeId(null);
+    }
+  };
+
+  const handleClearCode = async (exam: Exam) => {
+    if (!confirm("Remove the submit code? Candidates will be able to submit without a code.")) return;
+    try {
+      const res = await adminFetch("POST", undefined, { action: "clear_submit_code", examId: exam.id });
+      if (res.success) {
+        setExams((prev) => prev.map((e) => (e.id === exam.id ? { ...e, submit_code: null } : e)));
+      } else {
+        alert("Failed to clear code: " + (res.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Unexpected error clearing code.");
     }
   };
 
@@ -1405,51 +1438,85 @@ export default function Dashboard() {
                             </div>
                           </div>
 
-                          <div className="pt-4 mt-4 border-t border-zinc-100 flex items-center justify-between gap-3 flex-wrap">
-                            {}
-                            <div className="flex gap-1.5">
-                              <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
-                                exam.is_started
-                                  ? "bg-green-50 text-green-700 border-green-200"
-                                  : "bg-zinc-50 text-zinc-500 border-zinc-200"
-                              }`}>
-                                {exam.is_started ? "Exam Active" : "Not Started"}
-                              </span>
-                              <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
-                                exam.show_login
-                                  ? "bg-orange-50 text-orange-700 border-orange-200"
-                                  : "bg-zinc-50 text-zinc-500 border-zinc-200"
-                              }`}>
-                                {exam.show_login ? "Entry Open" : "Entry Closed"}
-                              </span>
+                          <div className="pt-4 mt-4 border-t border-zinc-100 space-y-3">
+                            {/* Submit Code Section */}
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase text-zinc-400 tracking-wider">Submit Code</span>
+                                {exam.submit_code ? (
+                                  <span className="font-mono text-base font-bold tracking-[0.3em] text-orange-600 bg-orange-50 border border-orange-200 px-3 py-0.5">
+                                    {exam.submit_code}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-zinc-400 italic">No code set</span>
+                                )}
+                              </div>
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => handleGenerateCode(exam)}
+                                  disabled={generatingCodeId === exam.id}
+                                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold text-[10px] uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+                                >
+                                  {generatingCodeId === exam.id ? "..." : exam.submit_code ? "Regenerate" : "Generate Code"}
+                                </button>
+                                {exam.submit_code && (
+                                  <button
+                                    onClick={() => handleClearCode(exam)}
+                                    className="px-3 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold text-[10px] uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+                                  >
+                                    Clear
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => toggleExamShowLogin(exam)}
-                                className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
-                                  exam.show_login
-                                    ? "bg-amber-500 hover:bg-amber-600 text-white"
-                                    : "bg-orange-500 hover:bg-orange-600 text-white"
-                                }`}
-                              >
-                                {exam.show_login ? "Hide Entry Button" : "Show Entry Button"}
-                              </button>
-                              <button
-                                onClick={() => toggleExamStarted(exam)}
-                                className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
+
+                            {/* Status badges + action buttons */}
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              {}
+                              <div className="flex gap-1.5">
+                                <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
                                   exam.is_started
-                                    ? "bg-red-500 hover:bg-red-600 text-white"
-                                    : "bg-green-600 hover:bg-green-700 text-white"
-                                }`}
-                              >
-                                {exam.is_started ? "Disable Exam" : "Enable Exam"}
-                              </button>
-                              <button
-                                onClick={() => setSelectedExamForCandidates(exam)}
-                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-900 text-white font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none"
-                              >
-                                Candidates ({regsCount})
-                              </button>
+                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                                }`}>
+                                  {exam.is_started ? "Exam Active" : "Not Started"}
+                                </span>
+                                <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
+                                  exam.show_login
+                                    ? "bg-orange-50 text-orange-700 border-orange-200"
+                                    : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                                }`}>
+                                  {exam.show_login ? "Entry Open" : "Entry Closed"}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => toggleExamShowLogin(exam)}
+                                  className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
+                                    exam.show_login
+                                      ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                      : "bg-orange-500 hover:bg-orange-600 text-white"
+                                  }`}
+                                >
+                                  {exam.show_login ? "Hide Entry Button" : "Show Entry Button"}
+                                </button>
+                                <button
+                                  onClick={() => toggleExamStarted(exam)}
+                                  className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
+                                    exam.is_started
+                                      ? "bg-red-500 hover:bg-red-600 text-white"
+                                      : "bg-green-600 hover:bg-green-700 text-white"
+                                  }`}
+                                >
+                                  {exam.is_started ? "Disable Exam" : "Enable Exam"}
+                                </button>
+                                <button
+                                  onClick={() => setSelectedExamForCandidates(exam)}
+                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-900 text-white font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none"
+                                >
+                                  Candidates ({regsCount})
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
