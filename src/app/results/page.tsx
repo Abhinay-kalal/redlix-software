@@ -45,6 +45,8 @@ interface Candidate {
   candidate_name: string;
   hall_ticket_number: string;
   email: string;
+  photo_url?: string;
+  registration_number?: string;
   mcq_answered: number;
   coding_answered: number;
   attempted: boolean;
@@ -440,44 +442,97 @@ export default function ResultsPage() {
             ) : searchedCandidate ? (
               (() => {
                 const mcqScore = searchedCandidate.answers ? gradeMCQ(searchedCandidate.answers) : null;
+                const isPass = mcqScore ? mcqScore.correct >= 12 : false;
+                const statusBadge = searchedCandidate.attempted
+                  ? isPass
+                    ? "bg-green-50 text-green-700 border-green-200"
+                    : "bg-red-50 text-red-700 border-red-200"
+                  : "bg-zinc-50 text-zinc-400 border-zinc-200";
+                const statusText = searchedCandidate.attempted
+                  ? isPass
+                    ? "Pass (Distinction/Cleared)"
+                    : "Fail (Below 40% cut-off)"
+                  : "No Attempt";
+
                 return (
-                  <div className="bg-white border border-zinc-200 p-6 shadow-sm space-y-4">
-                    <div className="border-b border-zinc-100 pb-3 flex items-center justify-between">
-                      <div>
-                        <h4 className="text-base font-bold text-zinc-900">{searchedCandidate.candidate_name}</h4>
-                        <p className="text-xs text-zinc-500 font-mono mt-0.5">{searchedCandidate.hall_ticket_number} · {searchedCandidate.email}</p>
+                  <div className="bg-white border border-zinc-200 p-6 shadow-sm space-y-5">
+                    {/* Header: Photo and Info */}
+                    <div className="flex flex-col sm:flex-row items-center gap-5 border-b border-zinc-100 pb-5">
+                      {/* Photo preview */}
+                      <div className="shrink-0">
+                        {searchedCandidate.photo_url ? (
+                          <img
+                            src={searchedCandidate.photo_url}
+                            alt={searchedCandidate.candidate_name}
+                            className="w-24 h-24 border border-zinc-200 object-cover shadow-sm bg-zinc-50"
+                          />
+                        ) : (
+                          <div className="w-24 h-24 bg-zinc-100 border border-zinc-200 flex flex-col items-center justify-center text-zinc-400">
+                            <svg className="w-8 h-8 opacity-40 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">No Photo</span>
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-[9px] font-bold px-2 py-0.5 border ${
-                        searchedCandidate.attempted
-                          ? "bg-green-50 text-green-700 border-green-200"
-                          : "bg-zinc-50 text-zinc-400 border-zinc-200"
-                      }`}>
-                        {searchedCandidate.attempted ? "Attempted" : "Not Attempted"}
-                      </span>
+
+                      {/* Info details */}
+                      <div className="flex-grow text-center sm:text-left space-y-1">
+                        <h4 className="text-lg font-bold text-zinc-900">{searchedCandidate.candidate_name}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-xs text-zinc-500 font-mono">
+                          <div><span className="font-sans font-bold text-zinc-400">Reg No:</span> {searchedCandidate.registration_number || "N/A"}</div>
+                          <div><span className="font-sans font-bold text-zinc-400">Hall Ticket:</span> {searchedCandidate.hall_ticket_number}</div>
+                          <div><span className="font-sans font-bold text-zinc-400">Email:</span> {searchedCandidate.email}</div>
+                          <div>
+                            <span className="font-sans font-bold text-zinc-400">Result:</span>{" "}
+                            <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase ${statusBadge}`}>
+                              {statusText}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-zinc-50 border border-zinc-100 p-4 rounded text-center">
-                        <p className="text-lg font-bold text-green-700 font-mono font-bold">
-                          {searchedCandidate.attempted && mcqScore ? `${mcqScore.marksObtained} / 90 pts` : "0 / 90 pts"}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">MCQ Score</p>
-                      </div>
-
-                      <div className="bg-zinc-50 border border-zinc-100 p-4 rounded text-center">
-                        <p className="text-lg font-bold text-purple-700 font-mono font-bold">
-                          {searchedCandidate.attempted ? `${searchedCandidate.coding_answered} / 10` : "0 / 10"}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Coding Attempted</p>
-                      </div>
+                    {/* Simple points table in gray borders */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-zinc-200 text-xs text-left">
+                        <thead>
+                          <tr className="bg-zinc-50 border-b border-zinc-200 text-[10px] uppercase tracking-wider text-zinc-500">
+                            <th className="px-4 py-2.5 border-r border-zinc-200 font-bold">Section</th>
+                            <th className="px-4 py-2.5 border-r border-zinc-200 font-bold text-center">Attempted / Correct</th>
+                            <th className="px-4 py-2.5 font-bold text-center">Marks Obtained</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-200">
+                          <tr className="hover:bg-zinc-50/50 transition-colors">
+                            <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: MCQs (30 questions)</td>
+                            <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                              {searchedCandidate.attempted && mcqScore ? `${mcqScore.correct} / 30 correct` : "0 / 30"}
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                              {searchedCandidate.attempted && mcqScore ? `${mcqScore.marksObtained} / 90 pts` : "0 / 90 pts"}
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-zinc-50/50 transition-colors">
+                            <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section B: Coding (10 challenges)</td>
+                            <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                              {searchedCandidate.coding_answered} / 10 attempted
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono font-bold text-purple-700">
+                              {searchedCandidate.attempted ? `${searchedCandidate.coding_answered * 10} max pts` : "0 pts"}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
 
+                    {/* Navigation/Action button */}
                     {searchedCandidate.attempted ? (
                       <button
                         onClick={() => openCandidate(searchedCandidate.hall_ticket_number)}
-                        className="w-full py-3 bg-zinc-900 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                        className="w-full py-3 bg-zinc-950 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                       >
-                        View Full Response Sheet & Code Evaluator
+                        View Full Response Sheet & Run Code Sandbox
                       </button>
                     ) : (
                       <p className="text-xs text-zinc-400 italic text-center py-2">

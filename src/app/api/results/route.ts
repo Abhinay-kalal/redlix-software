@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await supabase
       .from("registrations")
-      .select("id, candidate_name, hall_ticket_number, email, answers")
+      .select("id, candidate_name, hall_ticket_number, email, photo_url, registration_number, answers")
       .eq("exam_id", examId)
       .order("candidate_name");
 
@@ -63,6 +63,8 @@ export async function GET(req: NextRequest) {
         candidate_name: r.candidate_name,
         hall_ticket_number: r.hall_ticket_number,
         email: r.email,
+        photo_url: r.photo_url,
+        registration_number: r.registration_number,
         mcq_answered: mcqAnswered,
         coding_answered: codingAnswered,
         attempted,
