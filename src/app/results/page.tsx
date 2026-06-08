@@ -308,27 +308,32 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900">
 
       {/* Top bar */}
-      <header className="bg-white border-b border-zinc-200 px-6 py-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
-        {view !== "exams" && (
-          <button
-            onClick={goBack}
-            className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-orange-600 transition-colors cursor-pointer"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
-          </button>
-        )}
-        <div className="flex items-center gap-2 ml-auto mr-auto">
+      <header className="bg-white border-b border-zinc-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center gap-3">
+          {view !== "exams" && (
+            <button
+              onClick={goBack}
+              className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-orange-600 transition-colors cursor-pointer border border-zinc-200 px-2.5 py-1.5 bg-zinc-50 rounded sm:border-0 sm:bg-transparent sm:p-0"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
           <img
             src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
             alt="Redlix Secure"
-            className="w-7 h-7 object-contain"
+            className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
           />
-          <span className="font-bold text-sm text-zinc-800 tracking-wide">Redlix Secure</span>
-          <span className="text-zinc-300 mx-2">|</span>
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Results Portal</span>
+          <span className="font-bold text-xs sm:text-sm text-zinc-800 tracking-wide">Redlix Secure</span>
+          <span className="text-zinc-300 text-xs sm:text-sm mx-1 sm:mx-2">|</span>
+          <span className="text-[10px] sm:text-xs font-semibold text-zinc-500 uppercase tracking-widest">Results Portal</span>
+        </div>
+        <div className="w-12 sm:w-16 flex justify-end">
+          {/* Visual Balance Placeholder */}
         </div>
       </header>
 
@@ -362,10 +367,10 @@ export default function ResultsPage() {
                   <button
                     key={exam.id}
                     onClick={() => openExam(exam)}
-                    className="w-full text-left bg-white border border-zinc-200 hover:border-orange-400 hover:shadow-md p-6 transition-all duration-200 group cursor-pointer"
+                    className="w-full text-left bg-white border border-zinc-200 hover:border-orange-400 hover:shadow-md p-4 sm:p-6 transition-all duration-200 group cursor-pointer"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex items-start sm:items-center gap-4">
                         {exam.company_logo ? (
                           <img src={exam.company_logo} alt="" className="w-10 h-10 object-contain shrink-0" />
                         ) : (
@@ -375,14 +380,12 @@ export default function ResultsPage() {
                         )}
                         <div>
                           <p className="text-[10px] font-bold text-orange-600 uppercase tracking-wider mb-0.5">{exam.company_name}</p>
-                          <h2 className="text-base font-bold text-zinc-900 group-hover:text-orange-600 transition-colors">{exam.name}</h2>
+                          <h2 className="text-sm sm:text-base font-bold text-zinc-900 group-hover:text-orange-600 transition-colors">{exam.name}</h2>
                           <p className="text-xs text-zinc-500 mt-0.5">{exam.date} · {exam.time} IST</p>
                         </div>
                       </div>
-                      <div className="shrink-0 text-right space-y-1">
-                        <div className="text-xs font-bold text-zinc-800">{exam.total_attempted} <span className="font-normal text-zinc-400">submitted</span></div>
-                        <div className="text-xs text-zinc-400">{exam.total_registered} registered</div>
-                        <div className={`text-[10px] font-bold px-2 py-0.5 border inline-block ${
+                      <div className="sm:text-right shrink-0">
+                        <div className={`text-[10px] font-bold px-2.5 py-1 border inline-block rounded ${
                           exam.total_attempted > 0
                             ? "bg-green-50 text-green-700 border-green-200"
                             : "bg-zinc-50 text-zinc-400 border-zinc-200"
