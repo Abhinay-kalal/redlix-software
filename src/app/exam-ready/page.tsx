@@ -98,7 +98,7 @@ export default function ExamReadyPage() {
         <div className="max-w-3xl mx-auto px-8 py-5 flex items-center gap-4">
           {exam.company_logo
             ? <img src={exam.company_logo} alt={exam.company_name} className="w-10 h-10 object-contain shrink-0" />
-            : <img src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623" alt="Redlix Secure" className="w-10 h-10 object-contain shrink-0" />
+            : <img src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493" alt="Redlix Secure" className="w-10 h-10 object-contain shrink-0" />
           }
           <div>
             <p className="text-white font-bold text-base">{exam.name}</p>

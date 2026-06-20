@@ -159,7 +159,7 @@ export default function ExamPage() {
           <div className="flex items-center gap-4 min-w-0">
             {exam.company_logo
               ? <img src={exam.company_logo} alt={exam.company_name} className="w-10 h-10 object-contain rounded-none shrink-0" />
-              : <img src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623" alt="Redlix Secure" className="w-10 h-10 object-contain shrink-0" />
+              : <img src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493" alt="Redlix Secure" className="w-10 h-10 object-contain shrink-0" />
             }
             <div className="min-w-0">
               <p className="text-white font-bold text-base leading-tight truncate">{exam.name}</p>

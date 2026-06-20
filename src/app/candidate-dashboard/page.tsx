@@ -160,7 +160,7 @@ export default function CandidateDashboard() {
           college: collegeVal.trim(),
           department: deptVal.trim(),
           year_of_study: registrations[0]?.year_of_study || "Final Year",
-          photo_url: registrations[0]?.photo_url || "https://ik.imagekit.io/dypkhqxip/logo.png",
+          photo_url: registrations[0]?.photo_url || "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
           turnstileToken: "LOCALHOST_BYPASS_TOKEN" // Bypassing locally or via admin action
         })
       });
@@ -203,7 +203,7 @@ export default function CandidateDashboard() {
       <div className="md:hidden bg-zinc-900 border-b border-zinc-800 text-white p-4 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <img
-            src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+            src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
             alt="Redlix Secure Logo"
             className="w-6 h-6 object-contain"
           />
@@ -227,7 +227,7 @@ export default function CandidateDashboard() {
           {/* Logo Brand */}
           <div className="flex items-center gap-3 border-b border-zinc-800 pb-5">
             <img
-              src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+              src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
               alt="Redlix Secure Logo"
               className="w-7 h-7 object-contain"
             />

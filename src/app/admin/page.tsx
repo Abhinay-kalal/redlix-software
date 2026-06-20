@@ -120,7 +120,7 @@ export default function LoginPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-2">
               <img
-                src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+                src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
                 alt="Logo"
                 className="w-8 h-8 object-contain shrink-0"
               />

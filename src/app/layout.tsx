@@ -26,23 +26,23 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623",
-        href: "https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623",
+        url: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
+        href: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
       }
     ],
-    shortcut: "https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623",
-    apple: "https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623",
+    shortcut: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
+    apple: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
   },
   openGraph: {
     title: "Redlix Secure | Smart Proctored Examination System",
     description: "Secure, reliable, and real-time exam proctoring platform with lockout controls.",
-    images: ["https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"],
+    images: ["https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"],
   },
   twitter: {
     card: "summary",
     title: "Redlix Secure | Smart Proctored Examination System",
     description: "Secure, reliable, and real-time exam proctoring platform with lockout controls.",
-    images: ["https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"],
+    images: ["https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"],
   },
 };
 

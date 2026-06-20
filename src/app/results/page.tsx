@@ -324,7 +324,7 @@ export default function ResultsPage() {
         </div>
         <div className="flex items-center gap-2">
           <img
-            src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+            src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
             alt="Redlix Secure"
             className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
           />
@@ -345,7 +345,7 @@ export default function ResultsPage() {
             {/* Hero logo */}
             <div className="flex flex-col items-center gap-4 mb-10">
               <img
-                src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+                src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
                 alt="Redlix Secure"
                 className="w-20 h-20 object-contain"
               />

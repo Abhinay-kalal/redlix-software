@@ -1394,7 +1394,7 @@ export default function ExamSessionPage() {
             <img src={exam.company_logo} alt="" className="w-7 h-7 object-contain" />
           ) : (
             <img
-              src="https://ik.imagekit.io/dypkhqxip/logo.png?updatedAt=1777320313623"
+              src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
               alt=""
               className="w-7 h-7 object-contain"
             />
