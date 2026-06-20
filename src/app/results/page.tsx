@@ -4,6 +4,15 @@ import { useState, useEffect } from "react";
 import { QUESTIONS } from "@/app/exam-session/questions";
 import { ANSWER_KEY, gradeMCQ } from "@/app/exam-session/answerKey";
 import { TEST_SUITE } from "@/app/exam-session/testCases";
+import { TRAINING01_QUESTIONS } from "@/app/exam-session/training01Questions";
+import {
+  TRAINING01_ANSWER_KEY,
+  gradeTraining01Full,
+  gradeTraining01MCQ,
+  gradeTraining01Scenario,
+  gradeTraining01Coding
+} from "@/app/exam-session/training01AnswerKey";
+
 
 // Seedable random number generator for deterministic shuffling
 function seedRandom(seedStr: string) {
@@ -273,7 +282,10 @@ export default function ResultsPage() {
       setAnswerData(d.data);
       setLoading(false);
       // Run coding tests asynchronously in background
-      await evaluateAllCodingChallenges(d.data.answers || {});
+      const isTraining01 = selectedExam?.name.toLowerCase().includes("redlix training exam 01");
+      if (!isTraining01) {
+        await evaluateAllCodingChallenges(d.data.answers || {});
+      }
     } else {
       setLoading(false);
     }
@@ -444,18 +456,32 @@ export default function ResultsPage() {
               </div>
             ) : searchedCandidate ? (
               (() => {
+                const isTraining01 = selectedExam?.name.toLowerCase().includes("redlix training exam 01");
+                const training01Grade = (isTraining01 && searchedCandidate.answers) ? gradeTraining01Full(searchedCandidate.answers) : null;
                 const mcqScore = searchedCandidate.answers ? gradeMCQ(searchedCandidate.answers) : null;
-                const isPass = mcqScore ? mcqScore.correct >= 12 : false;
+                
+                let isPass = false;
+                if (isTraining01) {
+                  isPass = training01Grade ? training01Grade.totalAutoMarks >= 26 : false;
+                } else {
+                  isPass = mcqScore ? mcqScore.correct >= 12 : false;
+                }
+
                 const statusBadge = searchedCandidate.attempted
                   ? isPass
                     ? "bg-green-50 text-green-700 border-green-200"
                     : "bg-red-50 text-red-700 border-red-200"
                   : "bg-zinc-50 text-zinc-400 border-zinc-200";
+
                 const statusText = searchedCandidate.attempted
                   ? isPass
-                    ? "Pass (Distinction/Cleared)"
-                    : "Fail (Below 40% cut-off)"
+                    ? isTraining01 ? "Pass (Cleared)" : "Pass (Distinction/Cleared)"
+                    : isTraining01 ? "Fail (Below 26/65 cut-off)" : "Fail (Below 40% cut-off)"
                   : "No Attempt";
+
+                const scenarioCorrect = training01Grade
+                  ? Object.values(training01Grade.scenario.breakdown).filter((b: any) => b.isCorrect).length
+                  : 0;
 
                 return (
                   <div className="bg-white border border-zinc-200 p-6 shadow-sm space-y-5">
@@ -506,26 +532,58 @@ export default function ResultsPage() {
                             <th className="px-4 py-2.5 font-bold text-center">Marks Obtained</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-zinc-200">
-                          <tr className="hover:bg-zinc-50/50 transition-colors">
-                            <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: MCQs (30 questions)</td>
-                            <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
-                              {searchedCandidate.attempted && mcqScore ? `${mcqScore.correct} / 30 correct` : "0 / 30"}
-                            </td>
-                            <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
-                              {searchedCandidate.attempted && mcqScore ? `${mcqScore.marksObtained} / 90 pts` : "0 / 90 pts"}
-                            </td>
-                          </tr>
-                          <tr className="hover:bg-zinc-50/50 transition-colors">
-                            <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section B: Coding (10 challenges)</td>
-                            <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
-                              {searchedCandidate.coding_answered} / 10 attempted
-                            </td>
-                            <td className="px-4 py-3 text-center font-mono font-bold text-purple-700">
-                              {searchedCandidate.attempted ? `${searchedCandidate.coding_answered * 10} max pts` : "0 pts"}
-                            </td>
-                          </tr>
-                        </tbody>
+                        {isTraining01 ? (
+                          <tbody className="divide-y divide-zinc-200">
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: MCQs (15 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.mcq.correct} / 15 correct` : "0 / 15"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.mcq.marksObtained} / 15 pts` : "0 / 15 pts"}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section B: Scenarios (2 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && training01Grade ? `${scenarioCorrect} / 2 correct` : "0 / 2"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-blue-700">
+                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.scenario.marksObtained} / 10 pts` : "0 / 10 pts"}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section C: Coding (4 challenges)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.coding.attempted} / 4 attempted` : "0 / 4"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-purple-700">
+                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.coding.marksObtained} / 40 pts` : "0 / 40 pts"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        ) : (
+                          <tbody className="divide-y divide-zinc-200">
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: MCQs (30 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && mcqScore ? `${mcqScore.correct} / 30 correct` : "0 / 30"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                                {searchedCandidate.attempted && mcqScore ? `${mcqScore.marksObtained} / 90 pts` : "0 / 90 pts"}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section B: Coding (10 challenges)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.coding_answered} / 10 attempted
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-purple-700">
+                                {searchedCandidate.attempted ? `${searchedCandidate.coding_answered * 10} max pts` : "0 pts"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        )}
                       </table>
                     </div>
 
@@ -558,316 +616,657 @@ export default function ResultsPage() {
               </div>
             ) : answerData ? (
               (() => {
-                const mcqGraded = gradeMCQ(answerData.answers || {});
-                
-                // Shuffle MCQs using the candidate's hall ticket number
-                const assignedMCQs = shuffleQuestions(
-                  QUESTIONS.filter((q) => q.type === "mcq"),
-                  answerData.hall_ticket_number
-                ).slice(0, 30);
+                const isTraining01 = selectedExam?.name.toLowerCase().includes("redlix training exam 01");
 
-                // Shuffle Coding using candidate's hall ticket number + "-B"
-                const assignedCoding = shuffleQuestions(
-                  QUESTIONS.filter((q) => q.type === "coding"),
-                  answerData.hall_ticket_number + "-B"
-                );
+                if (isTraining01) {
+                  // Training Exam 01 Grading & Presentation
+                  const tGrade = gradeTraining01Full(answerData.answers || {});
+                  
+                  // Separate by sections, fixed order
+                  const assignedA = TRAINING01_QUESTIONS.filter(q => q.section === "A");
+                  const assignedB = TRAINING01_QUESTIONS.filter(q => q.section === "B" && q.type === "mcq");
+                  const assignedC = TRAINING01_QUESTIONS.filter(q => q.type === "coding");
 
-                // Calculate Coding marks dynamically based on codingTestResults state
-                let codingMarks = 0;
-                let codingPassedCount = 0;
-                let codingTotalTestCases = 0;
-                let codingAttemptedQns = 0;
-
-                for (const q of assignedCoding) {
-                  const code = answerData.answers[q.id] || "";
-                  if (code.trim()) {
-                    codingAttemptedQns++;
-                    const results = codingTestResults[q.id];
-                    if (results && results.length > 0) {
-                      const passed = results.filter((r) => r.success).length;
-                      const total = results.length;
-                      codingPassedCount += passed;
-                      codingTotalTestCases += total;
-                      codingMarks += (passed / total) * 10;
-                    }
+                  const totalMarks = tGrade.totalAutoMarks;
+                  
+                  let gradeName = "Fail";
+                  let gradeColor = "bg-red-50 text-red-700 border-red-200";
+                  if (totalMarks >= 50) {
+                    gradeName = "Distinction";
+                    gradeColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                  } else if (totalMarks >= 40) {
+                    gradeName = "First Class";
+                    gradeColor = "bg-blue-50 text-blue-700 border-blue-200";
+                  } else if (totalMarks >= 26) {
+                    gradeName = "Pass";
+                    gradeColor = "bg-amber-50 text-amber-700 border-amber-200";
                   }
-                }
 
-                const roundedCodingMarks = Math.round(codingMarks * 10) / 10;
-                const mcqMarks = mcqGraded.marksObtained;
-                const totalMarks = mcqMarks + roundedCodingMarks;
-                
-                // Determine Grade
-                let gradeName = "Fail";
-                let gradeColor = "bg-red-50 text-red-700 border-red-200";
-                if (totalMarks >= 150) {
-                  gradeName = "Distinction";
-                  gradeColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
-                } else if (totalMarks >= 114) {
-                  gradeName = "First Class";
-                  gradeColor = "bg-blue-50 text-blue-700 border-blue-200";
-                } else if (totalMarks >= 75) {
-                  gradeName = "Pass";
-                  gradeColor = "bg-amber-50 text-amber-700 border-amber-200";
-                }
+                  const scenarioCorrect = Object.values(tGrade.scenario.breakdown).filter((b: any) => b.isCorrect).length;
 
-                return (
-                  <>
-                    {/* Candidate header & Score Card */}
-                    <div className="bg-white border border-zinc-200 p-6 shadow-sm">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-1">Candidate Result</p>
-                          <h2 className="text-xl font-bold text-zinc-900">{answerData.candidate_name}</h2>
-                          <p className="text-xs text-zinc-500 mt-1 font-mono">{answerData.hall_ticket_number} · {answerData.email}</p>
+                  return (
+                    <>
+                      {/* Candidate header & Score Card */}
+                      <div className="bg-white border border-zinc-200 p-6 shadow-sm">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-1">Candidate Result</p>
+                            <h2 className="text-xl font-bold text-zinc-900">{answerData.candidate_name}</h2>
+                            <p className="text-xs text-zinc-500 mt-1 font-mono">{answerData.hall_ticket_number} · {answerData.email}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-[10px] font-extrabold uppercase px-3 py-1 border rounded-full ${gradeColor}`}>
+                              {gradeName}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-[10px] font-extrabold uppercase px-3 py-1 border rounded-full ${gradeColor}`}>
-                            {gradeName}
-                          </span>
+
+                        {/* Score summary grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-zinc-100">
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-orange-600 font-mono font-bold">
+                              {totalMarks} / 65
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">Overall Score</p>
+                          </div>
+
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-blue-700 font-mono font-bold">
+                              {tGrade.mcq.marksObtained} / 15
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">Section A MCQ ({tGrade.mcq.correct} / 15 Correct)</p>
+                          </div>
+
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-indigo-600 font-mono font-bold">
+                              {tGrade.scenario.marksObtained} / 10
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">Section B Scenario ({scenarioCorrect} / 2 Correct)</p>
+                          </div>
+
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-purple-700 font-mono font-bold">
+                              {tGrade.coding.marksObtained} / 40
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">
+                              Section C Coding ({tGrade.coding.attempted} / 4 Submitted)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section A — MCQ Answers */}
+                      <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section A — MCQ Answers (15 Questions)</h3>
+                          </div>
+                          <span className="text-[10px] font-semibold text-zinc-500">Marks: +1 for Correct, 0 for Wrong/Unattempted</span>
+                        </div>
+                        
+                        <div className="divide-y divide-zinc-100">
+                          {assignedA.map((q, idx) => {
+                            const selected = answerData.answers[q.id]?.toString().trim().charAt(0).toUpperCase() || "";
+                            const correct = TRAINING01_ANSWER_KEY[q.id];
+                            const isCorrect = selected === correct;
+                            const isAttempted = selected !== "";
+
+                            return (
+                              <div key={q.id} className="p-5 hover:bg-zinc-50/30 transition-colors">
+                                <div className="flex items-start justify-between gap-4 mb-3">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 font-mono">
+                                        Q{idx + 1} (ID: {q.id})
+                                      </span>
+                                      {isAttempted ? (
+                                        isCorrect ? (
+                                          <span className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5">
+                                            Correct (+1 pt)
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5">
+                                            Incorrect (0 pts)
+                                          </span>
+                                        )
+                                      ) : (
+                                        <span className="text-[10px] font-bold bg-zinc-100 text-zinc-500 border border-zinc-200 px-2 py-0.5">
+                                          Unattempted (0 pts)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <pre className="text-sm font-semibold text-zinc-800 whitespace-pre-wrap font-sans mt-2">{q.questionText}</pre>
+                                  </div>
+                                </div>
+
+                                {q.options && (
+                                  <div className="grid grid-cols-1 gap-2 mt-3 pl-2">
+                                    {q.options.map((opt) => {
+                                      const optLetter = opt.trim().charAt(0).toUpperCase();
+                                      const isOptCorrect = optLetter === correct;
+                                      const isOptSelected = optLetter === selected;
+
+                                      let optClass = "border-zinc-200 bg-white text-zinc-700";
+                                      let badge = null;
+
+                                      if (isOptCorrect) {
+                                        optClass = "border-green-300 bg-green-50 text-green-800 font-medium";
+                                      }
+                                      if (isOptSelected) {
+                                        if (isCorrect) {
+                                          optClass = "border-green-500 bg-green-50 text-green-800 font-bold shadow-sm";
+                                          badge = (
+                                            <span className="ml-auto text-xs font-bold text-green-600 flex items-center gap-1">
+                                              ✅ Candidate Selected
+                                            </span>
+                                          );
+                                        } else {
+                                          optClass = "border-red-400 bg-red-50 text-red-800 font-bold shadow-sm";
+                                          badge = (
+                                            <span className="ml-auto text-xs font-bold text-red-600 flex items-center gap-1">
+                                              ❌ Candidate Selected
+                                            </span>
+                                          );
+                                        }
+                                      }
+
+                                      return (
+                                        <div
+                                          key={opt}
+                                          className={`flex items-center px-4 py-2.5 border text-xs transition-colors rounded ${optClass}`}
+                                        >
+                                          <span>{opt}</span>
+                                          {badge}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
 
-                      {/* Score summary grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-zinc-100">
-                        <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
-                          <p className="text-2xl font-black text-orange-600 font-mono font-bold">
-                            {isEvaluatingCode ? (
-                              <span className="animate-pulse">Evaluating...</span>
-                            ) : (
-                              `${totalMarks} / 190`
-                            )}
-                          </p>
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">Overall Score</p>
+                      {/* Section B — Scenario Answers */}
+                      <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-pulse" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section B — Scenario-Based Answers (2 Questions)</h3>
+                          </div>
+                          <span className="text-[10px] font-semibold text-zinc-500">Marks: +5 for Correct, 0 for Wrong/Unattempted</span>
                         </div>
+                        
+                        <div className="divide-y divide-zinc-100">
+                          {assignedB.map((q, idx) => {
+                            const selected = answerData.answers[q.id]?.toString().trim().charAt(0).toUpperCase() || "";
+                            const correct = TRAINING01_ANSWER_KEY[q.id];
+                            const isCorrect = selected === correct;
+                            const isAttempted = selected !== "";
 
-                        <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
-                          <p className="text-2xl font-black text-blue-700 font-mono font-bold">
-                            {mcqMarks} / 90
-                          </p>
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">MCQ Score ({mcqGraded.correct} / 30 Correct)</p>
-                        </div>
+                            return (
+                              <div key={q.id} className="p-5 hover:bg-zinc-50/30 transition-colors">
+                                <div className="flex items-start justify-between gap-4 mb-3">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 font-mono">
+                                        Q{idx + 16} (ID: {q.id})
+                                      </span>
+                                      {isAttempted ? (
+                                        isCorrect ? (
+                                          <span className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5">
+                                            Correct (+5 pts)
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5">
+                                            Incorrect (0 pts)
+                                          </span>
+                                        )
+                                      ) : (
+                                        <span className="text-[10px] font-bold bg-zinc-100 text-zinc-500 border border-zinc-200 px-2 py-0.5">
+                                          Unattempted (0 pts)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <pre className="text-sm font-semibold text-zinc-800 whitespace-pre-wrap font-sans mt-2">{q.questionText}</pre>
+                                  </div>
+                                </div>
 
-                        <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
-                          <p className="text-2xl font-black text-purple-700 font-mono font-bold">
-                            {isEvaluatingCode ? (
-                              <span className="text-xs text-zinc-400 font-normal">Running Sandbox...</span>
-                            ) : (
-                              `${roundedCodingMarks} / 100`
-                            )}
-                          </p>
-                          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">
-                            Coding Score ({codingPassedCount} / {codingTotalTestCases} Tests)
-                          </p>
+                                {q.options && (
+                                  <div className="grid grid-cols-1 gap-2 mt-3 pl-2">
+                                    {q.options.map((opt) => {
+                                      const optLetter = opt.trim().charAt(0).toUpperCase();
+                                      const isOptCorrect = optLetter === correct;
+                                      const isOptSelected = optLetter === selected;
+
+                                      let optClass = "border-zinc-200 bg-white text-zinc-700";
+                                      let badge = null;
+
+                                      if (isOptCorrect) {
+                                        optClass = "border-green-300 bg-green-50 text-green-800 font-medium";
+                                      }
+                                      if (isOptSelected) {
+                                        if (isCorrect) {
+                                          optClass = "border-green-500 bg-green-50 text-green-800 font-bold shadow-sm";
+                                          badge = (
+                                            <span className="ml-auto text-xs font-bold text-green-600 flex items-center gap-1">
+                                              ✅ Candidate Selected
+                                            </span>
+                                          );
+                                        } else {
+                                          optClass = "border-red-400 bg-red-50 text-red-800 font-bold shadow-sm";
+                                          badge = (
+                                            <span className="ml-auto text-xs font-bold text-red-600 flex items-center gap-1">
+                                              ❌ Candidate Selected
+                                            </span>
+                                          );
+                                        }
+                                      }
+
+                                      return (
+                                        <div
+                                          key={opt}
+                                          className={`flex items-center px-4 py-2.5 border text-xs transition-colors rounded ${optClass}`}
+                                        >
+                                          <span>{opt}</span>
+                                          {badge}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
 
-                    {/* Section A — MCQ Answers */}
-                    <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section A — MCQ Answers (30 Assigned Questions)</h3>
+                      {/* Section C — Coding Answers */}
+                      <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section C — Coding Answers (4 Challenges)</h3>
+                          </div>
+                          <span className="text-[10px] font-semibold text-zinc-500">Marks: 10 per question based on completion (&gt;50 chars)</span>
                         </div>
-                        <span className="text-[10px] font-semibold text-zinc-500">Marks: +3 for Correct, 0 for Wrong/Unattempted</span>
-                      </div>
-                      
-                      <div className="divide-y divide-zinc-100">
-                        {assignedMCQs.map((q, idx) => {
-                          const selected = answerData.answers[q.id]?.toString().trim().charAt(0).toUpperCase() || "";
-                          const correct = ANSWER_KEY[q.id];
-                          const isCorrect = selected === correct;
-                          const isAttempted = selected !== "";
 
-                          return (
-                            <div key={q.id} className="p-5 hover:bg-zinc-50/30 transition-colors">
-                              <div className="flex items-start justify-between gap-4 mb-3">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 font-mono">
-                                      Q{idx + 1} (ID: {q.id})
-                                    </span>
-                                    {isAttempted ? (
-                                      isCorrect ? (
-                                        <span className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5">
-                                          Correct (+3 pts)
+                        <div className="divide-y divide-zinc-100">
+                          {assignedC.map((q, idx) => {
+                            const code = answerData.answers[q.id] || "";
+                            const isAttempted = code.trim().length > 50;
+                            const qMarks = isAttempted ? 10 : 0;
+
+                            return (
+                              <div key={q.id} className="p-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-2 py-0.5 font-mono">
+                                        Challenge {idx + 18} (ID: {q.id})
+                                      </span>
+                                      {isAttempted ? (
+                                        <span className="text-[10px] font-bold px-2 py-0.5 border bg-green-50 text-green-700 border-green-200">
+                                          {qMarks} / 10 Marks
                                         </span>
                                       ) : (
-                                        <span className="text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5">
-                                          Incorrect (0 pts)
+                                        <span className="text-[10px] font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 px-2 py-0.5">
+                                          Not Attempted
                                         </span>
-                                      )
-                                    ) : (
-                                      <span className="text-[10px] font-bold bg-zinc-100 text-zinc-500 border border-zinc-200 px-2 py-0.5">
-                                        Unattempted (0 pts)
-                                      </span>
-                                    )}
-                                  </div>
-                                  <pre className="text-sm font-semibold text-zinc-800 whitespace-pre-wrap font-sans mt-2">{q.questionText}</pre>
-                                </div>
-                              </div>
-
-                              {/* Options */}
-                              {q.options && (
-                                <div className="grid grid-cols-1 gap-2 mt-3 pl-2">
-                                  {q.options.map((opt) => {
-                                    const optLetter = opt.trim().charAt(0).toUpperCase();
-                                    const isOptCorrect = optLetter === correct;
-                                    const isOptSelected = optLetter === selected;
-
-                                    let optClass = "border-zinc-200 bg-white text-zinc-700";
-                                    let badge = null;
-
-                                    if (isOptCorrect) {
-                                      optClass = "border-green-300 bg-green-50 text-green-800 font-medium";
-                                    }
-                                    if (isOptSelected) {
-                                      if (isCorrect) {
-                                        optClass = "border-green-500 bg-green-50 text-green-800 font-bold shadow-sm";
-                                        badge = (
-                                          <span className="ml-auto text-xs font-bold text-green-600 flex items-center gap-1">
-                                            ✅ Candidate Selected
-                                          </span>
-                                        );
-                                      } else {
-                                        optClass = "border-red-400 bg-red-50 text-red-800 font-bold shadow-sm";
-                                        badge = (
-                                          <span className="ml-auto text-xs font-bold text-red-600 flex items-center gap-1">
-                                            ❌ Candidate Selected
-                                          </span>
-                                        );
-                                      }
-                                    }
-
-                                    return (
-                                      <div
-                                        key={opt}
-                                        className={`flex items-center px-4 py-2.5 border text-xs transition-colors rounded ${optClass}`}
-                                      >
-                                        <span>{opt}</span>
-                                        {badge}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Section B — Coding Answers */}
-                    <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section B — Coding Answers (10 Challenges)</h3>
-                        </div>
-                        <span className="text-[10px] font-semibold text-zinc-500">Marks: up to 10 per question based on unit tests</span>
-                      </div>
-
-                      <div className="divide-y divide-zinc-100">
-                        {assignedCoding.map((q, idx) => {
-                          const code = answerData.answers[q.id] || "";
-                          const isAttempted = code.trim().length > 0;
-                          const tests = codingTestResults[q.id];
-
-                          let qMarks = 0;
-                          let passed = 0;
-                          let total = 0;
-                          if (isAttempted && tests && tests.length > 0) {
-                            passed = tests.filter((r) => r.success).length;
-                            total = tests.length;
-                            qMarks = Math.round((passed / total) * 100) / 10;
-                          }
-
-                          return (
-                            <div key={q.id} className="p-6">
-                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-2 py-0.5 font-mono">
-                                      Challenge {idx + 1} (ID: {q.id})
-                                    </span>
-                                    {isAttempted ? (
-                                      <span className={`text-[10px] font-bold px-2 py-0.5 border ${
-                                        qMarks === 10
-                                          ? "bg-green-50 text-green-700 border-green-200"
-                                          : qMarks > 0
-                                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                                          : "bg-red-50 text-red-700 border-red-200"
-                                      }`}>
-                                        {isEvaluatingCode ? "Evaluating..." : `${qMarks} / 10 Marks`}
-                                      </span>
-                                    ) : (
-                                      <span className="text-[10px] font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 px-2 py-0.5">
-                                        Not Attempted
-                                      </span>
-                                    )}
-                                  </div>
-                                  <h4 className="text-sm font-bold text-zinc-800 mt-2">{q.questionText.split("\n")[0]}</h4>
-                                </div>
-                              </div>
-
-                              {isAttempted ? (
-                                <div className="space-y-4">
-                                  {/* Code block view */}
-                                  <div className="border border-zinc-200 rounded overflow-hidden">
-                                    <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center justify-between">
-                                      <span className="text-[10px] text-zinc-400 font-mono font-bold">submitted_solution.js</span>
-                                      <span className="text-[10px] text-zinc-500 font-mono">{code.length} chars</span>
+                                      )}
                                     </div>
-                                    <pre className="text-xs bg-zinc-950 text-green-400 p-4 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap">
-                                      {code.trim()}
-                                    </pre>
+                                    <h4 className="text-sm font-bold text-zinc-800 mt-2">{q.questionText.split("\n")[0]}</h4>
                                   </div>
+                                </div>
 
-                                  {/* Test suite panel */}
-                                  <div className="bg-zinc-50 border border-zinc-200 rounded p-4">
-                                    <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Test Suite Results</h5>
-                                    
-                                    {isEvaluatingCode ? (
-                                      <div className="space-y-2 py-2">
-                                        <div className="h-4 bg-zinc-200 animate-pulse w-3/4 rounded" />
-                                        <div className="h-4 bg-zinc-200 animate-pulse w-1/2 rounded" />
+                                {isAttempted ? (
+                                  <div className="space-y-4">
+                                    {/* Code block view */}
+                                    <div className="border border-zinc-200 rounded overflow-hidden">
+                                      <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center justify-between">
+                                        <span className="text-[10px] text-zinc-400 font-mono font-bold">submitted_solution.js</span>
+                                        <span className="text-[10px] text-zinc-500 font-mono">{code.length} chars</span>
                                       </div>
-                                    ) : tests && tests.length > 0 ? (
-                                      <div className="space-y-3">
-                                        {tests.map((t, tIdx) => (
-                                          <div key={tIdx} className="flex items-start gap-2 text-xs">
-                                            {t.success ? (
-                                              <span className="text-green-600 shrink-0 font-bold font-semibold">✅</span>
-                                            ) : (
-                                              <span className="text-red-500 shrink-0 font-bold font-semibold">❌</span>
-                                            )}
-                                            <div className="space-y-0.5">
-                                              <p className="font-semibold text-zinc-800">{t.name}</p>
-                                              <p className={`text-[10px] ${t.success ? "text-green-600" : "text-red-500 font-mono bg-red-50/50 px-2 py-0.5 border border-red-100 rounded inline-block"}`}>
-                                                {t.message}
-                                              </p>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <p className="text-xs text-zinc-400 italic">No tests executed.</p>
-                                    )}
+                                      <pre className="text-xs bg-zinc-950 text-green-400 p-4 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap">
+                                        {code.trim()}
+                                      </pre>
+                                    </div>
+
+                                    {/* Test suite panel */}
+                                    <div className="bg-zinc-50 border border-zinc-200 rounded p-4 text-xs text-zinc-500">
+                                      <span className="font-bold text-zinc-400 uppercase tracking-wider block mb-1">Grading Status</span>
+                                      <p className="text-zinc-500">
+                                        Auto-graded based on completion (submitted code &gt; 50 characters). Manual examiner review recommended.
+                                      </p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center rounded text-xs text-zinc-400">
+                                    No code submitted.
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  );
+                } else {
+                  // General Assessment Grading & Presentation
+                  const mcqGraded = gradeMCQ(answerData.answers || {});
+                  
+                  // Shuffle MCQs using the candidate's hall ticket number
+                  const assignedMCQs = shuffleQuestions(
+                    QUESTIONS.filter((q) => q.type === "mcq"),
+                    answerData.hall_ticket_number
+                  ).slice(0, 30);
+
+                  // Shuffle Coding using candidate's hall ticket number + "-B"
+                  const assignedCoding = shuffleQuestions(
+                    QUESTIONS.filter((q) => q.type === "coding"),
+                    answerData.hall_ticket_number + "-B"
+                  );
+
+                  // Calculate Coding marks dynamically based on codingTestResults state
+                  let codingMarks = 0;
+                  let codingPassedCount = 0;
+                  let codingTotalTestCases = 0;
+                  let codingAttemptedQns = 0;
+
+                  for (const q of assignedCoding) {
+                    const code = answerData.answers[q.id] || "";
+                    if (code.trim()) {
+                      codingAttemptedQns++;
+                      const results = codingTestResults[q.id];
+                      if (results && results.length > 0) {
+                        const passed = results.filter((r) => r.success).length;
+                        const total = results.length;
+                        codingPassedCount += passed;
+                        codingTotalTestCases += total;
+                        codingMarks += (passed / total) * 10;
+                      }
+                    }
+                  }
+
+                  const roundedCodingMarks = Math.round(codingMarks * 10) / 10;
+                  const mcqMarks = mcqGraded.marksObtained;
+                  const totalMarks = mcqMarks + roundedCodingMarks;
+                  
+                  // Determine Grade
+                  let gradeName = "Fail";
+                  let gradeColor = "bg-red-50 text-red-700 border-red-200";
+                  if (totalMarks >= 150) {
+                    gradeName = "Distinction";
+                    gradeColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                  } else if (totalMarks >= 114) {
+                    gradeName = "First Class";
+                    gradeColor = "bg-blue-50 text-blue-700 border-blue-200";
+                  } else if (totalMarks >= 75) {
+                    gradeName = "Pass";
+                    gradeColor = "bg-amber-50 text-amber-700 border-amber-200";
+                  }
+
+                  return (
+                    <>
+                      {/* Candidate header & Score Card */}
+                      <div className="bg-white border border-zinc-200 p-6 shadow-sm">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mb-1">Candidate Result</p>
+                            <h2 className="text-xl font-bold text-zinc-900">{answerData.candidate_name}</h2>
+                            <p className="text-xs text-zinc-500 mt-1 font-mono">{answerData.hall_ticket_number} · {answerData.email}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-[10px] font-extrabold uppercase px-3 py-1 border rounded-full ${gradeColor}`}>
+                              {gradeName}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Score summary grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-zinc-100">
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-orange-600 font-mono font-bold">
+                              {isEvaluatingCode ? (
+                                <span className="animate-pulse">Evaluating...</span>
+                              ) : (
+                                `${totalMarks} / 190`
+                              )}
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">Overall Score</p>
+                          </div>
+
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-blue-700 font-mono font-bold">
+                              {mcqMarks} / 90
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">MCQ Score ({mcqGraded.correct} / 30 Correct)</p>
+                          </div>
+
+                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
+                            <p className="text-2xl font-black text-purple-700 font-mono font-bold">
+                              {isEvaluatingCode ? (
+                                <span className="text-xs text-zinc-400 font-normal">Running Sandbox...</span>
+                              ) : (
+                                `${roundedCodingMarks} / 100`
+                              )}
+                            </p>
+                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">
+                              Coding Score ({codingPassedCount} / {codingTotalTestCases} Tests)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section A — MCQ Answers */}
+                      <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section A — MCQ Answers (30 Assigned Questions)</h3>
+                          </div>
+                          <span className="text-[10px] font-semibold text-zinc-500">Marks: +3 for Correct, 0 for Wrong/Unattempted</span>
+                        </div>
+                        
+                        <div className="divide-y divide-zinc-100">
+                          {assignedMCQs.map((q, idx) => {
+                            const selected = answerData.answers[q.id]?.toString().trim().charAt(0).toUpperCase() || "";
+                            const correct = ANSWER_KEY[q.id];
+                            const isCorrect = selected === correct;
+                            const isAttempted = selected !== "";
+
+                            return (
+                              <div key={q.id} className="p-5 hover:bg-zinc-50/30 transition-colors">
+                                <div className="flex items-start justify-between gap-4 mb-3">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100 px-2 py-0.5 font-mono">
+                                        Q{idx + 1} (ID: {q.id})
+                                      </span>
+                                      {isAttempted ? (
+                                        isCorrect ? (
+                                          <span className="text-[10px] font-bold bg-green-50 text-green-700 border border-green-200 px-2 py-0.5">
+                                            Correct (+3 pts)
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-bold bg-red-50 text-red-700 border border-red-200 px-2 py-0.5">
+                                            Incorrect (0 pts)
+                                          </span>
+                                        )
+                                      ) : (
+                                        <span className="text-[10px] font-bold bg-zinc-100 text-zinc-500 border border-zinc-200 px-2 py-0.5">
+                                          Unattempted (0 pts)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <pre className="text-sm font-semibold text-zinc-800 whitespace-pre-wrap font-sans mt-2">{q.questionText}</pre>
                                   </div>
                                 </div>
-                              ) : (
-                                <div className="border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center rounded text-xs text-zinc-400">
-                                  No code submitted.
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+
+                                {/* Options */}
+                                {q.options && (
+                                  <div className="grid grid-cols-1 gap-2 mt-3 pl-2">
+                                    {q.options.map((opt) => {
+                                      const optLetter = opt.trim().charAt(0).toUpperCase();
+                                      const isOptCorrect = optLetter === correct;
+                                      const isOptSelected = optLetter === selected;
+
+                                      let optClass = "border-zinc-200 bg-white text-zinc-700";
+                                      let badge = null;
+
+                                      if (isOptCorrect) {
+                                        optClass = "border-green-300 bg-green-50 text-green-800 font-medium";
+                                      }
+                                      if (isOptSelected) {
+                                        if (isCorrect) {
+                                          optClass = "border-green-500 bg-green-50 text-green-800 font-bold shadow-sm";
+                                          badge = (
+                                            <span className="ml-auto text-xs font-bold text-green-600 flex items-center gap-1">
+                                              ✅ Candidate Selected
+                                            </span>
+                                          );
+                                        } else {
+                                          optClass = "border-red-400 bg-red-50 text-red-800 font-bold shadow-sm";
+                                          badge = (
+                                            <span className="ml-auto text-xs font-bold text-red-600 flex items-center gap-1">
+                                              ❌ Candidate Selected
+                                            </span>
+                                          );
+                                        }
+                                      }
+
+                                      return (
+                                        <div
+                                          key={opt}
+                                          className={`flex items-center px-4 py-2.5 border text-xs transition-colors rounded ${optClass}`}
+                                        >
+                                          <span>{opt}</span>
+                                          {badge}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  </>
-                );
+
+                      {/* Section B — Coding Answers */}
+                      <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+                        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Section B — Coding Answers (10 Challenges)</h3>
+                          </div>
+                          <span className="text-[10px] font-semibold text-zinc-500">Marks: up to 10 per question based on unit tests</span>
+                        </div>
+
+                        <div className="divide-y divide-zinc-100">
+                          {assignedCoding.map((q, idx) => {
+                            const code = answerData.answers[q.id] || "";
+                            const isAttempted = code.trim().length > 0;
+                            const tests = codingTestResults[q.id];
+
+                            let qMarks = 0;
+                            let passed = 0;
+                            let total = 0;
+                            if (isAttempted && tests && tests.length > 0) {
+                              passed = tests.filter((r) => r.success).length;
+                              total = tests.length;
+                              qMarks = Math.round((passed / total) * 100) / 10;
+                            }
+
+                            return (
+                              <div key={q.id} className="p-6">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 px-2 py-0.5 font-mono">
+                                        Challenge {idx + 1} (ID: {q.id})
+                                      </span>
+                                      {isAttempted ? (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 border ${
+                                          qMarks === 10
+                                            ? "bg-green-50 text-green-700 border-green-200"
+                                            : qMarks > 0
+                                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                                            : "bg-red-50 text-red-700 border-red-200"
+                                        }`}>
+                                          {isEvaluatingCode ? "Evaluating..." : `${qMarks} / 10 Marks`}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 px-2 py-0.5">
+                                          Not Attempted
+                                        </span>
+                                      )}
+                                    </div>
+                                    <h4 className="text-sm font-bold text-zinc-800 mt-2">{q.questionText.split("\n")[0]}</h4>
+                                  </div>
+                                </div>
+
+                                {isAttempted ? (
+                                  <div className="space-y-4">
+                                    {/* Code block view */}
+                                    <div className="border border-zinc-200 rounded overflow-hidden">
+                                      <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center justify-between">
+                                        <span className="text-[10px] text-zinc-400 font-mono font-bold">submitted_solution.js</span>
+                                        <span className="text-[10px] text-zinc-500 font-mono">{code.length} chars</span>
+                                      </div>
+                                      <pre className="text-xs bg-zinc-950 text-green-400 p-4 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap">
+                                        {code.trim()}
+                                      </pre>
+                                    </div>
+
+                                    {/* Test suite panel */}
+                                    <div className="bg-zinc-50 border border-zinc-200 rounded p-4">
+                                      <h5 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Test Suite Results</h5>
+                                      
+                                      {isEvaluatingCode ? (
+                                        <div className="space-y-2 py-2">
+                                          <div className="h-4 bg-zinc-200 animate-pulse w-3/4 rounded" />
+                                          <div className="h-4 bg-zinc-200 animate-pulse w-1/2 rounded" />
+                                        </div>
+                                      ) : tests && tests.length > 0 ? (
+                                        <div className="space-y-3">
+                                          {tests.map((t, tIdx) => (
+                                            <div key={tIdx} className="flex items-start gap-2 text-xs">
+                                              {t.success ? (
+                                                <span className="text-green-600 shrink-0 font-bold font-semibold">✅</span>
+                                              ) : (
+                                                <span className="text-red-500 shrink-0 font-bold font-semibold">❌</span>
+                                              )}
+                                              <div className="space-y-0.5">
+                                                <p className="font-semibold text-zinc-800">{t.name}</p>
+                                                <p className={`text-[10px] ${t.success ? "text-green-600" : "text-red-500 font-mono bg-red-50/50 px-2 py-0.5 border border-red-100 rounded inline-block"}`}>
+                                                  {t.message}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <p className="text-xs text-zinc-400 italic">No tests executed.</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="border border-dashed border-zinc-200 bg-zinc-50 p-4 text-center rounded text-xs text-zinc-400">
+                                    No code submitted.
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  );
+                }
               })()
             ) : (
               <p className="text-center text-zinc-400 py-20">Failed to load answers.</p>

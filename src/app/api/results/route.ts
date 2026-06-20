@@ -51,12 +51,18 @@ export async function GET(req: NextRequest) {
 
     const withStats = (data ?? []).map((r) => {
       const answers = r.answers || {};
-      const mcqAnswered = Object.entries(answers).filter(([k, v]: any) =>
-        Number(k) <= 100 && v && v.toString().trim()
-      ).length;
-      const codingAnswered = Object.entries(answers).filter(([k, v]: any) =>
-        Number(k) > 100 && v && v.toString().trim()
-      ).length;
+      const mcqAnswered = Object.entries(answers).filter(([k, v]: any) => {
+        const qId = Number(k);
+        const isGeneralMCQ = qId >= 1 && qId <= 100;
+        const isTrainingMCQ = qId >= 1001 && qId <= 1017;
+        return (isGeneralMCQ || isTrainingMCQ) && v && v.toString().trim();
+      }).length;
+      const codingAnswered = Object.entries(answers).filter(([k, v]: any) => {
+        const qId = Number(k);
+        const isGeneralCoding = qId >= 101 && qId <= 110;
+        const isTrainingCoding = qId >= 1018 && qId <= 1021;
+        return (isGeneralCoding || isTrainingCoding) && v && v.toString().trim();
+      }).length;
       const attempted = mcqAnswered > 0 || codingAnswered > 0;
       return {
         id: r.id,
