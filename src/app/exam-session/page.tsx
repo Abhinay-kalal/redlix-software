@@ -26,6 +26,8 @@ interface ExamSession {
 
 import { QUESTIONS, Question } from "./questions";
 import { TEST_SUITE } from "./testCases";
+import { TRAINING01_QUESTIONS } from "./training01Questions";
+import { gradeTraining01Full } from "./training01AnswerKey";
 
 interface CodeEditorProps {
   value: string;
@@ -257,7 +259,9 @@ export default function ExamSessionPage() {
   const [questionStatuses, setQuestionStatuses] = useState<
     Record<number, "not_visited" | "not_answered" | "answered" | "marked">
   >({});
-  const [timeLeft, setTimeLeft] = useState(7200); 
+  const [timeLeft, setTimeLeft] = useState(7200);
+  // Flag: true when running Redlix Training Exam 01
+  const [isTraining01, setIsTraining01] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isFullySubmitted, setIsFullySubmitted] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -499,7 +503,16 @@ export default function ExamSessionPage() {
         setSession(parsed);
 
         let loadedQuestions = QUESTIONS.map((q) => ({ ...q }));
-        if (parsed.exam.id === 4 || parsed.exam.name.toLowerCase().includes("student forge")) {
+
+        // ── Redlix Training Exam 01 ─────────────────────────────────────────
+        const examNameLower = (parsed.exam.name || "").toLowerCase();
+        if (examNameLower.includes("redlix training exam 01")) {
+          // Use the dedicated training question bank (no shuffle needed)
+          loadedQuestions = TRAINING01_QUESTIONS.map((q) => ({ ...q }));
+          setIsTraining01(true);
+          // 75-minute exam for Training Exam 01
+          setTimeLeft(75 * 60);
+        } else if (parsed.exam.id === 4 || examNameLower.includes("student forge")) {
           const sectionA = loadedQuestions.filter((q) => q.section === "A");
           const sectionB = loadedQuestions.filter((q) => q.section === "B");
           const shuffledA = shuffleQuestions(sectionA, parsed.hallTicketNumber).slice(0, 30);

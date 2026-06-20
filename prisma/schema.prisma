@@ -1,29 +1,27 @@
-
-
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 model Exam {
-  id            Int            @id @default(autoincrement())
-  name          String         @db.VarChar(200)
-  companyName   String         @map("company_name") @db.VarChar(200)
-  companyLogo   String?        @map("company_logo")
-  date          String         @db.VarChar(50)
-  time          String         @db.VarChar(50)
-  description   String         @db.Text
-  totalQns      Int            @map("total_qns")
-  typesOfQns    String         @map("types_of_qns") @db.VarChar(100)
-  isStarted     Boolean?       @default(false) @map("is_started")
-  showLogin     Boolean?       @default(false) @map("show_login")
-  registrations Registration[]
+  id                  Int            @id @default(autoincrement())
+  name                String         @db.VarChar(250)
+  date                String         @db.VarChar(100)
+  time                String         @db.VarChar(100)
+  description         String?
+  totalQns            Int            @map("total_qns")
+  typesOfQns          String         @map("types_of_qns") @db.VarChar(250)
+  companyName         String         @map("company_name") @db.VarChar(250)
+  custom_fields       Json?          @default("{}")
+  companyLogo         String?        @map("company_logo")
+  isStarted           Boolean?       @default(false) @map("is_started")
+  showLogin           Boolean?       @default(false) @map("show_login")
+  registration_closed Boolean?       @default(false)
+  submit_code         String?        @db.VarChar(6)
+  registrations       Registration[]
 
   @@map("exams")
 }
@@ -38,10 +36,12 @@ model Registration {
   department         String    @db.VarChar(100)
   yearOfStudy        String    @map("year_of_study") @db.VarChar(50)
   photoUrl           String    @map("photo_url")
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   registrationNumber String?   @map("registration_number") @db.VarChar(10)
   hallTicketNumber   String?   @map("hall_ticket_number") @db.VarChar(15)
-  createdAt          DateTime? @default(now()) @map("created_at")
-  exam               Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  answers            Json?     @default("{}")
+  blocked            Boolean?  @default(false)
+  exam               Exam      @relation(fields: [examId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("registrations")
 }
@@ -58,6 +58,99 @@ model Session {
   timestamp      String  @db.VarChar(50)
   avatar         String  @db.VarChar(10)
   liveFeed       String? @map("live_feed")
+  visitor_id     String?
 
   @@map("sessions")
 }
+
+model candidates {
+  id         Int       @id @default(autoincrement())
+  full_name  String    @db.VarChar(150)
+  email      String    @unique @db.VarChar(150)
+  password   String    @db.VarChar(255)
+  phone      String?   @db.VarChar(50)
+  college    String?   @db.VarChar(200)
+  department String?   @db.VarChar(100)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model piscidrop_company_profile {
+  id           Int     @id @default(1)
+  name         String  @default("Pisci Drop Pvt Ltd") @db.VarChar(255)
+  description  String? @default("A state-of-the-art secure workspace and automated file logistics node, powering secure assessments globally.")
+  founder      String? @default("Marcus Aurelius") @db.VarChar(255)
+  date_started String? @default("January 15, 2024") @db.VarChar(255)
+  website      String? @default("piscidrop.com") @db.VarChar(255)
+  phone        String? @default("+91 98765 43210") @db.VarChar(255)
+  email        String? @default("support@piscidrop.com") @db.VarChar(255)
+  address      String? @default("108 Silicon Hills, Block A, ORR, Bangalore, KA, India, 560103")
+  logo_url     String? @default("https://ik.imagekit.io/dypkhqxip/picsihoriz?updatedAt=1778919009480")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model security_logs {
+  id         BigInt   @id @default(autoincrement())
+  session_id String
+  visitor_id String?
+  event_type String
+  details    String?
+  ip_address String?
+  user_agent String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at(sort: Desc)], map: "idx_security_logs_created_at")
+  @@index([session_id], map: "idx_security_logs_session_id")
+  @@index([visitor_id], map: "idx_security_logs_visitor_id")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model student_registrations {
+  id           Int       @id @default(autoincrement())
+  full_name    String    @db.VarChar(200)
+  email        String    @db.VarChar(200)
+  phone        String    @db.VarChar(50)
+  address      String
+  dob          String    @db.VarChar(50)
+  college_name String    @db.VarChar(200)
+  branch       String    @db.VarChar(200)
+  interests    String    @db.VarChar(200)
+  photo_url    String
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model Hackathon {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  teamSize        Int
+  type            String   @default("Online")
+  phases          String?  @db.Text
+  image           String?  @db.Text
+  prizeFirst      String?
+  prizeSecond     String?
+  prizeThird      String?
+  perks           String?  @db.Text
+  registrationFee Float    @default(0)
+  hasFee          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  hackathonId String
+  createdAt   DateTime @default(now())
+}
+
+model Submission {
+  id          String   @id @default(cuid())
+  githubUrl   String?
+  demoUrl     String?
+  teamId      String
+  createdAt   DateTime @default(now())
+}
+

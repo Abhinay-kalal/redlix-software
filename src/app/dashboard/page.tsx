@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { QUESTIONS } from "@/app/exam-session/questions";
+import { TRAINING01_QUESTIONS } from "@/app/exam-session/training01Questions";
+import { gradeTraining01Full } from "@/app/exam-session/training01AnswerKey";
 
 interface Session {
   id: string;
@@ -1776,7 +1778,17 @@ export default function Dashboard() {
       const exam = exams.find((e) => e.id === candidate.exam_id);
       
       let candidateQuestions = QUESTIONS.map((q) => ({ ...q }));
-      if (candidate.exam_id === 4 || (exam && exam.name.toLowerCase().includes("student forge"))) {
+
+      // ── Redlix Training Exam 01 ─────────────────────────────────────────
+      const isTraining01Exam = exam && exam.name.toLowerCase().includes("redlix training exam 01");
+      let training01Grade: ReturnType<typeof gradeTraining01Full> | null = null;
+
+      if (isTraining01Exam) {
+        candidateQuestions = TRAINING01_QUESTIONS.map((q) => ({ ...q }));
+        if (candidate.answers) {
+          training01Grade = gradeTraining01Full(candidate.answers as Record<string | number, string>);
+        }
+      } else if (candidate.exam_id === 4 || (exam && exam.name.toLowerCase().includes("student forge"))) {
         const sectionA = candidateQuestions.filter((q) => q.section === "A");
         const sectionB = candidateQuestions.filter((q) => q.section === "B");
         if (candidate.hall_ticket_number) {
@@ -1852,13 +1864,52 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Training Exam 01 — Auto-Grade Score Banner (Admin Only, NEVER shown to candidate) */}
+            {isTraining01Exam && training01Grade && (
+              <div className="px-5 py-3 border-b border-zinc-200 bg-orange-50/60 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-orange-700 mb-2">
+                  🔒 Auto-Graded Score — Redlix Training Exam 01 (Admin View Only — Not Shown to Candidate)
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec A MCQ</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">
+                      {training01Grade.mcq.marksObtained} / 15
+                    </p>
+                    <p className="text-[9px] text-zinc-400">{training01Grade.mcq.correct} correct</p>
+                  </div>
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec B Scenario</p>
+                    <p className="text-sm font-bold text-blue-700 mt-0.5">
+                      {training01Grade.scenario.marksObtained} / 10
+                    </p>
+                    <p className="text-[9px] text-zinc-400">MCQ auto-score</p>
+                  </div>
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec C Coding</p>
+                    <p className="text-sm font-bold text-indigo-700 mt-0.5">
+                      {training01Grade.coding.marksObtained} / 40
+                    </p>
+                    <p className="text-[9px] text-zinc-400">{training01Grade.coding.attempted}/4 submitted</p>
+                  </div>
+                  <div className="bg-orange-500 border border-orange-600 p-2 text-center">
+                    <p className="text-[9px] text-orange-100 uppercase font-bold">Total Auto</p>
+                    <p className="text-sm font-bold text-white mt-0.5">
+                      {training01Grade.totalAutoMarks} / 65
+                    </p>
+                    <p className="text-[9px] text-orange-200">Manual review needed</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {}
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
               {}
               <div className="space-y-4">
                 <h4 className="text-xs font-extrabold uppercase tracking-widest text-orange-600 border-b border-zinc-200 pb-1 flex items-center justify-between">
                   <span>Section A: Multiple Choice Questions ({mcqQuestions.length})</span>
-                  <span className="text-[10px] text-zinc-400 normal-case font-normal">(Shuffled in student's view)</span>
+                  <span className="text-[10px] text-zinc-400 normal-case font-normal">{isTraining01Exam ? "(Fixed order — Redlix Training Exam 01)" : "(Shuffled in student's view)"}</span>
                 </h4>
                 <div className="space-y-3">
                   {mcqQuestions.map((q) => {
