@@ -863,15 +863,27 @@ export default function Dashboard() {
                               <span className="text-zinc-800 font-medium">{session.lastFlagType}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-right">
-                            <button
-                              onClick={() => {
-                                setActiveStreamSession(session);
-                              }}
-                              className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-[10px] rounded-none cursor-pointer shadow-sm transition-all border-none"
-                            >
-                              Watch Live Stream
-                            </button>
+                           <td className="px-6 py-3 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  setActiveStreamSession(session);
+                                }}
+                                className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-[10px] rounded-none cursor-pointer shadow-sm transition-all border-none"
+                              >
+                                Watch Live Stream
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to terminate/remove the session for ${session.student}?`)) {
+                                    handleDismiss(session.id);
+                                  }
+                                }}
+                                className="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-semibold text-[10px] rounded-none cursor-pointer shadow-sm transition-all border-none"
+                              >
+                                Terminate
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -933,16 +945,29 @@ export default function Dashboard() {
                         </div>
                       </div>
                       
-                      <div className="p-3 bg-zinc-50 text-[10px] flex justify-between items-center text-zinc-650">
+                       <div className="p-3 bg-zinc-50 text-[10px] flex justify-between items-center text-zinc-650 font-sans">
                         <span>Anomalies: <span className="font-semibold">{session.flagsCount}</span></span>
-                        <button
-                          onClick={() => {
-                            setActiveStreamSession(session);
-                          }}
-                          className="text-[9px] font-bold text-orange-600 hover:text-orange-700 bg-transparent border-none cursor-pointer uppercase tracking-wider"
-                        >
-                          View Detail & Resolve
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setActiveStreamSession(session);
+                            }}
+                            className="text-[9px] font-bold text-orange-600 hover:text-orange-700 bg-transparent border-none cursor-pointer uppercase tracking-wider"
+                          >
+                            View Detail
+                          </button>
+                          <span className="text-zinc-350">|</span>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Terminate session for ${session.student}?`)) {
+                                handleDismiss(session.id);
+                              }
+                            }}
+                            className="text-[9px] font-bold text-red-600 hover:text-red-700 bg-transparent border-none cursor-pointer uppercase tracking-wider"
+                          >
+                            Terminate
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
