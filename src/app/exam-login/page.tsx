@@ -249,13 +249,12 @@ function ExamLoginContent() {
 
         <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200">
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               <img
                 src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
                 alt="Redlix Secure Logo"
-                className="w-8 h-8 object-contain shrink-0"
+                className="w-32 h-10 object-contain shrink-0"
               />
-              <span className="font-bold text-sm tracking-wide text-zinc-800">Redlix Secure</span>
             </div>
 
             <h1 className="text-2xl md:text-3xl font-medium leading-snug tracking-tight mt-6 text-zinc-900">

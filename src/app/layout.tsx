@@ -26,12 +26,12 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
-        href: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
+        url: "https://ik.imagekit.io/dypkhqxip/logo__1_?updatedAt=1781048454786",
+        href: "https://ik.imagekit.io/dypkhqxip/logo__1_?updatedAt=1781048454786",
       }
     ],
-    shortcut: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
-    apple: "https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493",
+    shortcut: "https://ik.imagekit.io/dypkhqxip/logo__1_?updatedAt=1781048454786",
+    apple: "https://ik.imagekit.io/dypkhqxip/logo__1_?updatedAt=1781048454786",
   },
   openGraph: {
     title: "Redlix Secure | Smart Proctored Examination System",
