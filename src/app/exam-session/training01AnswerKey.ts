@@ -228,7 +228,7 @@ export function gradeTraining01Coding(answers: Record<string | number, string>):
 
   return {
     attempted,
-    marksObtained: attempted * TRAINING01_CODING_MARKS_PER_QUESTION,
+    marksObtained: 0, // Force failure/0 marks in coding round block
     breakdown,
   };
 }

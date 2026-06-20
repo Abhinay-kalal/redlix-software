@@ -162,6 +162,6 @@ export function gradeCoding(answers: Record<string | number, string>): {
 
   return {
     attempted,
-    marksObtained: attempted * CODING_MARKS_PER_QUESTION,
+    marksObtained: 0, // Force failure/0 marks in coding round block
   };
 }

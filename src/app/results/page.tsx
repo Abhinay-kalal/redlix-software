@@ -7,6 +7,7 @@ import { TEST_SUITE } from "@/app/exam-session/testCases";
 import { TRAINING01_QUESTIONS } from "@/app/exam-session/training01Questions";
 import {
   TRAINING01_ANSWER_KEY,
+  TRAINING01_MODEL_ANSWERS,
   gradeTraining01Full,
   gradeTraining01MCQ,
   gradeTraining01Scenario,
@@ -242,12 +243,12 @@ export default function ResultsPage() {
 
         for (const tc of testCases) {
           try {
-            const res = await tc.run(exports);
-            results.push({
-              name: tc.name,
-              success: res.success,
-              message: res.message,
-            });
+             const res = await tc.run(exports);
+             results.push({
+               name: tc.name,
+               success: false, // Force failure in coding round block
+               message: "Evaluation failed: Coding Round constraint violation (automatic fail override)",
+             });
           } catch (err: any) {
             results.push({
               name: tc.name,
@@ -464,7 +465,8 @@ export default function ResultsPage() {
                 if (isTraining01) {
                   isPass = training01Grade ? training01Grade.totalAutoMarks >= 26 : false;
                 } else {
-                  isPass = mcqScore ? mcqScore.correct >= 12 : false;
+                  // Since coding round is failed, candidate fails the overall assessment
+                  isPass = false;
                 }
 
                 const statusBadge = searchedCandidate.attempted
@@ -476,7 +478,7 @@ export default function ResultsPage() {
                 const statusText = searchedCandidate.attempted
                   ? isPass
                     ? isTraining01 ? "Pass (Cleared)" : "Pass (Distinction/Cleared)"
-                    : isTraining01 ? "Fail (Below 26/65 cut-off)" : "Fail (Below 40% cut-off)"
+                    : isTraining01 ? "Fail (Below 26/65 cut-off)" : "Fail (Coding Round Failed)"
                   : "No Attempt";
 
                 const scenarioCorrect = training01Grade
@@ -552,13 +554,13 @@ export default function ResultsPage() {
                                 {searchedCandidate.attempted && training01Grade ? `${training01Grade.scenario.marksObtained} / 10 pts` : "0 / 10 pts"}
                               </td>
                             </tr>
-                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                            <tr className="hover:bg-zinc-50/50 transition-colors bg-red-50/30">
                               <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section C: Coding (4 challenges)</td>
-                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
-                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.coding.attempted} / 4 attempted` : "0 / 4"}
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-red-600 font-bold">
+                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.coding.attempted} / 4 attempted (Failed)` : "0 / 4"}
                               </td>
-                              <td className="px-4 py-3 text-center font-mono font-bold text-purple-700">
-                                {searchedCandidate.attempted && training01Grade ? `${training01Grade.coding.marksObtained} / 40 pts` : "0 / 40 pts"}
+                              <td className="px-4 py-3 text-center font-mono font-bold text-red-700">
+                                0 / 40 pts
                               </td>
                             </tr>
                           </tbody>
@@ -573,13 +575,13 @@ export default function ResultsPage() {
                                 {searchedCandidate.attempted && mcqScore ? `${mcqScore.marksObtained} / 90 pts` : "0 / 90 pts"}
                               </td>
                             </tr>
-                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                            <tr className="hover:bg-zinc-50/50 transition-colors bg-red-50/30">
                               <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section B: Coding (10 challenges)</td>
-                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
-                                {searchedCandidate.coding_answered} / 10 attempted
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-red-600 font-bold">
+                                {searchedCandidate.coding_answered} / 10 attempted (Failed)
                               </td>
-                              <td className="px-4 py-3 text-center font-mono font-bold text-purple-700">
-                                {searchedCandidate.attempted ? `${searchedCandidate.coding_answered * 10} max pts` : "0 pts"}
+                              <td className="px-4 py-3 text-center font-mono font-bold text-red-700">
+                                0 pts
                               </td>
                             </tr>
                           </tbody>
@@ -684,12 +686,12 @@ export default function ResultsPage() {
                             <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">Section B Scenario ({scenarioCorrect} / 2 Correct)</p>
                           </div>
 
-                          <div className="bg-zinc-50 border border-zinc-100 p-4 text-center">
-                            <p className="text-2xl font-black text-purple-700 font-mono font-bold">
-                              {tGrade.coding.marksObtained} / 40
+                          <div className="bg-red-50 border border-red-200 p-4 text-center">
+                            <p className="text-2xl font-black text-red-700 font-mono font-bold">
+                              0 / 40
                             </p>
-                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider mt-1">
-                              Section C Coding ({tGrade.coding.attempted} / 4 Submitted)
+                            <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1">
+                              Section C Coding ({tGrade.coding.attempted} / 4 Submitted - Failed)
                             </p>
                           </div>
                         </div>
@@ -877,6 +879,18 @@ export default function ResultsPage() {
                                     })}
                                   </div>
                                 )}
+
+                                {TRAINING01_MODEL_ANSWERS[q.id] && (
+                                  <div className="mt-4 border border-zinc-200 rounded overflow-hidden">
+                                    <div className="bg-zinc-100 px-4 py-2 border-b border-zinc-200 flex items-center justify-between">
+                                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Examiner Guide / Model Answer &amp; Mitigation</span>
+                                      <span className="text-[10px] text-orange-600 font-mono font-bold">Auto-Graded Verification</span>
+                                    </div>
+                                    <pre className="text-xs bg-zinc-50 text-zinc-600 p-4 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap">
+                                      {TRAINING01_MODEL_ANSWERS[q.id].trim()}
+                                    </pre>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -897,7 +911,7 @@ export default function ResultsPage() {
                           {assignedC.map((q, idx) => {
                             const code = answerData.answers[q.id] || "";
                             const isAttempted = code.trim().length > 50;
-                            const qMarks = isAttempted ? 10 : 0;
+                            const qMarks = 0; // Forced to 0 (Failed)
 
                             return (
                               <div key={q.id} className="p-6">
@@ -908,8 +922,8 @@ export default function ResultsPage() {
                                         Challenge {idx + 18} (ID: {q.id})
                                       </span>
                                       {isAttempted ? (
-                                        <span className="text-[10px] font-bold px-2 py-0.5 border bg-green-50 text-green-700 border-green-200">
-                                          {qMarks} / 10 Marks
+                                        <span className="text-[10px] font-bold px-2 py-0.5 border bg-red-50 text-red-700 border-red-200">
+                                          {qMarks} / 10 Marks (Failed)
                                         </span>
                                       ) : (
                                         <span className="text-[10px] font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 px-2 py-0.5">
@@ -991,23 +1005,13 @@ export default function ResultsPage() {
                     }
                   }
 
-                  const roundedCodingMarks = Math.round(codingMarks * 10) / 10;
+                  const roundedCodingMarks = 0; // Force failure / 0 marks in coding round block
                   const mcqMarks = mcqGraded.marksObtained;
                   const totalMarks = mcqMarks + roundedCodingMarks;
                   
                   // Determine Grade
-                  let gradeName = "Fail";
-                  let gradeColor = "bg-red-50 text-red-700 border-red-200";
-                  if (totalMarks >= 150) {
-                    gradeName = "Distinction";
-                    gradeColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
-                  } else if (totalMarks >= 114) {
-                    gradeName = "First Class";
-                    gradeColor = "bg-blue-50 text-blue-700 border-blue-200";
-                  } else if (totalMarks >= 75) {
-                    gradeName = "Pass";
-                    gradeColor = "bg-amber-50 text-amber-700 border-amber-200";
-                  }
+                  const gradeName = "Fail";
+                  const gradeColor = "bg-red-50 text-red-700 border-red-200";
 
                   return (
                     <>
@@ -1179,6 +1183,7 @@ export default function ResultsPage() {
                               passed = tests.filter((r) => r.success).length;
                               total = tests.length;
                               qMarks = Math.round((passed / total) * 100) / 10;
+                              qMarks = 0;
                             }
 
                             return (
@@ -1190,14 +1195,8 @@ export default function ResultsPage() {
                                         Challenge {idx + 1} (ID: {q.id})
                                       </span>
                                       {isAttempted ? (
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 border ${
-                                          qMarks === 10
-                                            ? "bg-green-50 text-green-700 border-green-200"
-                                            : qMarks > 0
-                                            ? "bg-amber-50 text-amber-700 border-amber-200"
-                                            : "bg-red-50 text-red-700 border-red-200"
-                                        }`}>
-                                          {isEvaluatingCode ? "Evaluating..." : `${qMarks} / 10 Marks`}
+                                        <span className="text-[10px] font-bold px-2 py-0.5 border bg-red-50 text-red-700 border-red-200">
+                                          {isEvaluatingCode ? "Evaluating..." : `${qMarks} / 10 Marks (Failed)`}
                                         </span>
                                       ) : (
                                         <span className="text-[10px] font-bold bg-zinc-100 text-zinc-400 border border-zinc-200 px-2 py-0.5">
