@@ -881,6 +881,75 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* Real-time Webcam Stream Grid */}
+            <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden mt-6">
+              <div className="p-5 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold normal-case text-zinc-800">Simultaneous Live Webcam Feeds</h3>
+                  <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Real-time simultaneous view of all active candidate screens/webcams</p>
+                </div>
+                {sessions.length > 0 && (
+                  <span className="text-[10px] font-bold text-orange-600 uppercase bg-orange-50 border border-orange-200 px-2 py-0.5">
+                    {sessions.length} Active Stream{sessions.length === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
+              
+              {sessions.length === 0 ? (
+                <div className="p-10 text-center text-zinc-400 font-semibold italic text-xs">
+                  No active streams to show.
+                </div>
+              ) : (
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {sessions.map((session) => (
+                    <div key={session.id} className="border border-zinc-200 bg-white shadow-sm flex flex-col">
+                      <div className="bg-zinc-800 px-3 py-2 text-white flex items-center justify-between">
+                        <div className="truncate pr-2">
+                          <span className="font-semibold text-xs">{session.student}</span>
+                          <span className="text-[9px] text-zinc-400 block font-mono leading-none mt-0.5 truncate">{session.id}</span>
+                        </div>
+                        {onlineStudents.has(session.id) ? (
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
+                        ) : (
+                          <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" title="Offline" />
+                        )}
+                      </div>
+                      
+                      <div className="relative aspect-video bg-zinc-950 flex items-center justify-center overflow-hidden border-b border-zinc-200">
+                        {session.liveFeed ? (
+                          <img 
+                            src={session.liveFeed} 
+                            alt={session.student} 
+                            className="w-full h-full object-cover scale-x-[-1]" 
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 p-2 text-center bg-zinc-900">
+                            <span className="material-symbols-outlined text-lg mb-1 animate-pulse">videocam_off</span>
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">Waiting for feed...</span>
+                          </div>
+                        )}
+                        <div className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/60 text-[9px] text-zinc-350 font-mono rounded">
+                          Integrity: {session.integrityScore}%
+                        </div>
+                      </div>
+                      
+                      <div className="p-3 bg-zinc-50 text-[10px] flex justify-between items-center text-zinc-650">
+                        <span>Anomalies: <span className="font-semibold">{session.flagsCount}</span></span>
+                        <button
+                          onClick={() => {
+                            setActiveStreamSession(session);
+                          }}
+                          className="text-[9px] font-bold text-orange-600 hover:text-orange-700 bg-transparent border-none cursor-pointer uppercase tracking-wider"
+                        >
+                          View Detail & Resolve
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         ) : activeTab === "settings" ? (
           <div className="flex-1 p-6 space-y-6 overflow-y-auto bg-zinc-50">
