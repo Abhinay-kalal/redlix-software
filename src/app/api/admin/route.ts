@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 
 const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secure-admin-token-2026";
 
@@ -22,6 +23,14 @@ function isAdminAuthorized(req: NextRequest): boolean {
   return token === ADMIN_TOKEN || cookieToken === ADMIN_TOKEN;
 }
 
+function serialize(obj: any) {
+  return JSON.parse(
+    JSON.stringify(obj, (key, value) =>
+      typeof value === "bigint" ? value.toString() : value
+    )
+  );
+}
+
 export async function GET(req: NextRequest) {
   if (!isAdminAuthorized(req)) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -31,43 +40,44 @@ export async function GET(req: NextRequest) {
   const resource = searchParams.get("resource");
 
   if (resource === "exams") {
-    const { data, error } = await supabase
-      .from("exams")
-      .select()
-      .order("id", { ascending: false });
-    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, data });
+    try {
+      const data = await prisma.$queryRawUnsafe(`SELECT * FROM exams ORDER BY id DESC`);
+      return NextResponse.json({ success: true, data: serialize(data) });
+    } catch (error: any) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
   }
 
   if (resource === "registrations") {
-    const { data, error } = await supabase
-      .from("registrations")
-      .select()
-      .order("id", { ascending: false });
-    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, data });
+    try {
+      const data = await prisma.$queryRawUnsafe(`SELECT * FROM registrations ORDER BY id DESC`);
+      return NextResponse.json({ success: true, data: serialize(data) });
+    } catch (error: any) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
   }
 
   if (resource === "sessions") {
-    const { data, error } = await supabase
-      .from("sessions")
-      .select()
-      .order("timestamp", { ascending: true });
-    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, data });
+    try {
+      const data = await prisma.$queryRawUnsafe(`SELECT * FROM sessions ORDER BY timestamp ASC`);
+      return NextResponse.json({ success: true, data: serialize(data) });
+    } catch (error: any) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
   }
 
   if (resource === "security_logs") {
-    const { data, error } = await supabase
-      .from("security_logs")
-      .select()
-      .order("created_at", { ascending: false });
-    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    return NextResponse.json({ success: true, data });
+    try {
+      const data = await prisma.$queryRawUnsafe(`SELECT * FROM security_logs ORDER BY created_at DESC`);
+      return NextResponse.json({ success: true, data: serialize(data) });
+    } catch (error: any) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: false, error: "Unknown resource" }, { status: 400 });
 }
+
 
 export async function POST(req: NextRequest) {
   if (!isAdminAuthorized(req)) {
