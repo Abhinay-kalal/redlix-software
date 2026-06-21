@@ -1,6 +1,6 @@
 export interface Question {
   id: number;
-  type: "mcq" | "coding";
+  type: "mcq" | "coding" | "open";
   section: "A" | "B";
   number: number;
   questionText: string;

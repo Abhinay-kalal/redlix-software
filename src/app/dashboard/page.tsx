@@ -6,6 +6,8 @@ import { createClient } from "@/utils/supabase/client";
 import { QUESTIONS } from "@/app/exam-session/questions";
 import { TRAINING01_QUESTIONS } from "@/app/exam-session/training01Questions";
 import { gradeTraining01Full } from "@/app/exam-session/training01AnswerKey";
+import { PHASE02_QUESTIONS } from "@/app/exam-session/phase02Questions";
+import { gradePhase02Full } from "@/app/exam-session/phase02AnswerKey";
 
 interface Session {
   id: string;
@@ -1873,14 +1875,21 @@ export default function Dashboard() {
       
       let candidateQuestions = QUESTIONS.map((q) => ({ ...q }));
 
-      // ── Redlix Training Exam 01 ─────────────────────────────────────────
+      // ── Redlix Training Exam 01 / Phase 02 ──────────────────────────────
       const isTraining01Exam = exam && exam.name.toLowerCase().includes("redlix training exam 01");
+      const isPhase02Exam = exam && (exam.name.toLowerCase().includes("redlix phase - 02") || exam.name.toLowerCase().includes("final phase"));
       let training01Grade: ReturnType<typeof gradeTraining01Full> | null = null;
+      let phase02Grade: ReturnType<typeof gradePhase02Full> | null = null;
 
       if (isTraining01Exam) {
         candidateQuestions = TRAINING01_QUESTIONS.map((q) => ({ ...q }));
         if (candidate.answers) {
           training01Grade = gradeTraining01Full(candidate.answers as Record<string | number, string>);
+        }
+      } else if (isPhase02Exam) {
+        candidateQuestions = PHASE02_QUESTIONS.map((q) => ({ ...q }));
+        if (candidate.answers) {
+          phase02Grade = gradePhase02Full(candidate.answers as Record<string | number, string>);
         }
       } else if (candidate.exam_id === 4 || (exam && exam.name.toLowerCase().includes("student forge"))) {
         const sectionA = candidateQuestions.filter((q) => q.section === "A");
@@ -1898,8 +1907,8 @@ export default function Dashboard() {
         }
       }
 
-      const mcqQuestions = candidateQuestions.filter(q => q.type === "mcq");
-      const codingQuestions = candidateQuestions.filter(q => q.type === "coding");
+      const mcqQuestions = candidateQuestions.filter(q => q.section === "A");
+      const codingQuestions = candidateQuestions.filter(q => q.section === "B");
 
       const isQuestionAttempted = (q: typeof QUESTIONS[0]) => {
         const ans = candidate.answers?.[q.id];
@@ -1951,9 +1960,9 @@ export default function Dashboard() {
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-400 uppercase font-bold">Section B: Coding</p>
+                <p className="text-[10px] text-zinc-400 uppercase font-bold">Section B: {isPhase02Exam ? "Scenarios" : "Coding"}</p>
                 <p className="text-sm font-bold text-indigo-600 mt-0.5">
-                  {codingAttempted} / {codingQuestions.length} Attempted
+                  {codingAttempted} / {codingQuestions.length} {isPhase02Exam ? "Answered" : "Attempted"}
                 </p>
               </div>
             </div>
@@ -1997,13 +2006,44 @@ export default function Dashboard() {
               </div>
             )}
 
+            {/* Phase 02 — Auto-Grade Score Banner (Admin Only, NEVER shown to candidate) */}
+            {isPhase02Exam && phase02Grade && (
+              <div className="px-5 py-3 border-b border-zinc-200 bg-orange-50/60 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-orange-700 mb-2">
+                  🔒 Auto-Graded Score — Redlix Phase - 02 (Final Phase) (Admin View Only)
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec A MCQ</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">
+                      {phase02Grade.mcq.marksObtained} / 76
+                    </p>
+                    <p className="text-[9px] text-zinc-400">{phase02Grade.mcq.correct} / 19 correct</p>
+                  </div>
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec B Scenarios</p>
+                    <p className="text-sm font-bold text-blue-700 mt-0.5">
+                      {phase02Grade.open.attempted} / 8
+                    </p>
+                    <p className="text-[9px] text-zinc-400">Manual review required</p>
+                  </div>
+                  <div className="bg-orange-500 border border-orange-600 p-2 text-center flex flex-col justify-center">
+                    <p className="text-[9px] text-orange-100 uppercase font-bold">Total Auto Marks</p>
+                    <p className="text-sm font-bold text-white mt-0.5">
+                      {phase02Grade.totalAutoMarks} / 156
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {}
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
               {}
               <div className="space-y-4">
                 <h4 className="text-xs font-extrabold uppercase tracking-widest text-orange-600 border-b border-zinc-200 pb-1 flex items-center justify-between">
                   <span>Section A: Multiple Choice Questions ({mcqQuestions.length})</span>
-                  <span className="text-[10px] text-zinc-400 normal-case font-normal">{isTraining01Exam ? "(Fixed order — Redlix Training Exam 01)" : "(Shuffled in student's view)"}</span>
+                  <span className="text-[10px] text-zinc-400 normal-case font-normal">{isTraining01Exam ? "(Fixed order — Redlix Training Exam 01)" : isPhase02Exam ? "(Fixed order — Redlix Phase - 02)" : "(Shuffled in student's view)"}</span>
                 </h4>
                 <div className="space-y-3">
                   {mcqQuestions.map((q) => {
@@ -2059,7 +2099,7 @@ export default function Dashboard() {
               {}
               <div className="space-y-4 pt-2">
                 <h4 className="text-xs font-extrabold uppercase tracking-widest text-indigo-600 border-b border-zinc-200 pb-1 flex items-center justify-between">
-                  <span>Section B: Coding Challenges ({codingQuestions.length})</span>
+                  <span>Section B: {codingQuestions.some(q => q.type === "open") ? "Scenario-Based / Open-Ended" : "Coding Challenges"} ({codingQuestions.length})</span>
                   <span className="text-[10px] text-zinc-400 normal-case font-normal">(Shuffled in student's view)</span>
                 </h4>
                 <div className="space-y-4">
@@ -2071,7 +2111,7 @@ export default function Dashboard() {
                       <div key={q.id} className="p-3.5 border border-zinc-200 bg-white space-y-3">
                         <div className="flex justify-between items-start gap-4">
                           <h5 className="text-xs font-bold text-zinc-800 leading-relaxed">
-                            Coding Challenge {q.number}: <span className="font-normal text-zinc-600">{q.questionText.split("\n")[0]}</span>
+                            {q.type === "open" ? "Open-Ended Question" : "Coding Challenge"} {q.number}: <span className="font-normal text-zinc-650">{q.questionText.split("\n")[0]}</span>
                           </h5>
                           <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 border ${
                             attempted 

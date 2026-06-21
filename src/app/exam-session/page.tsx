@@ -28,6 +28,7 @@ import { QUESTIONS, Question } from "./questions";
 import { TEST_SUITE } from "./testCases";
 import { TRAINING01_QUESTIONS } from "./training01Questions";
 import { gradeTraining01Full } from "./training01AnswerKey";
+import { PHASE02_QUESTIONS } from "./phase02Questions";
 
 interface CodeEditorProps {
   value: string;
@@ -512,6 +513,11 @@ export default function ExamSessionPage() {
           setIsTraining01(true);
           // 75-minute exam for Training Exam 01
           setTimeLeft(75 * 60);
+        } else if (examNameLower.includes("redlix phase - 02") || examNameLower.includes("final phase")) {
+          // Use the Phase 02 questions
+          loadedQuestions = PHASE02_QUESTIONS.map((q) => ({ ...q }));
+          // 120-minute exam for Phase 02
+          setTimeLeft(120 * 60);
         } else if (parsed.exam.id === 4 || examNameLower.includes("student forge")) {
           const sectionA = loadedQuestions.filter((q) => q.section === "A");
           const sectionB = loadedQuestions.filter((q) => q.section === "B");
@@ -1442,7 +1448,7 @@ export default function ExamSessionPage() {
                     : "Section B: Coding Challenges"}
                 </span>
                 <h2 className="text-lg font-bold text-zinc-900 mt-0.5">
-                  Question {currentQuestion.number} of {questions.filter(q => q.section === currentQuestion.section).length} ({currentQuestion.type === "mcq" ? "MCQ" : "Coding"})
+                  Question {currentQuestion.number} of {questions.filter(q => q.section === currentQuestion.section).length} ({currentQuestion.type === "mcq" ? "MCQ" : currentQuestion.type === "open" ? "Open-Ended" : "Coding"})
                 </h2>
               </div>
               <span className="text-xs bg-zinc-100 text-zinc-700 px-2.5 py-1 border border-zinc-200 font-mono font-bold">
@@ -1450,14 +1456,14 @@ export default function ExamSessionPage() {
               </span>
             </div>
 
-            {}
+            {/* Question Text */}
             <div className="bg-white border border-zinc-200 p-6 shadow-sm">
               <p className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap font-sans">
                 {currentQuestion.questionText}
               </p>
             </div>
 
-            {}
+            {/* Input / Response Area */}
             {currentQuestion.type === "mcq" ? (
               <div className="space-y-2.5">
                 {currentQuestion.options?.map((opt) => {
@@ -1486,6 +1492,21 @@ export default function ExamSessionPage() {
                     </button>
                   );
                 })}
+              </div>
+            ) : currentQuestion.type === "open" ? (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">
+                    Write your answer / analysis below
+                  </label>
+                  <textarea
+                    value={activeAnswer}
+                    onChange={(e) => handleAnswerChange(e.target.value)}
+                    placeholder="Type your detailed diagnostic steps, analysis, and recommendations here..."
+                    className="w-full h-80 p-4 bg-[#1e1e1e] text-zinc-200 border border-zinc-700 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-orange-500 rounded-none shadow-md"
+                    spellCheck={false}
+                  />
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -1703,7 +1724,7 @@ export default function ExamSessionPage() {
                 Section A: MCQs
               </p>
               <div className="grid grid-cols-5 gap-1.5">
-                {questions.filter(q => q.type === "mcq").map((q) => {
+                {questions.filter(q => q.section === "A").map((q) => {
                   const idx = questions.findIndex(x => x.id === q.id);
                   const status = questionStatuses[q.id] || "not_visited";
                   const isActive = currentIndex === idx;
@@ -1725,10 +1746,10 @@ export default function ExamSessionPage() {
 
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
-                Section B: Coding
+                {questions.some(q => q.type === "open") ? "Section B: Scenario-Based" : "Section B: Coding"}
               </p>
               <div className="grid grid-cols-5 gap-1.5">
-                {questions.filter(q => q.type === "coding").map((q) => {
+                {questions.filter(q => q.section === "B").map((q) => {
                   const idx = questions.findIndex(x => x.id === q.id);
                   const status = questionStatuses[q.id] || "not_visited";
                   const isActive = currentIndex === idx;
