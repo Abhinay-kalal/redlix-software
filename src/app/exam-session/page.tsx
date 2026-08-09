@@ -236,6 +236,184 @@ function shuffleQuestions<T>(array: T[], seed: string): T[] {
   return arr;
 }
 
+function highlightCodeTokens(line: string) {
+  const commentMatch = line.match(/^(\s*)(#|\/\/|--)(.*)$/);
+  if (commentMatch) {
+    return (
+      <span className="text-zinc-500 italic">
+        {line}
+      </span>
+    );
+  }
+
+  const regex = /(".*?"|'.*?'|`.*?`|\b(?:const|let|var|function|return|if|else|for|while|await|async|class|import|export|from|new|try|catch|def|in|and|or|not|SELECT|FROM|WHERE|GROUP|BY|HAVING|ORDER|LIMIT|JOIN|INNER|LEFT|RIGHT|ON|AVG|SUM|COUNT|MAX|MIN|DISTINCT|ROW_NUMBER|RANK|AS|INT|VARCHAR)\b|\b(?:true|false|null|undefined|None|True|False)\b|\b\d+\b|\b[a-zA-Z_]\w*(?=\()|[^\s\w]+|\b[a-zA-Z_]\w*\b|\s+)/g;
+
+  let match;
+  const elements: React.ReactNode[] = [];
+  let keyIndex = 0;
+
+  const keywords = new Set([
+    "const", "let", "var", "function", "return", "if", "else", "for", "while",
+    "await", "async", "class", "import", "export", "from", "new", "try", "catch",
+    "def", "in", "and", "or", "not", "SELECT", "FROM", "WHERE", "GROUP", "BY",
+    "HAVING", "ORDER", "LIMIT", "JOIN", "INNER", "LEFT", "RIGHT", "ON", "AVG",
+    "SUM", "COUNT", "MAX", "MIN", "DISTINCT", "ROW_NUMBER", "RANK", "AS", "INT", "VARCHAR"
+  ]);
+
+  const booleans = new Set(["true", "false", "null", "undefined", "None", "True", "False"]);
+
+  while ((match = regex.exec(line)) !== null) {
+    const token = match[0];
+    keyIndex++;
+
+    if (token.startsWith('"') || token.startsWith("'") || token.startsWith("`")) {
+      elements.push(<span key={keyIndex} className="text-emerald-400 font-medium">{token}</span>);
+    } else if (keywords.has(token)) {
+      elements.push(<span key={keyIndex} className="text-[#E61E32] font-bold">{token}</span>);
+    } else if (booleans.has(token)) {
+      elements.push(<span key={keyIndex} className="text-purple-400 font-bold">{token}</span>);
+    } else if (/^\d+$/.test(token)) {
+      elements.push(<span key={keyIndex} className="text-amber-400 font-bold">{token}</span>);
+    } else if (/^[a-zA-Z_]\w*(?=\()/.test(token)) {
+      elements.push(<span key={keyIndex} className="text-blue-400 font-semibold">{token}</span>);
+    } else {
+      elements.push(<span key={keyIndex} className="text-zinc-200">{token}</span>);
+    }
+  }
+
+  return elements;
+}
+
+interface ContentBlock {
+  type: "text" | "code";
+  content: string;
+  language?: string;
+}
+
+function parseQuestionContent(text: string): ContentBlock[] {
+  if (text.includes("```")) {
+    const parts = text.split("```");
+    const blocks: ContentBlock[] = [];
+    parts.forEach((part, index) => {
+      if (index % 2 === 1) {
+        const lines = part.trim().split("\n");
+        let lang = "";
+        let code = part.trim();
+        if (lines[0] && /^(javascript|js|python|py|sql|html|css|json|cpp|c|java|ts|typescript)/i.test(lines[0])) {
+          lang = lines[0].trim();
+          code = lines.slice(1).join("\n").trim();
+        }
+        blocks.push({ type: "code", content: code, language: lang });
+      } else {
+        if (part.trim()) {
+          blocks.push({ type: "text", content: part.trim() });
+        }
+      }
+    });
+    return blocks;
+  }
+
+  const lines = text.split("\n");
+  const blocks: ContentBlock[] = [];
+  let currentTextLines: string[] = [];
+  let currentCodeLines: string[] = [];
+  let inCode = false;
+
+  const isCodeLine = (line: string) => {
+    const trimmed = line.trim();
+    if (!trimmed) return inCode;
+    return (
+      /^(const|let|var|function|return|if|else|for|while|await|async|def|import|class)\b/.test(trimmed) ||
+      /^(SELECT|FROM|WHERE|GROUP BY|HAVING|ORDER BY|INSERT|UPDATE|DELETE|JOIN|INNER JOIN|LEFT JOIN)\b/i.test(trimmed) ||
+      /^(console\.log|print|data\s*=|result\s*=|numbers\s*=|values\s*=|count\s*=|i\s*=|x\s*=)/.test(trimmed) ||
+      /^[a-zA-Z_]\w*\s*=\s*\[.*\]/.test(trimmed) ||
+      /^[a-zA-Z_]\w*\s*=\s*\{.*\}/.test(trimmed) ||
+      /^(\/\/|#|--)/.test(trimmed) ||
+      /^df\[.*\]/.test(trimmed) ||
+      /^df\.groupby/.test(trimmed) ||
+      /^df\.dropna/.test(trimmed) ||
+      /^df\.fillna/.test(trimmed)
+    );
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const checkCode = isCodeLine(line);
+
+    if (checkCode) {
+      if (!inCode) {
+        if (currentTextLines.length > 0) {
+          blocks.push({ type: "text", content: currentTextLines.join("\n").trim() });
+          currentTextLines = [];
+        }
+        inCode = true;
+      }
+      currentCodeLines.push(line);
+    } else {
+      if (inCode) {
+        blocks.push({ type: "code", content: currentCodeLines.join("\n").trim() });
+        currentCodeLines = [];
+        inCode = false;
+      }
+      currentTextLines.push(line);
+    }
+  }
+
+  if (inCode && currentCodeLines.length > 0) {
+    blocks.push({ type: "code", content: currentCodeLines.join("\n").trim() });
+  } else if (currentTextLines.length > 0) {
+    blocks.push({ type: "text", content: currentTextLines.join("\n").trim() });
+  }
+
+  return blocks;
+}
+
+function FormattedQuestionText({ text }: { text: string }) {
+  const blocks = parseQuestionContent(text);
+
+  return (
+    <div className="space-y-3">
+      {blocks.map((block, idx) => {
+        if (block.type === "text") {
+          return (
+            <p key={idx} className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap font-sans">
+              {block.content}
+            </p>
+          );
+        }
+
+        return (
+          <div key={idx} className="my-3 bg-[#0D1117] border border-zinc-800 rounded-xl overflow-hidden shadow-md font-mono text-xs">
+            <div className="bg-[#161B22] px-4 py-2 border-b border-zinc-800/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" />
+                <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono">
+                  {block.language ? block.language.toUpperCase() : "CODE SNIPPET"}
+                </span>
+              </div>
+              <span className="text-[10px] text-zinc-500 font-mono font-semibold">Question Code Block</span>
+            </div>
+            <div className="p-4 overflow-x-auto leading-relaxed space-y-1">
+              {block.content.split("\n").map((line, lineIdx) => (
+                <div key={lineIdx} className="flex items-start gap-4">
+                  <span className="text-zinc-600 select-none w-5 text-right shrink-0 text-[10px]">
+                    {lineIdx + 1}
+                  </span>
+                  <div className="font-mono whitespace-pre text-xs">
+                    {highlightCodeTokens(line)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ExamSessionPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -1472,9 +1650,7 @@ export default function ExamSessionPage() {
 
             {/* Question Text */}
             <div className="bg-white border border-zinc-200/90 rounded-xl p-6 shadow-xs">
-              <p className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap font-sans">
-                {currentQuestion.questionText}
-              </p>
+              <FormattedQuestionText text={currentQuestion.questionText} />
             </div>
 
             {/* Input / Response Area */}
