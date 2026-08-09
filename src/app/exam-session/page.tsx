@@ -32,6 +32,7 @@ import { PHASE02_QUESTIONS } from "./phase02Questions";
 import { MARKETING_QUESTIONS } from "./marketingQuestions";
 import { ANALYTICS_QUESTIONS } from "./analyticsQuestions";
 import { UIUX_QUESTIONS } from "./uiuxQuestions";
+import { TECHNICAL_QUESTIONS } from "./technicalQuestions";
 
 interface CodeEditorProps {
   value: string;
@@ -510,7 +511,11 @@ export default function ExamSessionPage() {
 
         // ── Redlix Training Exam 01 ─────────────────────────────────────────
         const examNameLower = (parsed.exam.name || "").toLowerCase();
-        if (examNameLower.includes("ui") || examNameLower.includes("ux")) {
+        if (examNameLower.includes("technical")) {
+          // Use the dedicated 50 Technical Wing question bank (15 Section A, 10 Section B, 25 Section C)
+          loadedQuestions = TECHNICAL_QUESTIONS.map((q) => ({ ...q }));
+          setTimeLeft(120 * 60);
+        } else if (examNameLower.includes("ui") || examNameLower.includes("ux")) {
           // Use the dedicated 50 MCQs UI & UX Wing question bank
           loadedQuestions = UIUX_QUESTIONS.map((q) => ({ ...q }));
           setTimeLeft(180 * 60);
@@ -1452,7 +1457,9 @@ export default function ExamSessionPage() {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#E61E32] font-mono">
                   {currentQuestion.section === "A"
                     ? "Section A: Multiple Choice Questions"
-                    : "Section B: Coding Challenges"}
+                    : currentQuestion.section === "B"
+                    ? "Section B: Code Analysis"
+                    : "Section C: Coding Challenges"}
                 </span>
                 <h2 className="text-lg font-bold text-zinc-900 mt-0.5">
                   Question {currentQuestion.number} of {questions.filter(q => q.section === currentQuestion.section).length} ({currentQuestion.type === "mcq" ? "MCQ" : currentQuestion.type === "open" ? "Open-Ended" : "Coding"})
@@ -1726,55 +1733,86 @@ export default function ExamSessionPage() {
 
           {/* Scrollable Middle: Questions Grid */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
-                Section A: MCQs
-              </p>
-              <div className="grid grid-cols-5 gap-1.5">
-                {questions.filter(q => q.section === "A").map((q) => {
-                  const idx = questions.findIndex(x => x.id === q.id);
-                  const status = questionStatuses[q.id] || "not_visited";
-                  const isActive = currentIndex === idx;
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => handleQuestionSelect(idx)}
-                      className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
-                        status,
-                        isActive
-                      )}`}
-                    >
-                      {q.number}
-                    </button>
-                  );
-                })}
+            {questions.some(q => q.section === "A") && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                  Section A: MCQs
+                </p>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {questions.filter(q => q.section === "A").map((q) => {
+                    const idx = questions.findIndex(x => x.id === q.id);
+                    const status = questionStatuses[q.id] || "not_visited";
+                    const isActive = currentIndex === idx;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => handleQuestionSelect(idx)}
+                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                          status,
+                          isActive
+                        )}`}
+                      >
+                        {q.number}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
-                {questions.some(q => q.type === "open") ? "Section B: Scenario-Based" : "Section B: Coding"}
-              </p>
-              <div className="grid grid-cols-5 gap-1.5">
-                {questions.filter(q => q.section === "B").map((q) => {
-                  const idx = questions.findIndex(x => x.id === q.id);
-                  const status = questionStatuses[q.id] || "not_visited";
-                  const isActive = currentIndex === idx;
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => handleQuestionSelect(idx)}
-                      className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
-                        status,
-                        isActive
-                      )}`}
-                    >
-                      Q{q.number}
-                    </button>
-                  );
-                })}
+            {questions.some(q => q.section === "B") && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                  {questions.some(q => q.section === "C") ? "Section B: Code Analysis" : questions.some(q => q.type === "open") ? "Section B: Scenario-Based" : "Section B: Coding"}
+                </p>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {questions.filter(q => q.section === "B").map((q) => {
+                    const idx = questions.findIndex(x => x.id === q.id);
+                    const status = questionStatuses[q.id] || "not_visited";
+                    const isActive = currentIndex === idx;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => handleQuestionSelect(idx)}
+                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                          status,
+                          isActive
+                        )}`}
+                      >
+                        Q{q.number}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+
+            {questions.some(q => q.section === "C") && (
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2 font-mono">
+                  Section C: Coding Challenges
+                </p>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {questions.filter(q => q.section === "C").map((q) => {
+                    const idx = questions.findIndex(x => x.id === q.id);
+                    const status = questionStatuses[q.id] || "not_visited";
+                    const isActive = currentIndex === idx;
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => handleQuestionSelect(idx)}
+                        className={`h-9 w-9 text-xs font-mono font-bold flex items-center justify-center cursor-pointer transition-colors ${getPaletteButtonClass(
+                          status,
+                          isActive
+                        )}`}
+                      >
+                        Q{q.number}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Locked Bottom: Question Legend + Submit button */}

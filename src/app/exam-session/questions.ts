@@ -1,7 +1,7 @@
 export interface Question {
   id: number;
   type: "mcq" | "coding" | "open";
-  section: "A" | "B";
+  section: "A" | "B" | "C";
   number: number;
   questionText: string;
   options?: string[];
