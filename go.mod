@@ -1,5 +1,0 @@
-module github.com/your-org/app-m
-
-go 1.26.4
-
-require github.com/lib/pq v1.12.3 // indirect
