@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");

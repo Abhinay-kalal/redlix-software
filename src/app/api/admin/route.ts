@@ -91,6 +91,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
+  const supabase = getSupabaseAdminClient();
+
   const body = await req.json();
   const { action } = body;
 
