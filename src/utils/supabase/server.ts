@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-const DEFAULT_SUPABASE_URL = "https://vcbxrdwomptrsxghtkpw.supabase.co";
-const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder";
+const DEFAULT_SUPABASE_URL = "https://zemknulufleswmroqcrc.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_hVZW7O7f0ilwwoeCgip-2Q_ryUAwiiE";
 
 function getValidUrl(provided?: string): string {
   if (!provided) return DEFAULT_SUPABASE_URL;

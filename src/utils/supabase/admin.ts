@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const DEFAULT_SUPABASE_URL = "https://vcbxrdwomptrsxghtkpw.supabase.co";
-const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder";
+const DEFAULT_SUPABASE_URL = "https://zemknulufleswmroqcrc.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_hVZW7O7f0ilwwoeCgip-2Q_ryUAwiiE";
 const DEFAULT_ADMIN_TOKEN = "redlix-secure-admin-token-2026";
 
 function getValidUrl(provided?: string): string {
