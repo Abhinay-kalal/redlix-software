@@ -30,6 +30,15 @@ export default function ExamDetailPage() {
   const [regCount, setRegCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    if (!exam) return;
+    const link = window.location.origin + "/scheduled-exams/" + encodeExamId(exam.id);
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
 
   useEffect(() => {
     if (!rawParam) return;
@@ -130,16 +139,27 @@ export default function ExamDetailPage() {
         ) : (
           <div className="space-y-5 animate-in fade-in duration-300">
 
-            {/* Breadcrumb Navigation */}
-            <div className="flex items-center justify-between text-xs text-zinc-500">
+            {/* Breadcrumb Navigation & Copy Link Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-zinc-500">
               <div className="flex items-center gap-2">
                 <Link href="/scheduled-exams" className="hover:text-zinc-900 transition-colors font-medium">Scheduled Exams</Link>
                 <span>/</span>
                 <span className="font-semibold text-zinc-900 truncate max-w-[280px] sm:max-w-none">{exam.name}</span>
               </div>
-              <span className="text-[10px] font-mono text-zinc-500 font-semibold bg-white px-2.5 py-1 rounded-lg border border-zinc-200/90 shadow-xs">
-                TOKEN: {encodeExamId(exam.id)}
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyLink}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-zinc-50 active:bg-zinc-100 text-zinc-700 text-xs font-bold rounded-xl border border-zinc-200/90 transition-all cursor-pointer shadow-2xs"
+                >
+                  <svg className="w-3.5 h-3.5 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>{copied ? "Link Copied!" : "Copy Exam Link"}</span>
+                </button>
+                <span className="text-[10px] font-mono text-zinc-500 font-semibold bg-white px-2.5 py-1.5 rounded-xl border border-zinc-200/90 shadow-2xs">
+                  TOKEN: {encodeExamId(exam.id)}
+                </span>
+              </div>
             </div>
 
             {/* 2-Column Responsive Grid */}
@@ -287,15 +307,36 @@ export default function ExamDetailPage() {
               {/* Right Column (Sidebar - 5/12 cols on desktop) */}
               <div className="lg:col-span-5 space-y-5 lg:sticky lg:top-20">
                 
-                {/* 1200x1200px Cover Image Card */}
-                <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-xs">
-                  <div className="w-full aspect-square rounded-xl overflow-hidden border border-zinc-200/80 bg-zinc-100 shadow-xs relative">
+                {/* 1200x1200px High Resolution Cover Image Card */}
+                <div className="bg-white border border-zinc-200/90 rounded-2xl p-4 shadow-xs space-y-3">
+                  <div
+                    className="w-full aspect-square rounded-xl overflow-hidden border border-zinc-200/80 bg-zinc-900 shadow-xs relative group cursor-pointer"
+                    onClick={() => window.open(coverSrc, "_blank")}
+                    title="Click to view full resolution banner"
+                  >
                     <img
                       src={coverSrc}
                       alt={exam.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://ik.imagekit.io/dypkhqxip/technical%20Wing.png";
+                      }}
                     />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5 backdrop-blur-[2px]">
+                      <span className="material-symbols-rounded text-sm">open_in_full</span>
+                      <span>View Full Banner</span>
+                    </div>
                   </div>
+
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                  >
+                    <svg className="w-4 h-4 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>{copied ? "Link Copied to Clipboard!" : "Copy Exam Detail Link"}</span>
+                  </button>
                 </div>
 
                 {/* Key Metrics Stack Card */}
@@ -343,6 +384,13 @@ export default function ExamDetailPage() {
       <footer className="py-8 border-t border-zinc-200/80 bg-white text-center text-xs text-zinc-500 font-medium">
         © 2026 Redlix Secure. Smart Proctored Examination System.
       </footer>
+
+      {copied && (
+        <div className="fixed bottom-6 right-6 z-50 bg-zinc-950 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl border border-zinc-800 flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
+          <span>✓ Exam detail link &amp; cover preview copied to clipboard!</span>
+        </div>
+      )}
     </div>
   );
 }

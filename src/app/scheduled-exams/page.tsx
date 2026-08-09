@@ -27,6 +27,16 @@ export default function ScheduledExams() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [regCounts, setRegCounts] = useState<Record<number, number>>({});
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const handleCopyLink = (examId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const link = window.location.origin + "/scheduled-exams/" + encodeExamId(examId);
+    navigator.clipboard.writeText(link);
+    setCopiedId(examId);
+    setTimeout(() => setCopiedId(null), 3000);
+  };
 
   const fetchExams = async () => {
     try {
@@ -122,7 +132,7 @@ export default function ScheduledExams() {
                 className="bg-white border border-zinc-200/90 rounded-xl shadow-xs hover:shadow-md hover:border-[#E61E32]/25 transition-all duration-200 overflow-hidden flex flex-col"
               >
                 {/* Cover Image (1200x1200px 1:1 Square Frame) */}
-                <div className="w-full aspect-square relative overflow-hidden bg-zinc-100 shrink-0">
+                <div className="w-full aspect-square relative overflow-hidden bg-zinc-900 shrink-0">
                   <img
                     src={
                       (exam as any).company_logo && (exam as any).company_logo.startsWith("http")
@@ -139,8 +149,11 @@ export default function ScheduledExams() {
                     }
                     alt={exam.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://ik.imagekit.io/dypkhqxip/technical%20Wing.png";
+                    }}
                   />
-                  <div className="absolute top-3 left-3">
+                  <div className="absolute top-3 left-3 flex items-center gap-2">
                     <span className="text-[11px] font-semibold bg-white/95 text-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200/90 shadow-xs">
                       {exam.company_name}
                     </span>
@@ -176,12 +189,25 @@ export default function ScheduledExams() {
 
                   <div className="flex-1" />
 
-                  <Link
-                    href={`/scheduled-exams/${encodeExamId(exam.id)}`}
-                    className="mt-2 w-full px-4 py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer text-center block"
-                  >
-                    View Exam →
-                  </Link>
+                  <div className="flex items-center gap-2 pt-2">
+                    <button
+                      onClick={(e) => handleCopyLink(exam.id, e)}
+                      title="Copy Exam Link"
+                      className="px-3 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-zinc-200"
+                    >
+                      <svg className="w-3.5 h-3.5 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span>{copiedId === exam.id ? "Copied!" : "Copy"}</span>
+                    </button>
+
+                    <Link
+                      href={`/scheduled-exams/${encodeExamId(exam.id)}`}
+                      className="flex-1 px-4 py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer text-center block"
+                    >
+                      View Exam →
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}
