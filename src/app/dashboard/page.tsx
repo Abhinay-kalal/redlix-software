@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "motion/react";
 import { createClient } from "@/utils/supabase/client";
 import { QUESTIONS } from "@/app/exam-session/questions";
 import { TRAINING01_QUESTIONS } from "@/app/exam-session/training01Questions";
@@ -169,6 +170,54 @@ export default function Dashboard() {
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
   const [loadingSecurityLogs, setLoadingSecurityLogs] = useState(false);
   const [reEnablingId, setReEnablingId] = useState<string | null>(null);
+
+  const [settings, setSettings] = useState({
+    ai_audio_detection: true,
+    webcam_face_recognition: true,
+    tab_switch_lockout: true,
+    fullscreen_enforcement: true,
+    auto_incident_logging: true,
+    email_proctor_alerts: false,
+    public_registration_open: true,
+    auto_release_results: false,
+  });
+  const [loadingSettings, setLoadingSettings] = useState(false);
+  const [savingSettingKey, setSavingSettingKey] = useState<string | null>(null);
+
+  const fetchSettings = async () => {
+    setLoadingSettings(true);
+    try {
+      const res = await adminFetch("GET", { resource: "settings" });
+      if (res.success && res.data) {
+        setSettings(res.data);
+      }
+    } catch (err) {
+      console.error("Error loading settings:", err);
+    } finally {
+      setLoadingSettings(false);
+    }
+  };
+
+  const handleToggleSetting = async (key: keyof typeof settings) => {
+    const newValue = !settings[key];
+    setSettings((prev) => ({ ...prev, [key]: newValue }));
+    setSavingSettingKey(key as string);
+
+    try {
+      const res = await adminFetch("POST", undefined, {
+        action: "update_settings",
+        settingsData: { [key]: newValue },
+      });
+      if (!res.success) {
+        setSettings((prev) => ({ ...prev, [key]: !newValue }));
+      }
+    } catch (err) {
+      console.error("Failed to update setting:", err);
+      setSettings((prev) => ({ ...prev, [key]: !newValue }));
+    } finally {
+      setSavingSettingKey(null);
+    }
+  };
 
   const fetchSecurityLogs = async () => {
     setLoadingSecurityLogs(true);
@@ -424,9 +473,13 @@ export default function Dashboard() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    if ((activeTab === "exams-list" || activeTab === "overview" || activeTab === "settings") && isAuthenticated) {
+    if ((activeTab === "exams-list" || activeTab === "overview") && isAuthenticated) {
       fetchExamsAndRegistrations();
       setSelectedExamForCandidates(null);
+    }
+    if (activeTab === "settings" && isAuthenticated) {
+      fetchSettings();
+      fetchExamsAndRegistrations();
     }
     if (activeTab === "security-logs" && isAuthenticated) {
       fetchSecurityLogs();
@@ -569,137 +622,79 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-800 flex flex-col lg:flex-row font-sans">
+    <div className="min-h-screen bg-zinc-100 text-zinc-800 flex flex-col font-sans">
       
-      {}
-      <aside className="w-full lg:w-64 bg-white border-b lg:border-b-0 lg:border-r border-zinc-200 flex flex-col shrink-0">
-        
-        {}
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-zinc-200">
+      {/* Top Header */}
+      <header className="bg-white border-b border-zinc-200 px-4 md:px-8 py-3 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-3">
           <img
             src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
-            alt="Logo"
-            className="w-8 h-8 object-contain shrink-0"
+            alt="Redlix Logo"
+            className="h-9 w-auto object-contain shrink-0"
           />
-          <div>
-            <span className="font-bold text-sm text-zinc-900">Redlix</span>
-            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-none bg-orange-100 text-orange-700 font-semibold normal-case">Secure</span>
-          </div>
-        </div>
-
-        {}
-        <nav className="flex-1 px-4 py-6 space-y-1">
-
-          <button 
-            onClick={() => setActiveTab("overview")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "overview" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">dashboard</span>
-            Overview
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("create-exam")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "create-exam" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">add_circle</span>
-            Create Exam
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("exams-list")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "exams-list" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">folder</span>
-            Exams Directory
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("settings")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "settings" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">settings</span>
-            Settings
-          </button>
-
-          <button 
-            onClick={() => setActiveTab("security-logs")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "security-logs" 
-                ? "bg-zinc-100 text-zinc-900 shadow-sm border-l-2 border-orange-500" 
-                : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm text-zinc-500 shrink-0">policy</span>
-            IP Security Logs
-          </button>
-        </nav>
-
-        {}
-        <div className="p-4 border-t border-zinc-200 bg-zinc-50">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-none bg-white flex items-center justify-center font-bold text-xs text-orange-600 border border-zinc-200">
-              AD
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-zinc-900 truncate">{userEmail}</p>
-              <p className="text-[10px] text-zinc-500 normal-case font-semibold">Administrator</p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-none bg-white hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 text-xs font-medium transition-all border border-zinc-200 cursor-pointer shadow-sm"
-          >
-            <span className="material-symbols-outlined text-xs text-zinc-500 shrink-0">logout</span>
-            Sign Out
-          </button>
-        </div>
-
-      </aside>
-
-      {}
-      <main className="flex-1 flex flex-col min-w-0">
-        
-        {}
-        <header className="h-16 border-b border-zinc-200 flex items-center justify-between px-6 bg-white">
-          <div className="flex items-center gap-4">
-            <h1 className="text-md font-bold text-zinc-900 normal-case">
-              {activeTab === "overview"
-                ? "System Overview"
-                : activeTab === "settings"
-                ? "Settings & Diagnostics"
-                : activeTab === "exams-list"
-                ? "Exams Directory"
-                : activeTab === "security-logs"
-                ? "IP Security Logs"
-                : "Create Exam"}
-            </h1>
-            <div className="flex items-center gap-2 bg-emerald-50 px-2 py-0.5 rounded-none text-[10px] text-emerald-700 font-semibold border border-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+          <div className="flex items-center gap-2 border-l border-zinc-200 pl-3">
+            <span className="font-semibold text-sm text-zinc-900 tracking-tight font-inter">Admin Console</span>
+            <div className="flex items-center gap-1.5 bg-emerald-50 px-2 py-0.5 rounded-full text-[11px] text-emerald-700 font-semibold border border-emerald-200/80">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
               Connected
             </div>
           </div>
-          
-          <div className="text-xs text-zinc-500 font-mono hidden md:block">
-            Clock: <span className="text-zinc-800">{clockTime}</span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-xs text-zinc-600 font-sans font-normal hidden md:block border-r border-zinc-200 pr-4">
+            Clock: <span className="text-zinc-800 font-medium">{clockTime}</span>
           </div>
-        </header>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-lg bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
+          >
+            <span className="material-symbols-outlined text-sm shrink-0">logout</span>
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Red Sub-Navbar */}
+      <div className="bg-[#E61E32] text-white shadow-md px-4 md:px-8 py-1.5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto no-scrollbar">
+          <nav className="flex items-center gap-1">
+            {[
+              { id: "overview", label: "Overview", icon: "grid_view" },
+              { id: "create-exam", label: "Create Exam", icon: "add_task" },
+              { id: "exams-list", label: "All Exams", icon: "folder_open" },
+              { id: "settings", label: "Settings", icon: "tune" },
+              { id: "security-logs", label: "Security Logs", icon: "shield" },
+              { id: "profile", label: "Profile", icon: "account_circle" },
+            ].map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer whitespace-nowrap select-none ${
+                    isActive ? "text-[#E61E32] font-bold" : "text-white/85 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeSubnavPill"
+                      className="absolute inset-0 bg-white rounded-lg shadow-sm z-0"
+                      transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                    />
+                  )}
+                  <span className="material-symbols-outlined text-sm shrink-0 relative z-10">{item.icon}</span>
+                  <span className="relative z-10">{item.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content Body */}
+      <main className="flex-1 flex flex-col min-w-0 bg-zinc-100">
 
         {loading ? (
           
@@ -708,142 +703,160 @@ export default function Dashboard() {
             <p className="text-zinc-500 text-xs">Loading database records...</p>
           </div>
         ) : activeTab === "overview" ? (
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto bg-zinc-50">
-            {/* Top row: 4 Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex-1 p-6 md:p-8 space-y-8 overflow-y-auto bg-zinc-50/60">
+            
+            {/* Top row: 4 Premium Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               
               {/* Card 1: Total Exams */}
-              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-bold normal-case text-zinc-500">Exams Directory</span>
-                  <div className="p-1 bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center rounded-none shrink-0"><span className="material-symbols-outlined text-md">folder</span></div>
+              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Exams</span>
+                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">{exams.length}</div>
+                  </div>
+                  <div className="p-2.5 bg-[#E61E32]/10 text-[#E61E32] border border-[#E61E32]/20 rounded-xl flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-xl">folder_open</span>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">{exams.length}</div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
-                  {exams.filter(e => e.is_started).length} currently active & open
+                <p className="text-xs text-zinc-500 font-medium">
+                  <span className="text-emerald-700 font-semibold">{exams.filter(e => e.is_started).length}</span> exams open & active
                 </p>
               </div>
 
               {/* Card 2: Candidate Registrations */}
-              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-bold normal-case text-zinc-500">Registrations</span>
-                  <div className="p-1 bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center rounded-none shrink-0"><span className="material-symbols-outlined text-md">group</span></div>
+              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Registered Students</span>
+                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">{registrations.length}</div>
+                  </div>
+                  <div className="p-2.5 bg-[#E61E32]/10 text-[#E61E32] border border-[#E61E32]/20 rounded-xl flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-xl">groups</span>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">{registrations.length}</div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
-                  Total candidates verified and registered
+                <p className="text-xs text-zinc-500 font-medium">
+                  Verified student signups
                 </p>
               </div>
 
               {/* Card 3: Live Session Room Connections */}
-              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-bold normal-case text-zinc-500">Active Sessions</span>
-                  <div className="p-1 flex items-center justify-center bg-green-50 text-green-700 border border-green-150 rounded-none">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-650 animate-pulse inline-block mr-1" />
-                    <span className="text-[9px] font-bold normal-case">Live</span>
+              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Active Students</span>
+                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">{sessions.length}</div>
+                  </div>
+                  <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-xl flex items-center justify-center shrink-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse mr-1" />
+                    <span className="text-xs font-bold">Live</span>
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">{sessions.length}</div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
-                  Candidates currently sitting exams
+                <p className="text-xs text-zinc-500 font-medium">
+                  Students taking an exam now
                 </p>
               </div>
 
               {/* Card 4: System Average Integrity */}
-              <div className="bg-white py-3 px-4 border border-zinc-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-[10px] font-bold normal-case text-zinc-500">Avg Integrity</span>
-                  <div className="p-1 bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center rounded-none shrink-0"><span className="material-symbols-outlined text-md">verified_user</span></div>
+              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all relative overflow-hidden flex flex-col justify-between">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Trust Score</span>
+                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">
+                      {sessions.length > 0
+                        ? `${Math.round(sessions.reduce((acc, curr) => acc + curr.integrityScore, 0) / sessions.length)}%`
+                        : "100%"
+                      }
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-[#E61E32]/10 text-[#E61E32] border border-[#E61E32]/20 rounded-xl flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-xl">verified</span>
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-zinc-900">
-                  {sessions.length > 0
-                    ? `${Math.round(sessions.reduce((acc, curr) => acc + curr.integrityScore, 0) / sessions.length)}%`
-                    : "100%"
-                  }
-                </div>
-                <p className="text-[10px] text-zinc-500 mt-1 font-semibold font-sans">
-                  {sessions.filter(s => s.severity === "Critical").length} critical warnings active
+                <p className="text-xs text-zinc-500 font-medium">
+                  <span className="text-[#E61E32] font-semibold">{sessions.filter(s => s.severity === "Critical").length}</span> urgent warnings
                 </p>
               </div>
 
             </div>
 
-            {/* Bottom Row: Quick Live Candidate Feed (only if sessions.length > 0) */}
-            <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+            {/* Bottom Row: Quick Live Candidate Feed */}
+            <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs overflow-hidden">
+              <div className="p-5 md:p-6 border-b border-zinc-200/80 bg-zinc-50/50 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-bold normal-case text-zinc-800">Active Live Proctoring Room</h3>
-                  <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Real-time listing of active candidate security index status</p>
+                  <h3 className="text-base font-semibold text-zinc-900 font-inter">Live Exam Activity</h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">Real-time overview of students currently taking exams</p>
                 </div>
                 {sessions.length > 0 && (
-                  <span className="w-2.5 h-2.5 bg-green-500 rounded-none animate-pulse" />
+                  <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200">
+                    <span className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse" />
+                    <span>Live Stream</span>
+                  </div>
                 )}
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse font-sans">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] font-bold text-zinc-500 normal-case">
-                      <th className="px-6 py-4">Student</th>
-                      <th className="px-6 py-4">Exam</th>
-                      <th className="px-6 py-4 text-center">Anomalies</th>
-                      <th className="px-6 py-4 text-center">Integrity</th>
-                      <th className="px-6 py-4">Last Violation Log</th>
-                      <th className="px-6 py-4 text-right">Action</th>
+                    <tr className="border-b border-zinc-200/80 bg-zinc-50/80 font-semibold text-zinc-600 uppercase tracking-wider text-[11px]">
+                      <th className="px-6 py-3.5">Student</th>
+                      <th className="px-6 py-3.5">Exam</th>
+                      <th className="px-6 py-3.5 text-center">Alerts</th>
+                      <th className="px-6 py-3.5 text-center">Trust Score</th>
+                      <th className="px-6 py-3.5">Recent Alert</th>
+                      <th className="px-6 py-3.5 text-right">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-100 text-xs">
+                  <tbody className="divide-y divide-zinc-200/80 text-xs">
                     {sessions.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-10 text-center text-zinc-400 font-semibold italic">
-                          No candidate currently taking an exam. Real-time proctor stream idle.
+                        <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 font-medium italic">
+                          No candidate is currently taking an exam. Real-time proctor stream is idle.
                         </td>
                       </tr>
                     ) : (
                       sessions.map((session) => (
-                        <tr key={session.id} className="hover:bg-zinc-50/50 text-zinc-700">
-                          <td className="px-6 py-3">
+                        <tr key={session.id} className="hover:bg-zinc-50/80 text-zinc-700 transition-colors">
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-7 h-7 rounded-none bg-zinc-100 flex items-center justify-center font-bold text-xs text-zinc-650 border border-zinc-200">
+                              <div className="w-8 h-8 rounded-lg bg-[#E61E32]/10 border border-[#E61E32]/20 flex items-center justify-center font-bold text-xs text-[#E61E32]">
                                 {session.avatar}
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
                                   <p className="font-semibold text-zinc-900">{session.student}</p>
                                   {onlineStudents.has(session.id) ? (
-                                    <span className="inline-flex items-center gap-1 text-[9px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-250 font-bold uppercase rounded-none shrink-0 scale-90">
-                                      <span className="w-1 h-1 rounded-full bg-emerald-600 animate-pulse" />
+                                    <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 border border-emerald-200 font-semibold rounded-full shrink-0">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                                       Online
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 text-[9px] bg-red-50 text-red-650 px-1 border border-red-150 font-bold uppercase rounded-none shrink-0 scale-90">
-                                      <span className="w-1 h-1 rounded-full bg-red-500" />
+                                    <span className="inline-flex items-center gap-1 text-[10px] bg-red-50 text-red-700 px-2 py-0.5 border border-red-200 font-semibold rounded-full shrink-0">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                                       Offline
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-zinc-400">{session.email}</p>
+                                <p className="text-[11px] text-zinc-500">{session.email}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-3">
+                          <td className="px-6 py-4">
                             <p className="font-medium text-zinc-800">{session.exam}</p>
                           </td>
-                          <td className="px-6 py-3 text-center">
-                            <span className={`px-2 py-0.5 rounded-none font-bold text-[9px] ${
+                          <td className="px-6 py-4 text-center">
+                            <span className={`px-2.5 py-1 rounded-full font-semibold text-[11px] ${
                               session.flagsCount > 3 
-                                ? "bg-red-50 text-red-650 border border-red-100" 
+                                ? "bg-red-50 text-red-700 border border-red-200" 
                                 : session.flagsCount > 0 
-                                ? "bg-amber-50 text-amber-650 border border-amber-100"
-                                : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-zinc-100 text-zinc-600 border border-zinc-200"
                             }`}>
                               {session.flagsCount} flags
                             </span>
                           </td>
-                          <td className="px-6 py-3 text-center">
-                            <span className={`font-mono font-bold ${
+                          <td className="px-6 py-4 text-center">
+                            <span className={`font-mono font-semibold text-sm ${
                               session.integrityScore > 85 
                                 ? "text-emerald-600" 
                                 : session.integrityScore > 60 
@@ -853,27 +866,28 @@ export default function Dashboard() {
                               {session.integrityScore}%
                             </span>
                           </td>
-                          <td className="px-6 py-3">
-                            <div className="flex items-center gap-1.5">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
                               {session.severity === "Critical" ? (
-                                <span className="w-1.5 h-1.5 rounded-none bg-red-500" />
+                                <span className="w-2 h-2 rounded-full bg-red-500" />
                               ) : session.severity === "Warning" ? (
-                                <span className="w-1.5 h-1.5 rounded-none bg-amber-500" />
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
                               ) : (
-                                <span className="w-1.5 h-1.5 rounded-none bg-emerald-500" />
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               )}
                               <span className="text-zinc-800 font-medium">{session.lastFlagType}</span>
                             </div>
                           </td>
-                           <td className="px-6 py-3 text-right">
+                          <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-2">
                               <button
                                 onClick={() => {
                                   setActiveStreamSession(session);
                                 }}
-                                className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-[10px] rounded-none cursor-pointer shadow-sm transition-all border-none"
+                                className="px-3 py-1.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-xs rounded-lg cursor-pointer shadow-xs transition-all border-none flex items-center gap-1"
                               >
-                                Watch Live Stream
+                                <span className="material-symbols-outlined text-sm">videocam</span>
+                                <span>Watch Feed</span>
                               </button>
                               <button
                                 onClick={() => {
@@ -881,7 +895,7 @@ export default function Dashboard() {
                                     handleDismiss(session.id);
                                   }
                                 }}
-                                className="px-2 py-1 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-semibold text-[10px] rounded-none cursor-pointer shadow-sm transition-all border-none"
+                                className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-semibold text-xs rounded-lg cursor-pointer shadow-xs transition-all border border-zinc-200"
                               >
                                 Terminate
                               </button>
@@ -979,231 +993,310 @@ export default function Dashboard() {
 
           </div>
         ) : activeTab === "settings" ? (
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto bg-zinc-50">
-              {/* Mid Section: Page stats and system checklist */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Left Box: System Pages Status & Info */}
-                <div className="lg:col-span-2 bg-white border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
-                  <div className="p-5 border-b border-zinc-200 bg-zinc-50">
-                    <h3 className="text-xs font-bold normal-case text-zinc-800">System & Page Status Directory</h3>
-                    <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Real-time status check and paths of active proctoring web pages</p>
-                  </div>
-                  
-                  <div className="divide-y divide-zinc-200 font-sans">
-                    
-                    {/* Row 1: Login Portal */}
-                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
-                      <div className="space-y-1 pr-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-zinc-900">Candidate Login Portal</span>
-                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/exam-login</span>
-                        </div>
-                        <p className="text-[11px] text-zinc-550">Secure entry point for candidates. Validates hall ticket number against registration database records.</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Online
-                        </span>
-                        <p className="text-[9px] text-zinc-400 mt-1">{exams.filter(e => e.show_login).length} entry doors open</p>
-                      </div>
-                    </div>
-  
-                    {/* Row 2: Verification Portal */}
-                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
-                      <div className="space-y-1 pr-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-zinc-900">Verification & Lobby</span>
-                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/exam-ready</span>
-                        </div>
-                        <p className="text-[11px] text-zinc-550">Guidelines screen. Prompts candidate to review proctoring rules, verifies camera/mic access, and requests fullscreen permissions.</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Operational
-                        </span>
-                        <p className="text-[9px] text-zinc-400 mt-1">Webcam check active</p>
-                      </div>
-                    </div>
-  
-                    {/* Row 3: Exam Room Portal */}
-                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
-                      <div className="space-y-1 pr-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-zinc-900">Secure Examination Room</span>
-                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/exam-session</span>
-                        </div>
-                        <p className="text-[11px] text-zinc-550">Live test-taking screen. Tracks face detection, eye gaze deviation, tab switching, and fullscreen bypasses in real-time.</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        {sessions.length > 0 ? (
-                          <>
-                            <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-green-500 text-white animate-pulse">
-                              Monitoring
-                            </span>
-                            <p className="text-[9px] text-zinc-500 mt-1 font-semibold">{sessions.length} streams active</p>
-                          </>
-                        ) : (
-                          <>
-                            <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-zinc-100 text-zinc-500 border border-zinc-200">
-                              No Active Tests
-                            </span>
-                            <p className="text-[9px] text-zinc-400 mt-1">Ready for sessions</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-  
-                    {/* Row 4: Admin Console */}
-                    <div className="p-5 flex items-center justify-between hover:bg-zinc-50/50 transition-colors">
-                      <div className="space-y-1 pr-4">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-zinc-900">Administrator Console</span>
-                          <span className="font-mono text-[9px] bg-zinc-100 text-zinc-650 px-1.5 py-0.5 border border-zinc-200">/dashboard</span>
-                        </div>
-                        <p className="text-[11px] text-zinc-550">Central manager for publishing exams, reviewing candidate logs, resolving anomalies, and viewing proctor status.</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="px-2 py-0.5 text-[9px] font-bold normal-case bg-orange-50 text-orange-700 border border-orange-200">
-                          Operational
-                        </span>
-                        <p className="text-[9px] text-zinc-400 mt-1">Admin session verified</p>
-                      </div>
-                    </div>
-  
-                  </div>
-                </div>
-  
-                {/* Right Box: System Status & Diagnostic Checks */}
-                <div className="bg-white border border-zinc-200 shadow-sm p-6 space-y-6 flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-xs font-bold normal-case text-zinc-800">Diagnostic & Health Checks</h3>
-                      <p className="text-[11px] text-zinc-400 mt-0.5 font-sans">Localhost and database connectivity index</p>
-                    </div>
-  
-                    <div className="space-y-3 pt-2 font-sans">
-                      
-                      {/* Database Health */}
-                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-none shrink-0" />
-                          <div>
-                            <p className="font-bold text-zinc-800">Database Engine</p>
-                            <p className="text-[10px] text-zinc-400">PostgreSQL (Supabase transaction pooler)</p>
-                          </div>
-                        </div>
-                        <span className="font-mono text-[10px] text-emerald-600 font-bold normal-case">Connected</span>
-                      </div>
-  
-                      {/* RLS Policies */}
-                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-none shrink-0" />
-                          <div>
-                            <p className="font-bold text-zinc-800">Row Level Security</p>
-                            <p className="text-[10px] text-zinc-400">12 table policies active & verified</p>
-                          </div>
-                        </div>
-                        <span className="font-mono text-[10px] text-emerald-600 font-bold normal-case">Enforced</span>
-                      </div>
-  
-                      {/* Localhost cloudflare Turnstile bypass */}
-                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-2.5 h-2.5 bg-amber-500 rounded-none shrink-0" />
-                          <div>
-                            <p className="font-bold text-zinc-800">Cloudflare Turnstile</p>
-                            <p className="text-[10px] text-zinc-400">Bypass rule active on localhost</p>
-                          </div>
-                        </div>
-                        <span className="font-mono text-[10px] text-amber-600 font-bold normal-case">Local Dev</span>
-                      </div>
-  
-                      {/* Media streaming pipe */}
-                      <div className="flex items-center justify-between p-3 bg-zinc-50 border border-zinc-200 text-xs">
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-none shrink-0" />
-                          <div>
-                            <p className="font-bold text-zinc-800">Media Pipeline</p>
-                            <p className="text-[10px] text-zinc-400">WebRTC frame-based canvas capture</p>
-                          </div>
-                        </div>
-                        <span className="font-mono text-[10px] text-emerald-600 font-bold normal-case">Online</span>
-                      </div>
-  
-                    </div>
-                  </div>
-  
-                  <div className="border-t border-zinc-200 pt-4 text-center font-sans">
-                    <span className="text-[10px] text-zinc-400 font-mono">
-                      System clock synced: {clockTime}
-                    </span>
-                  </div>
-                </div>
-  
+          <div className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto bg-zinc-50/60">
+            {/* Settings Header */}
+            <div className="bg-white p-6 border border-zinc-200/80 rounded-xl shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900 font-inter">System Settings & Controls</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">Configure exam security, proctoring rules, and system behavior in real time.</p>
               </div>
-  
+              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3.5 py-1.5 rounded-full text-xs font-semibold border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                <span>Live Database Sync</span>
+              </div>
+            </div>
+
+            {/* Toggle Switch Groups */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Box 1: Exam Security & Monitoring */}
+              <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs p-6 space-y-5">
+                <div className="border-b border-zinc-100 pb-3 flex items-center gap-2">
+                  <div className="p-2 bg-[#E61E32]/10 text-[#E61E32] rounded-lg">
+                    <span className="material-symbols-outlined text-base">shield</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-zinc-900 font-inter">Exam Security & Monitoring</h4>
+                    <p className="text-xs text-zinc-500">Manage real-time candidate proctoring filters</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  
+                  {/* Toggle 1: AI Audio Detection */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">AI Audio & Voice Detection</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Flag speaking voices or loud background noise</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("ai_audio_detection")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.ai_audio_detection ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.ai_audio_detection ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle 2: Webcam Face Recognition */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Webcam Face Detection</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Verify face posture and flag multiple persons in frame</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("webcam_face_recognition")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.webcam_face_recognition ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.webcam_face_recognition ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle 3: Tab Switch Lockout */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Tab Switch & Focus Lockout</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Block student exam access if browser tab loses focus</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("tab_switch_lockout")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.tab_switch_lockout ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.tab_switch_lockout ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle 4: Fullscreen Enforcement */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Fullscreen Requirement</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Enforce fullscreen mode throughout the examination session</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("fullscreen_enforcement")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.fullscreen_enforcement ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.fullscreen_enforcement ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Box 2: Workflows & Notifications */}
+              <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs p-6 space-y-5">
+                <div className="border-b border-zinc-100 pb-3 flex items-center gap-2">
+                  <div className="p-2 bg-[#E61E32]/10 text-[#E61E32] rounded-lg">
+                    <span className="material-symbols-outlined text-base">tune</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-zinc-900 font-inter">Automation & Workflows</h4>
+                    <p className="text-xs text-zinc-500">Configure notifications and candidate access rules</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+
+                  {/* Toggle 5: Auto Incident Logging */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Automatic Alert Logging</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Record security violations directly into database logs</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("auto_incident_logging")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.auto_incident_logging ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.auto_incident_logging ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle 6: Email Proctor Alerts */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Email Proctor Alerts</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Send instant email alerts to admins on critical incidents</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("email_proctor_alerts")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.email_proctor_alerts ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.email_proctor_alerts ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle 7: Public Registration Open */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Public Student Signups</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Allow candidates to register for upcoming scheduled exams</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("public_registration_open")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.public_registration_open ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.public_registration_open ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Toggle 8: Auto Release Results */}
+                  <div className="flex items-center justify-between gap-4 p-3.5 bg-zinc-50/70 border border-zinc-200/60 rounded-xl hover:bg-zinc-50 transition-colors">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900">Instant Score Release</p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Automatically show test results upon exam completion</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSetting("auto_release_results")}
+                      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer relative shrink-0 border-none ${
+                        settings.auto_release_results ? "bg-[#E61E32]" : "bg-zinc-300"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                        settings.auto_release_results ? "translate-x-5" : "translate-x-0"
+                      }`} />
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            {/* Diagnostic & Database Status Cards */}
+            <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs p-6 space-y-4">
+              <h4 className="text-sm font-semibold text-zinc-900 font-inter">System Health & Diagnostics</h4>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 bg-zinc-50/80 border border-zinc-200/70 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-600">Database Engine</span>
+                    <span className="text-xs font-bold text-emerald-600">Connected</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">PostgreSQL (Supabase Pooler)</p>
+                </div>
+
+                <div className="p-4 bg-zinc-50/80 border border-zinc-200/70 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-600">Security Schema</span>
+                    <span className="text-xs font-bold text-emerald-600">In Sync</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">SystemSettings table verified</p>
+                </div>
+
+                <div className="p-4 bg-zinc-50/80 border border-zinc-200/70 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-600">Media Pipe</span>
+                    <span className="text-xs font-bold text-emerald-600">Active</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">WebRTC Live Stream Pipe</p>
+                </div>
+
+                <div className="p-4 bg-zinc-50/80 border border-zinc-200/70 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-zinc-600">Admin Session</span>
+                    <span className="text-xs font-bold text-emerald-600">Verified</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">Redlix Token Active</p>
+                </div>
+              </div>
+            </div>
           </div>
         ) : activeTab === "create-exam" ? (
           
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-            <div className="max-w-2xl bg-white rounded-none border border-zinc-200 shadow-sm p-6 space-y-6">
+          <div className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto bg-zinc-50/60">
+            <div className="max-w-3xl bg-white rounded-xl border border-zinc-200/80 shadow-xs p-6 md:p-8 space-y-6 ml-0">
               
-              <div>
-                <h3 className="text-xs font-bold normal-case text-zinc-500 mb-1">Create Exam</h3>
-                <p className="text-xs text-zinc-400">Configure and publish a new exam card to the public directory</p>
+              <div className="border-b border-zinc-200/80 pb-4">
+                <h2 className="text-xl font-semibold text-zinc-900 font-inter">Create New Exam</h2>
+                <p className="text-xs text-zinc-500 mt-0.5">Fill in the assessment details below to publish a new exam for students.</p>
               </div>
 
               {publishSuccess && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-                  Exam published successfully! It is now visible on the scheduled exams page.
+                <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-xl flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  <span>Exam published successfully! It is now live in the exams list.</span>
                 </div>
               )}
 
               {publishError && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-xs font-semibold">
-                  {publishError}
+                <div className="p-4 bg-red-50 border border-red-200 text-red-800 text-xs font-semibold rounded-xl flex items-center gap-2">
+                  <span className="material-symbols-outlined text-base">error</span>
+                  <span>{publishError}</span>
                 </div>
               )}
 
-              <form onSubmit={handlePublishExam} className="space-y-4">
+              <form onSubmit={handlePublishExam} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">Exam Name *</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Exam Title *</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g., CS-101: Midterm"
+                      placeholder="e.g., Computer Science Midterm"
                       value={examName}
                       onChange={(e) => setExamName(e.target.value)}
-                      className="text-sm w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                      className="text-xs w-full py-2.5 px-3.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">Conducting Company Name *</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Conducting Organization *</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g., Redlix Secure"
+                      placeholder="e.g., Redlix Academy"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className="text-sm w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                      className="text-xs w-full py-2.5 px-3.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-700 mb-1.5">Company Logo (Image File or URL)</label>
-                  <div className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-zinc-50 border border-zinc-200">
-                    <div className="w-12 h-12 bg-zinc-100 flex items-center justify-center overflow-hidden border border-zinc-300 shrink-0 relative">
+                  <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Organization Logo</label>
+                  <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-zinc-50/80 border border-zinc-200/80 rounded-xl">
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-zinc-200 shrink-0 relative shadow-xs">
                       {companyLogo ? (
-                        <img src={companyLogo} alt="Logo Preview" className="w-full h-full object-contain" />
+                        <img src={companyLogo} alt="Logo Preview" className="w-full h-full object-contain p-1" />
                       ) : (
-                        <span className="material-symbols-outlined text-zinc-400">image</span>
+                        <span className="material-symbols-outlined text-zinc-400 text-lg">image</span>
                       )}
                     </div>
-                    <div className="space-y-1 flex-1 w-full">
+                    <div className="space-y-2 flex-1 w-full">
                       <input
                         type="file"
                         accept="image/*"
@@ -1216,14 +1309,14 @@ export default function Dashboard() {
                           };
                           reader.readAsDataURL(file);
                         }}
-                        className="text-xs file:mr-3 file:py-1 file:px-2 file:border file:border-zinc-300 file:text-[10px] file:font-semibold file:bg-white file:text-zinc-700 hover:file:bg-zinc-50 cursor-pointer"
+                        className="text-xs file:mr-3 file:py-1.5 file:px-3 file:border-0 file:rounded-lg file:text-xs file:font-semibold file:bg-white file:text-zinc-700 hover:file:bg-zinc-100 cursor-pointer"
                       />
                       <input
                         type="text"
-                        placeholder="Or paste image URL"
+                        placeholder="Or paste direct image URL"
                         value={companyLogo}
                         onChange={(e) => setCompanyLogo(e.target.value)}
-                        className="text-xs w-full py-1.5 px-2.5 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 mt-1"
+                        className="text-xs w-full py-2 px-3 border border-zinc-200 rounded-lg bg-white text-zinc-900 focus:outline-none focus:border-[#E61E32]"
                       />
                     </div>
                   </div>
@@ -1231,61 +1324,62 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">Date *</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Date *</label>
                     <input
                       type="date"
                       required
                       value={examDate}
                       onChange={(e) => setExamDate(e.target.value)}
-                      className="text-sm w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-sans"
+                      className="text-xs w-full py-2.5 px-3.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all font-sans"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">Time *</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Time *</label>
                     <input
                       type="time"
                       required
                       value={examTime}
                       onChange={(e) => setExamTime(e.target.value)}
-                      className="text-sm w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500 font-sans"
+                      className="text-xs w-full py-2.5 px-3.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all font-sans"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">Total Questions *</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Total Questions *</label>
                     <input
                       type="number"
                       required
                       placeholder="e.g., 50"
                       value={totalQns}
                       onChange={(e) => setTotalQns(e.target.value)}
-                      className="text-sm w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                      className="text-xs w-full py-2.5 px-3.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-700 mb-1.5">Exam Duration (Minutes)</label>
+                    <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Duration (Minutes)</label>
                     <input
                       type="number"
                       placeholder="e.g., 120"
                       value={examDuration}
                       onChange={(e) => setExamDuration(e.target.value)}
-                      className="text-sm w-full py-2 px-3 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                      className="text-xs w-full py-2.5 px-3.5 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all"
                     />
                   </div>
                 </div>
 
-                {}
-                <div className="space-y-3 pt-2">
+                {/* Question Types */}
+                <div className="space-y-3 pt-1">
                   <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold normal-case text-zinc-500">Question Types *</label>
+                    <label className="block text-xs font-semibold text-zinc-700">Question Types *</label>
                     <button
                       type="button"
                       onClick={() => setTypesOfQnsList([...typesOfQnsList, ""])}
-                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold normal-case rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg cursor-pointer transition-all border-none flex items-center gap-1"
                     >
-                      + Add Type
+                      <span className="material-symbols-outlined text-sm">add</span>
+                      <span>Add Type</span>
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -1301,7 +1395,7 @@ export default function Dashboard() {
                             updated[idx] = e.target.value;
                             setTypesOfQnsList(updated);
                           }}
-                          className="text-xs flex-1 py-1.5 px-2.5 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                          className="text-xs flex-1 py-2 px-3 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:border-[#E61E32]"
                         />
                         {typesOfQnsList.length > 1 && (
                           <button
@@ -1317,16 +1411,17 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {}
-                <div className="space-y-3 pt-2">
+                {/* Description Sections */}
+                <div className="space-y-3 pt-1">
                   <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold normal-case text-zinc-500">Description Sections *</label>
+                    <label className="block text-xs font-semibold text-zinc-700">Exam Instructions & Rules *</label>
                     <button
                       type="button"
                       onClick={() => setDescriptionsList([...descriptionsList, ""])}
-                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold normal-case rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg cursor-pointer transition-all border-none flex items-center gap-1"
                     >
-                      + Add Section
+                      <span className="material-symbols-outlined text-sm">add</span>
+                      <span>Add Rule Section</span>
                     </button>
                   </div>
                   <div className="space-y-2">
@@ -1342,7 +1437,7 @@ export default function Dashboard() {
                             updated[idx] = e.target.value;
                             setDescriptionsList(updated);
                           }}
-                          className="text-xs flex-1 py-1.5 px-2.5 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                          className="text-xs flex-1 py-2 px-3 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:border-[#E61E32]"
                         />
                         {descriptionsList.length > 1 && (
                           <button
@@ -1358,16 +1453,17 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {}
-                <div className="space-y-3 pt-2">
+                {/* Custom Fields */}
+                <div className="space-y-3 pt-1">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold normal-case text-zinc-500">Custom Fields</span>
+                    <span className="text-xs font-semibold text-zinc-700">Custom Fields</span>
                     <button
                       type="button"
                       onClick={addCustomField}
-                      className="px-2 py-1 bg-zinc-800 text-white text-[10px] font-bold normal-case rounded-none hover:bg-zinc-700 cursor-pointer transition-all border-none"
+                      className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg cursor-pointer transition-all border-none flex items-center gap-1"
                     >
-                      + Add Field
+                      <span className="material-symbols-outlined text-sm">add</span>
+                      <span>Add Custom Field</span>
                     </button>
                   </div>
 
@@ -1377,19 +1473,19 @@ export default function Dashboard() {
                         <div key={idx} className="flex gap-2 items-center">
                           <input
                             type="text"
-                            placeholder="Field Label (e.g. Duration)"
+                            placeholder="Field Label (e.g. Pass Mark)"
                             required
                             value={cf.key}
                             onChange={(e) => updateCustomField(idx, "key", e.target.value)}
-                            className="text-xs w-1/3 py-1.5 px-2.5 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                            className="text-xs w-1/3 py-2 px-3 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:border-[#E61E32]"
                           />
                           <input
                             type="text"
-                            placeholder="Field Value (e.g. 120 mins)"
+                            placeholder="Field Value (e.g. 60%)"
                             required
                             value={cf.value}
                             onChange={(e) => updateCustomField(idx, "value", e.target.value)}
-                            className="text-xs w-1/2 py-1.5 px-2.5 border border-zinc-300 rounded-none bg-white focus:outline-none focus:border-orange-500"
+                            className="text-xs w-1/2 py-2 px-3 border border-zinc-200 rounded-xl bg-white text-zinc-900 focus:outline-none focus:border-[#E61E32]"
                           />
                           <button
                             type="button"
@@ -1404,13 +1500,14 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-zinc-200">
+                <div className="flex justify-end pt-6 border-t border-zinc-200/80">
                   <button
                     type="submit"
                     disabled={isPublishing}
-                    className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs rounded-none shadow-sm transition-all cursor-pointer disabled:bg-zinc-300 disabled:cursor-not-allowed border-none"
+                    className="px-6 py-2.5 bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white font-semibold text-xs rounded-xl shadow-xs transition-all cursor-pointer disabled:bg-zinc-300 disabled:cursor-not-allowed border-none flex items-center gap-2"
                   >
-                    {isPublishing ? "Publishing..." : "Publish Exam"}
+                    <span className="material-symbols-outlined text-sm">publish</span>
+                    <span>{isPublishing ? "Publishing Exam..." : "Publish Exam"}</span>
                   </button>
                 </div>
               </form>
@@ -1418,49 +1515,54 @@ export default function Dashboard() {
             </div>
           </div>
         ) : activeTab === "exams-list" ? (
-          <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+          <div className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto bg-zinc-50/60">
             {loadingExamsTab ? (
               <div className="py-20 flex flex-col items-center justify-center">
-                <div className="w-10 h-10 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin mb-4" />
-                <p className="text-zinc-500 text-xs">Loading directory...</p>
+                <div className="w-10 h-10 rounded-full border-2 border-t-[#E61E32] border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin mb-4" />
+                <p className="text-zinc-500 text-xs font-semibold">Loading exams directory...</p>
               </div>
             ) : selectedExamForCandidates ? (
               
               <div className="space-y-6">
-                {}
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setSelectedExamForCandidates(null)} className="flex items-center justify-center p-2 border border-zinc-200 hover:bg-zinc-50 text-zinc-600 hover:text-zinc-900 cursor-pointer shadow-sm"><span className="material-symbols-outlined text-sm leading-none">arrow_back</span></button>
+                <div className="flex items-center gap-3 bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs">
+                  <button
+                    onClick={() => setSelectedExamForCandidates(null)}
+                    className="flex items-center justify-center p-2 rounded-xl border border-zinc-200/80 bg-white hover:bg-zinc-100 text-zinc-700 cursor-pointer shadow-xs transition-all"
+                  >
+                    <span className="material-symbols-outlined text-base">arrow_back</span>
+                  </button>
                   <div>
-                    <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{selectedExamForCandidates.name}</h2>
-                    <p className="text-xs text-zinc-500">Registered Candidates for <span className="font-semibold text-zinc-700">{selectedExamForCandidates.company_name}</span> Evaluation</p>
+                    <h2 className="text-lg font-semibold text-zinc-900 font-inter">{selectedExamForCandidates.name}</h2>
+                    <p className="text-xs text-zinc-500">Registered Students for <span className="font-semibold text-zinc-800">{selectedExamForCandidates.company_name}</span> Evaluation</p>
                   </div>
                 </div>
 
-                {}
                 {registrations.filter((r) => r.exam_id === selectedExamForCandidates.id).length === 0 ? (
-                  <div className="py-16 text-center bg-white border border-zinc-200 shadow-sm p-8">
-                    <p className="text-zinc-500 text-sm font-medium">No candidates registered for this exam yet.</p>
+                  <div className="py-16 text-center bg-white border border-zinc-200/80 rounded-xl shadow-xs p-8">
+                    <p className="text-zinc-500 text-sm font-medium">No students registered for this exam yet.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {registrations
                       .filter((r) => r.exam_id === selectedExamForCandidates.id)
                       .map((candidate) => (
-                        <div key={candidate.id} className="bg-white border border-zinc-200 shadow-sm p-5 flex flex-col sm:flex-row gap-4">
-                          <div className="w-20 h-20 bg-zinc-100 border border-zinc-200 overflow-hidden shrink-0">
+                        <div key={candidate.id} className="bg-white border border-zinc-200/80 rounded-xl shadow-xs p-5 flex flex-col sm:flex-row gap-4 hover:shadow-md transition-all">
+                          <div className="w-20 h-20 bg-zinc-100 rounded-xl border border-zinc-200/80 overflow-hidden shrink-0">
                             {candidate.photo_url ? (
-                              <img src={candidate.photo_url} alt={candidate.candidate_name} className="w-full h-full object-cover animate-fade-in" />
+                              <img src={candidate.photo_url} alt={candidate.candidate_name} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-zinc-200 text-zinc-400"><span className="material-symbols-outlined text-xl text-zinc-400">person</span></div>
+                              <div className="w-full h-full flex items-center justify-center bg-zinc-100 text-zinc-400">
+                                <span className="material-symbols-outlined text-2xl text-zinc-400">person</span>
+                              </div>
                             )}
                           </div>
-                          <div className="space-y-2 flex-1 min-w-0">
+                          <div className="space-y-2.5 flex-1 min-w-0">
                             <div>
-                              <h4 className="text-sm font-bold text-zinc-955 truncate leading-snug">{candidate.candidate_name}</h4>
-                              <p className="text-[10px] text-zinc-400 font-semibold normal-case leading-tight mt-0.5">{candidate.year_of_study} • {candidate.department}</p>
+                              <h4 className="text-sm font-semibold text-zinc-900 truncate leading-snug font-inter">{candidate.candidate_name}</h4>
+                              <p className="text-xs text-zinc-500 font-medium mt-0.5">{candidate.year_of_study} • {candidate.department}</p>
                             </div>
                             
-                            <div className="text-xs text-zinc-600 space-y-1 pt-1 border-t border-zinc-100 font-normal">
+                            <div className="text-xs text-zinc-600 space-y-1 pt-2 border-t border-zinc-100 font-normal">
                               {candidate.registration_number && (
                                 <p className="font-mono"><span className="text-zinc-400 font-sans">Reg No:</span> {candidate.registration_number}</p>
                               )}
@@ -1471,16 +1573,16 @@ export default function Dashboard() {
                               <p className="truncate"><span className="text-zinc-400">Phone:</span> {candidate.phone}</p>
                               <p className="truncate"><span className="text-zinc-400">College:</span> {candidate.college}</p>
                             </div>
-                            <div className="pt-2 border-t border-zinc-100 flex justify-between items-center">
-                              <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider font-mono">
-                                {Object.keys(candidate.answers ?? {}).length} Saved
+                            <div className="pt-2.5 border-t border-zinc-100 flex justify-between items-center">
+                              <span className="text-xs font-semibold text-zinc-500 font-mono">
+                                {Object.keys(candidate.answers ?? {}).length} Saved Answers
                               </span>
                               <button
                                 onClick={() => setSelectedCandidateForAnswers(candidate)}
-                                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors flex items-center gap-1"
+                                className="px-3.5 py-1.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-xs rounded-lg cursor-pointer border-none transition-all flex items-center gap-1 shadow-xs"
                               >
-                                <span className="material-symbols-outlined text-xs leading-none">visibility</span>
-                                Show
+                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                <span>Show Answers</span>
                               </button>
                             </div>
                           </div>
@@ -1492,75 +1594,80 @@ export default function Dashboard() {
             ) : (
               
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-xs font-bold normal-case text-zinc-500 mb-1">Exams Listing</h3>
-                  <p className="text-xs text-zinc-400">Manage exam instances and view registered student profiles</p>
+                <div className="bg-white p-6 border border-zinc-200/80 rounded-xl shadow-xs">
+                  <h3 className="text-base font-semibold text-zinc-900 font-inter">All Exams Directory</h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">Manage exam instances, toggle student access, and view registered student profiles</p>
                 </div>
 
                 {exams.length === 0 ? (
-                  <div className="py-16 text-center bg-white border border-zinc-200 shadow-sm p-8">
+                  <div className="py-16 text-center bg-white border border-zinc-200/80 rounded-xl shadow-xs p-8">
                     <p className="text-zinc-500 text-sm font-medium">No published exams found.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {exams.map((exam) => {
                       const regsCount = registrations.filter((r) => r.exam_id === exam.id).length;
                       return (
                         <div 
                           key={exam.id} 
-                          className="bg-white border border-zinc-200 shadow-sm p-6 flex flex-col justify-between hover:border-orange-500/30 transition-all duration-200"
+                          className="bg-white border border-zinc-200/80 rounded-xl shadow-xs p-6 flex flex-col justify-between hover:shadow-md transition-all duration-200"
                         >
                           <div className="space-y-4">
-                            <div>
-                              <span className="text-[9px] font-bold normal-case bg-orange-50 text-orange-700 border border-orange-100 px-2 py-0.5 rounded-none">
-                                {exam.company_name}
-                              </span>
-                              <h3 className="text-lg font-bold text-zinc-900 mt-2 tracking-tight leading-snug">
-                                {exam.name}
-                              </h3>
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <span className="text-xs font-semibold bg-[#E61E32]/10 text-[#E61E32] border border-[#E61E32]/20 px-2.5 py-1 rounded-lg">
+                                  {exam.company_name}
+                                </span>
+                                <h3 className="text-base font-semibold text-zinc-900 font-inter mt-3 leading-snug">
+                                  {exam.name}
+                                </h3>
+                              </div>
+                              {exam.company_logo && (
+                                <img src={exam.company_logo} alt={exam.company_name} className="w-10 h-10 object-contain shrink-0" />
+                              )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 py-3 border-y border-zinc-100 text-xs font-medium text-zinc-600">
                               <div>
-                                <p className="text-[10px] text-zinc-400 normal-case mb-0.5">Schedule</p>
+                                <p className="text-xs text-zinc-400 mb-0.5">Schedule</p>
                                 <p className="text-zinc-800 font-semibold">{exam.date}</p>
-                                <p className="text-zinc-500 font-normal">{exam.time} IST</p>
+                                <p className="text-zinc-500 font-normal">{exam.time}</p>
                               </div>
                               <div>
-                                <p className="text-[10px] text-zinc-400 normal-case mb-0.5">Details</p>
+                                <p className="text-xs text-zinc-400 mb-0.5">Details</p>
                                 <p className="text-zinc-800 font-semibold">{exam.total_qns} Qns • {exam.types_of_qns}</p>
-                                <p className="text-zinc-500 font-bold text-orange-600 normal-case mt-0.5 text-[9px]">
-                                  {regsCount} {regsCount === 1 ? "Registrant" : "Registrants"}
+                                <p className="text-[#E61E32] font-semibold text-xs mt-0.5">
+                                  {regsCount} {regsCount === 1 ? "Student Registered" : "Students Registered"}
                                 </p>
                               </div>
                             </div>
                           </div>
 
-                          <div className="pt-4 mt-4 border-t border-zinc-100 space-y-3">
+                          <div className="pt-4 mt-4 border-t border-zinc-100 space-y-4">
                             {/* Submit Code Section */}
-                            <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center justify-between gap-3 bg-zinc-50/80 p-3 rounded-xl border border-zinc-200/60">
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold uppercase text-zinc-400 tracking-wider">Submit Code</span>
+                                <span className="text-xs font-semibold text-zinc-500">Submit Code</span>
                                 {exam.submit_code ? (
-                                  <span className="font-mono text-base font-bold tracking-[0.3em] text-orange-600 bg-orange-50 border border-orange-200 px-3 py-0.5">
+                                  <span className="font-mono text-sm font-bold tracking-[0.2em] text-[#E61E32] bg-red-50 border border-red-200 px-3 py-0.5 rounded-lg">
                                     {exam.submit_code}
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] text-zinc-400 italic">No code set</span>
+                                  <span className="text-xs text-zinc-400 italic">No code set</span>
                                 )}
                               </div>
                               <div className="flex gap-1.5">
                                 <button
                                   onClick={() => handleGenerateCode(exam)}
                                   disabled={generatingCodeId === exam.id}
-                                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-bold text-[10px] uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+                                  className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-60 text-white font-semibold text-xs rounded-lg cursor-pointer border-none transition-all shadow-xs"
                                 >
                                   {generatingCodeId === exam.id ? "..." : exam.submit_code ? "Regenerate" : "Generate Code"}
                                 </button>
                                 {exam.submit_code && (
                                   <button
                                     onClick={() => handleClearCode(exam)}
-                                    className="px-3 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 font-bold text-[10px] uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+                                    className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-semibold text-xs rounded-lg cursor-pointer border-none transition-all"
                                   >
                                     Clear
                                   </button>
@@ -1570,49 +1677,50 @@ export default function Dashboard() {
 
                             {/* Status badges + action buttons */}
                             <div className="flex items-center justify-between gap-3 flex-wrap">
-                              {}
-                              <div className="flex gap-1.5">
-                                <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
+                              <div className="flex gap-2">
+                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
                                   exam.is_started
-                                    ? "bg-green-50 text-green-700 border-green-200"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                     : "bg-zinc-50 text-zinc-500 border-zinc-200"
                                 }`}>
                                   {exam.is_started ? "Exam Active" : "Not Started"}
                                 </span>
-                                <span className={`text-[9px] font-bold normal-case px-2 py-1 border ${
+                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
                                   exam.show_login
-                                    ? "bg-orange-50 text-orange-700 border-orange-200"
+                                    ? "bg-red-50 text-[#E61E32] border-red-200"
                                     : "bg-zinc-50 text-zinc-500 border-zinc-200"
                                 }`}>
                                   {exam.show_login ? "Entry Open" : "Entry Closed"}
                                 </span>
                               </div>
-                              <div className="flex gap-2">
+
+                              <div className="flex gap-2 flex-wrap">
                                 <button
                                   onClick={() => toggleExamShowLogin(exam)}
-                                  className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
+                                  className={`px-3 py-1.5 font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer border-none ${
                                     exam.show_login
                                       ? "bg-amber-500 hover:bg-amber-600 text-white"
-                                      : "bg-orange-500 hover:bg-orange-600 text-white"
+                                      : "bg-[#E61E32] hover:bg-[#d01729] text-white"
                                   }`}
                                 >
-                                  {exam.show_login ? "Hide Entry Button" : "Show Entry Button"}
+                                  {exam.show_login ? "Hide Entry" : "Show Entry"}
                                 </button>
                                 <button
                                   onClick={() => toggleExamStarted(exam)}
-                                  className={`px-3 py-1.5 font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none ${
+                                  className={`px-3 py-1.5 font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer border-none ${
                                     exam.is_started
-                                      ? "bg-red-500 hover:bg-red-600 text-white"
-                                      : "bg-green-600 hover:bg-green-700 text-white"
+                                      ? "bg-zinc-800 hover:bg-zinc-900 text-white"
+                                      : "bg-emerald-600 hover:bg-emerald-700 text-white"
                                   }`}
                                 >
                                   {exam.is_started ? "Disable Exam" : "Enable Exam"}
                                 </button>
                                 <button
                                   onClick={() => setSelectedExamForCandidates(exam)}
-                                  className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-900 text-white font-semibold text-xs rounded-none shadow-sm transition-colors cursor-pointer border-none"
+                                  className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer border-none flex items-center gap-1"
                                 >
-                                  Candidates ({regsCount})
+                                  <span className="material-symbols-outlined text-sm">groups</span>
+                                  <span>Students ({regsCount})</span>
                                 </button>
                               </div>
                             </div>
@@ -1626,56 +1734,83 @@ export default function Dashboard() {
             )}
           </div>
         ) : activeTab === "security-logs" ? (
-          <div className="space-y-6 p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-6 p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 border border-zinc-200/80 rounded-xl shadow-xs">
               <div>
-                <h3 className="text-sm font-bold normal-case text-zinc-800">IP & Proctoring Security Logs</h3>
-                <p className="text-xs text-zinc-400">Review real-time proctoring violations, user agents, IP logs, and manage exam locks</p>
+                <h3 className="text-base font-semibold text-zinc-900 font-inter">Security Logs & Alerts</h3>
+                <p className="text-xs text-zinc-500 mt-0.5">View student security alerts, login details, and manage exam access</p>
               </div>
               <button
                 onClick={fetchSecurityLogs}
-                className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs uppercase rounded-none cursor-pointer transition-all border-none"
+                className="px-4 py-2 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-xs rounded-lg cursor-pointer transition-all border-none shadow-xs flex items-center gap-1.5"
               >
-                Refresh Logs
+                <span className="material-symbols-outlined text-sm">refresh</span>
+                <span>Refresh Logs</span>
               </button>
             </div>
 
             {/* Quick stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-white border border-zinc-200 p-5 shadow-sm">
-                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Total Security Events</p>
-                <p className="text-lg font-bold text-zinc-800 mt-1">{securityLogs.length}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-xs">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Alerts Logged</p>
+                <p className="text-2xl font-semibold text-zinc-900 font-inter mt-1">{securityLogs.length}</p>
               </div>
-              <div className="bg-white border border-zinc-200 p-5 shadow-sm">
-                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Active Lockouts / Blocks</p>
-                <p className="text-lg font-bold text-red-650 mt-1">
-                  {registrations.filter((r) => r.blocked).length} Candidates Blocked
+              <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-xs">
+                <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Blocked Students</p>
+                <p className="text-2xl font-semibold text-[#E61E32] font-inter mt-1">
+                  {registrations.filter((r) => r.blocked).length} Students Blocked
                 </p>
               </div>
             </div>
 
             {/* Logs Table */}
-            <div className="bg-white border border-zinc-200 shadow-sm overflow-hidden">
+            <div className="bg-white border border-zinc-200/80 rounded-xl shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs font-sans">
                   <thead>
-                    <tr className="bg-zinc-50 border-b border-zinc-200 font-bold text-zinc-650">
-                      <th className="px-6 py-3">Timestamp</th>
-                      <th className="px-6 py-3">Candidate Details</th>
-                      <th className="px-6 py-3">IP & User Agent</th>
-                      <th className="px-6 py-3">Event Type</th>
-                      <th className="px-6 py-3">Violation Details</th>
-                      <th className="px-6 py-3 text-right">Status / Actions</th>
+                    <tr className="bg-zinc-50/80 border-b border-zinc-200/80 font-semibold text-zinc-600 uppercase tracking-wider text-[11px]">
+                      <th className="px-6 py-3.5">Time</th>
+                      <th className="px-6 py-3.5">Student</th>
+                      <th className="px-6 py-3.5">Network & Device</th>
+                      <th className="px-6 py-3.5">Alert Type</th>
+                      <th className="px-6 py-3.5">Alert Details</th>
+                      <th className="px-6 py-3.5 text-right">Status & Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-200">
+                    {/* Blocked candidates always shown at top */}
+                    {registrations.filter((r) => r.blocked).map((reg) => (
+                      <tr key={`blocked-${reg.id}`} className="bg-red-50/40 hover:bg-red-50/70">
+                        <td className="px-6 py-3.5 whitespace-nowrap text-zinc-400 font-mono text-[10px]">—</td>
+                        <td className="px-6 py-3.5">
+                          <p className="font-semibold text-zinc-900">{reg.candidate_name}</p>
+                          <p className="text-[10px] text-zinc-400 font-mono leading-tight">{reg.hall_ticket_number}</p>
+                        </td>
+                        <td className="px-6 py-3.5 text-zinc-400 text-[10px]">—</td>
+                        <td className="px-6 py-3.5">
+                          <span className="px-2 py-0.5 font-bold tracking-wider text-[9px] border uppercase rounded-lg bg-red-50 text-red-700 border-red-200">
+                            BLOCKED
+                          </span>
+                        </td>
+                        <td className="px-6 py-3.5 text-zinc-500 text-[10px]">Candidate access has been revoked</td>
+                        <td className="px-6 py-3.5 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => handleReEnableExam(reg.hall_ticket_number ?? "")}
+                            disabled={reEnablingId === reg.hall_ticket_number}
+                            className="px-2.5 py-1 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-[10px] rounded-lg cursor-pointer border-none transition-all disabled:opacity-50"
+                          >
+                            {reEnablingId === reg.hall_ticket_number ? "Unblocking..." : "Unblock"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                     {loadingSecurityLogs ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 italic">
                           Querying security logs database records, please wait...
                         </td>
                       </tr>
-                    ) : securityLogs.length === 0 ? (
+                    ) : securityLogs.length === 0 && registrations.filter((r) => r.blocked).length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 italic">
                           No security events or violations logged in the database.
@@ -1710,10 +1845,10 @@ export default function Dashboard() {
                               </p>
                             </td>
                             <td className="px-6 py-3.5">
-                              <span className={`px-2 py-0.5 font-bold tracking-wider text-[9px] border uppercase rounded-none ${
+                              <span className={`px-2 py-0.5 font-bold tracking-wider text-[9px] border uppercase rounded-lg ${
                                 log.event_type === "PROCTORING_VIOLATION"
                                   ? "bg-red-50 text-red-700 border-red-200"
-                                  : "bg-orange-50 text-orange-700 border-orange-200"
+                                  : "bg-zinc-100 text-zinc-700 border-zinc-200"
                               }`}>
                                 {log.event_type}
                               </span>
@@ -1724,19 +1859,19 @@ export default function Dashboard() {
                             <td className="px-6 py-3.5 text-right whitespace-nowrap">
                               {isCandidateBlocked ? (
                                 <div className="flex items-center justify-end gap-2">
-                                  <span className="px-1.5 py-0.5 bg-red-105 text-red-800 text-[9px] font-bold border border-red-200 uppercase rounded-none">
+                                  <span className="px-2 py-0.5 bg-red-50 text-red-700 text-[9px] font-bold border border-red-200 uppercase rounded-lg">
                                     Locked
                                   </span>
                                   <button
                                     onClick={() => handleReEnableExam(log.session_id)}
                                     disabled={reEnablingId === log.session_id}
-                                    className="px-2 py-1 bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] rounded-none cursor-pointer border-none transition-all uppercase tracking-wider disabled:opacity-50"
+                                    className="px-2.5 py-1 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-[10px] rounded-lg cursor-pointer border-none transition-all uppercase tracking-wider disabled:opacity-50"
                                   >
                                     {reEnablingId === log.session_id ? "Re-enabling..." : "Re-enable Exam"}
                                   </button>
                                 </div>
                               ) : (
-                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-250 uppercase rounded-none">
+                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-200 uppercase rounded-lg">
                                   Allowed
                                 </span>
                               )}
@@ -1747,6 +1882,61 @@ export default function Dashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "profile" ? (
+          <div className="space-y-6 p-6 max-w-4xl">
+            <div className="bg-white border border-zinc-200/80 rounded-xl p-6 md:p-8 shadow-xs">
+              <div className="flex items-center gap-4 border-b border-zinc-200/80 pb-6 mb-6">
+                <div className="w-14 h-14 rounded-xl bg-[#E61E32]/10 border border-[#E61E32]/20 flex items-center justify-center font-bold text-lg text-[#E61E32]">
+                  AD
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-zinc-900 font-inter">Administrator Profile</h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">Manage your administrative credentials, security parameters, and session privileges.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-zinc-50/80 border border-zinc-200/80 rounded-xl p-5 space-y-3">
+                  <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">Account Information</h3>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between py-1 border-b border-zinc-200/60">
+                      <span className="text-zinc-500">Email Address</span>
+                      <span className="font-semibold text-zinc-900">{userEmail || "admin@redlixsecure.com"}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-zinc-200/60">
+                      <span className="text-zinc-500">System Role</span>
+                      <span className="font-semibold text-[#E61E32]">Super Administrator</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-zinc-500">Access Level</span>
+                      <span className="font-semibold text-emerald-700">Full Proctoring & Control</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-zinc-50/80 border border-zinc-200/80 rounded-xl p-5 space-y-3">
+                  <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">Active Session Security</h3>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between py-1 border-b border-zinc-200/60">
+                      <span className="text-zinc-500">Authentication Token</span>
+                      <span className="font-mono text-zinc-700">Active (Verified)</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-zinc-200/60">
+                      <span className="text-zinc-500">Turnstile Protection</span>
+                      <span className="font-semibold text-emerald-700 font-mono">Passed</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-zinc-500">Session Status</span>
+                      <span className="font-semibold text-emerald-700 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                        Live Encrypted
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

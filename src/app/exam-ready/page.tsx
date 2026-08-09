@@ -82,7 +82,7 @@ export default function ExamReadyPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-50 flex items-center justify-center font-sans">
-      <div className="w-10 h-10 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
+      <div className="w-8 h-8 rounded-full border-2 border-t-[#E61E32] border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
     </div>
   );
 
@@ -91,59 +91,70 @@ export default function ExamReadyPage() {
   const { exam, candidateName, hallTicketNumber } = session;
 
   return (
-    <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
+    <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 flex flex-col">
 
-      {}
-      <header className="bg-orange-500 border-b border-orange-600 shadow-sm shrink-0">
-        <div className="max-w-3xl mx-auto px-8 py-5 flex items-center gap-4">
-          {exam.company_logo
-            ? <img src={exam.company_logo} alt={exam.company_name} className="w-10 h-10 object-contain shrink-0" />
-            : <img src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493" alt="Redlix Secure" className="w-10 h-10 object-contain shrink-0" />
-          }
-          <div>
-            <p className="text-white font-bold text-base">{exam.name}</p>
-            <p className="text-orange-100 text-xs">{exam.company_name}</p>
+      {/* Top Header */}
+      <header className="bg-[#E61E32] border-b border-[#d01729] shadow-xs shrink-0">
+        <div className="max-w-3xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <img
+              src="https://ik.imagekit.io/dypkhqxip/logotraining?updatedAt=1783099023149"
+              alt="Redlix Secure"
+              className="h-8 w-auto object-contain shrink-0"
+            />
+            <div className="min-w-0 border-l border-white/20 pl-3">
+              <p className="text-white font-semibold text-sm font-inter leading-tight truncate">{exam.name}</p>
+              <p className="text-white/75 text-xs truncate mt-0.5">{exam.company_name}</p>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs border border-white/30 px-3 py-1 rounded-full text-white text-xs font-semibold shadow-xs shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Exam Open</span>
           </div>
         </div>
       </header>
 
-      {}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-8 flex flex-col gap-5">
+      {/* Main Container */}
+      <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-7 flex flex-col gap-5">
 
-        {}
-        <div className="bg-white border border-zinc-200 shadow-sm px-5 py-3 flex items-center justify-between flex-wrap gap-2">
+        {/* Candidate Verified Card */}
+        <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs px-5 py-3.5 flex items-center justify-between flex-wrap gap-2">
           <div>
-            <p className="text-xs font-semibold text-zinc-800">{candidateName}</p>
-            <p className="text-[10px] font-mono text-orange-600">{hallTicketNumber}</p>
+            <p className="text-sm font-semibold text-zinc-900 font-inter">{candidateName}</p>
+            <p className="text-[11px] font-mono text-zinc-500 mt-0.5">{hallTicketNumber}</p>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Candidate Verified
           </span>
         </div>
 
-        {}
-        <div className="bg-white border border-zinc-200 shadow-sm p-5 space-y-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Instructions &amp; Guidelines</p>
-          <ul className="space-y-2">
+        {/* Instructions Card */}
+        <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 rounded-full bg-[#E61E32]" />
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Instructions &amp; Guidelines</p>
+          </div>
+          <ul className="space-y-2.5">
             {INSTRUCTIONS.map((pt, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-zinc-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0 mt-1.5" />
+              <li key={i} className="flex items-start gap-2.5 text-xs text-zinc-700 leading-relaxed">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E61E32] shrink-0 mt-1.5" />
                 {pt}
               </li>
             ))}
           </ul>
         </div>
 
-        {}
-        <div className="bg-white border border-zinc-200 shadow-sm p-5 space-y-4">
-          <label className="flex items-start gap-3 cursor-pointer select-none">
+        {/* Declaration & Begin Card */}
+        <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs p-6 space-y-5">
+          <label className="flex items-start gap-3 cursor-pointer select-none group">
             <input
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-0.5 w-4 h-4 accent-orange-500 cursor-pointer shrink-0"
+              className="mt-0.5 w-4 h-4 accent-[#E61E32] cursor-pointer shrink-0 rounded"
             />
-            <p className="text-xs text-zinc-700 leading-relaxed">
+            <p className="text-xs text-zinc-700 leading-relaxed group-hover:text-zinc-900 transition-colors">
               I have read and understood all the instructions above. I agree to the exam rules and confirm that I am the registered candidate.
             </p>
           </label>
@@ -151,38 +162,40 @@ export default function ExamReadyPage() {
           <div className="flex items-center gap-4">
             {starting ? (
               <div className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
-                <p className="text-sm text-zinc-600 font-medium">Starting your session...</p>
+                <div className="w-5 h-5 rounded-full border-2 border-t-[#E61E32] border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
+                <p className="text-xs text-zinc-600 font-medium">Starting your session...</p>
               </div>
             ) : (
               <>
                 <button
                   onClick={handleBeginExam}
                   disabled={!agreed}
-                  className={`px-7 py-2.5 text-sm font-bold rounded-none shadow-sm transition-all border-none cursor-pointer ${
-                    agreed ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-zinc-200 text-zinc-400 cursor-not-allowed"
+                  className={`px-6 py-2.5 text-xs font-semibold rounded-lg shadow-xs transition-all border-none ${
+                    agreed
+                      ? "bg-[#E61E32] hover:bg-[#d01729] text-white cursor-pointer"
+                      : "bg-zinc-100 text-zinc-400 cursor-not-allowed"
                   }`}
                 >
                   I&apos;m Ready — Begin Exam
                 </button>
-                <button onClick={() => router.back()} className="text-xs text-zinc-400 hover:text-zinc-600 underline cursor-pointer">
+                <button onClick={() => router.back()} className="text-xs text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer underline underline-offset-2">
                   Go back
                 </button>
               </>
             )}
           </div>
           {!agreed && (
-            <p className="text-[10px] text-orange-600">Accept the declaration above to enable the Begin button.</p>
+            <p className="text-[11px] text-[#E61E32] font-medium">Accept the declaration above to enable the Begin button.</p>
           )}
         </div>
 
       </main>
 
-      {}
-      <footer className="border-t border-zinc-200 bg-white py-3 px-6 shrink-0">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <p className="text-[10px] text-zinc-400">Powered by <span className="font-semibold text-zinc-600">Redlix Secure</span></p>
-          <p className="text-[10px] text-zinc-400 font-mono">{hallTicketNumber}</p>
+      {/* Footer */}
+      <footer className="border-t border-zinc-200/90 bg-zinc-100 py-3.5 px-6 shrink-0">
+        <div className="max-w-3xl mx-auto flex items-center justify-between text-xs text-zinc-500">
+          <p className="font-medium">Powered by <span className="font-semibold text-zinc-800">Redlix Secure</span></p>
+          <p className="font-mono text-zinc-400">{hallTicketNumber}</p>
         </div>
       </footer>
     </div>

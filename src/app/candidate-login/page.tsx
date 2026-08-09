@@ -191,17 +191,10 @@ function CandidateLoginContent() {
               Sign in with your registered candidate profile to view exam details, update registration profiles, and access test results.
             </p>
             <div className="flex justify-center pt-2">
-              <Script
-                src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js"
-                type="module"
-                strategy="afterInteractive"
-              />
-              {/* @ts-ignore */}
-              <dotlottie-wc
-                src="https://lottie.host/e6e11b63-fa23-46e2-8a7c-d5f6ec2d193f/Y5lstf8SOf.lottie"
-                style={{ width: "220px", height: "220px" }}
-                autoplay
-                loop
+              <iframe
+                src="https://lottie.host/embed/e9948351-dd15-427f-bde1-b547486d6c83/atd20DWZjT.lottie"
+                style={{ width: "260px", height: "260px", border: "none", overflow: "hidden" }}
+                title="Candidate Portal Animation"
               />
             </div>
           </div>

@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 import { prisma } from "@/lib/prisma";
 
 const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secure-admin-token-2026";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  {
-    global: {
-      headers: {
-        "x-admin-token": ADMIN_TOKEN,
-      },
-    },
-  }
-);
+const supabase = getSupabaseAdminClient();
 
 function isAdminAuthorized(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
@@ -66,10 +55,29 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  if (resource === "settings") {
+    try {
+      let data = await prisma.systemSettings.findUnique({ where: { id: 1 } });
+      if (!data) {
+        data = await prisma.systemSettings.create({
+          data: { id: 1 },
+        });
+      }
+      return NextResponse.json({ success: true, data: serialize(data) });
+    } catch (error: any) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+  }
+
   if (resource === "security_logs") {
     try {
-      const data = await prisma.$queryRawUnsafe(`SELECT * FROM security_logs ORDER BY created_at DESC`);
-      return NextResponse.json({ success: true, data: serialize(data) });
+      const { data, error } = await supabase
+        .from("security_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: true, data: serialize(data ?? []) });
     } catch (error: any) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -174,6 +182,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   }
 
+  // Unblock a candidate without wiping their answers (standalone unblock)
+  if (action === "unblock_candidate") {
+    const { hallTicketNumber } = body;
+    const { error } = await supabase
+      .from("registrations")
+      .update({ blocked: false })
+      .eq("hall_ticket_number", hallTicketNumber);
+    if (error) return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  }
+
   // Logout admin session
   if (action === "logout") {
     const res = NextResponse.json({ success: true });
@@ -185,6 +204,20 @@ export async function POST(req: NextRequest) {
       maxAge: 0,
     });
     return res;
+  }
+
+  if (action === "update_settings") {
+    try {
+      const { settingsData } = body;
+      const data = await prisma.systemSettings.upsert({
+        where: { id: 1 },
+        update: settingsData,
+        create: { id: 1, ...settingsData },
+      });
+      return NextResponse.json({ success: true, data: serialize(data) });
+    } catch (error: any) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ success: false, error: "Unknown action" }, { status: 400 });

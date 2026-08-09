@@ -154,3 +154,19 @@ model Submission {
   createdAt   DateTime @default(now())
 }
 
+model SystemSettings {
+  id                        Int      @id @default(1)
+  ai_audio_detection        Boolean  @default(true)
+  webcam_face_recognition   Boolean  @default(true)
+  tab_switch_lockout        Boolean  @default(true)
+  fullscreen_enforcement    Boolean  @default(true)
+  auto_incident_logging     Boolean  @default(true)
+  email_proctor_alerts      Boolean  @default(false)
+  public_registration_open  Boolean  @default(true)
+  auto_release_results      Boolean  @default(false)
+  updated_at                DateTime @default(now()) @updatedAt
+
+  @@map("system_settings")
+}
+
+

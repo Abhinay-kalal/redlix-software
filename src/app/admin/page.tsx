@@ -1,9 +1,9 @@
 "use client";
 
-import { SunIcon as Sunburst } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Turnstile } from "@/components/ui/turnstile";
+import { SmoothInput } from "@/components/ui/smooth-input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function LoginPage() {
 
   const loadingMessages = [
     "Checking admin credentials...",
-    "Logging in...",
+    "Verifying security session...",
     "Redirecting to dashboard..."
   ];
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
     let valid = true;
 
     if (!validateEmail(email)) {
-      setEmailError("Please enter a valid email address.");
+      setEmailError("Please enter a valid administrator email.");
       valid = false;
     } else {
       setEmailError("");
@@ -112,52 +112,61 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 sm:p-6 md:p-8 relative font-sans text-zinc-900">
+    <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 md:p-6 font-sans text-zinc-900 relative overflow-hidden">
       
-      <div className="w-full relative max-w-4xl flex flex-col md:flex-row shadow-lg rounded-none border border-zinc-200 bg-white">
+      {/* Right half window solid red background circle */}
+      <div className="absolute right-0 top-0 bottom-0 w-1/2 h-full flex items-center justify-center pointer-events-none overflow-hidden z-0">
+        <div className="w-[1400px] h-[1400px] md:w-[1600px] md:h-[1600px] rounded-full bg-[#E61E32] opacity-35 translate-x-1/3 shrink-0" />
+      </div>
+
+      <div className="w-full max-w-5xl flex flex-col md:flex-row shadow-md border border-zinc-200/80 bg-white relative z-10 rounded-2xl overflow-hidden">
         
-        <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between rounded-none border-b md:border-b-0 md:border-r border-zinc-200">
+        {/* Left Info Panel */}
+        <div className="bg-zinc-50/80 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80">
           <div className="space-y-6">
-            <div className="flex items-center">
+            <div className="flex items-center -ml-1">
               <img
                 src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
-                alt="Logo"
-                className="w-32 h-10 object-contain shrink-0"
+                alt="Redlix Logo"
+                className="h-12 md:h-14 w-auto object-contain object-left shrink-0"
               />
             </div>
-            <h1 className="text-2xl md:text-3xl font-medium leading-snug tracking-tight mt-6 text-zinc-900">
-              Admin Console
-            </h1>
-            <p className="text-zinc-600 text-sm max-w-xs leading-relaxed">
-              Sign in to manage proctoring sessions and configurations.
-            </p>
+
+            <div className="space-y-2 mt-4">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900 font-inter">
+                Admin Console
+              </h1>
+              <p className="text-zinc-600 text-sm leading-relaxed">
+                Sign in to manage proctoring sessions, candidate registries, and security controls.
+              </p>
+            </div>
           </div>
+
+          <p className="text-xs text-zinc-500 mt-6">
+            Need assistance? Contact <span className="text-[#E61E32] font-semibold underline underline-offset-2 decoration-[#E61E32] cursor-pointer">System Administration</span>.
+          </p>
         </div>
 
-        <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white rounded-none min-h-[400px]">
+        {/* Right Form Panel */}
+        <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white min-h-[420px]">
           
           {isLoading ? (
-            
-            <div className="py-8 flex flex-col items-center justify-center text-center">
-              <div className="relative w-16 h-16 mb-6">
-                <div className="absolute inset-0 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
+            <div className="py-8 flex flex-col items-center justify-center text-center gap-6">
+              <div className="relative w-14 h-14">
+                <div className="absolute inset-0 rounded-full border-2 border-t-[#E61E32] border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
               </div>
-              
-              <div className="h-6 flex items-center justify-center">
-                <p className="text-zinc-700 font-medium text-sm transition-all duration-300">
-                  {loadingMessages[loadingStep]}
-                </p>
-              </div>
+              <p className="text-zinc-700 font-medium text-sm transition-all duration-300">
+                {loadingMessages[loadingStep]}
+              </p>
             </div>
           ) : (
-            
             <div className="w-full max-w-sm mx-auto">
-              <div className="flex flex-col items-left mb-6">
-                <h2 className="text-2xl font-medium tracking-tight text-zinc-900">
-                  Admin Login
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold tracking-tight text-zinc-900 font-inter">
+                  Admin Sign In
                 </h2>
-                <p className="text-left text-xs text-zinc-500 mt-1">
-                  Enter your administrator credentials to access the console
+                <p className="text-xs text-zinc-500 mt-1">
+                  Enter your administrator credentials to access the console.
                 </p>
               </div>
 
@@ -165,27 +174,22 @@ export default function LoginPage() {
                 
                 <div>
                   <label htmlFor="email" className="block text-xs font-medium text-zinc-700 mb-1.5">
-                    Email address
+                    Email Address
                   </label>
-                  <input
-                    type="email"
+                  <SmoothInput
                     id="email"
-                    placeholder="admin@institution.edu"
-                    className={`text-sm w-full py-2 px-3 border rounded-none bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-orange-500 ${
-                      emailError ? "border-red-500 focus:ring-red-500" : "border-zinc-300 focus:border-orange-500"
-                    } transition-all`}
+                    type="email"
+                    placeholder="admin@redlixsecure.com"
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value);
                       if (emailError) setEmailError("");
                     }}
-                    aria-invalid={!!emailError}
-                    aria-describedby="email-error"
+                    error={!!emailError}
+                    autoComplete="email"
                   />
                   {emailError && (
-                    <p id="email-error" className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                      {emailError}
-                    </p>
+                    <p className="text-[#E61E32] text-xs mt-1 font-medium">{emailError}</p>
                   )}
                 </div>
 
@@ -193,25 +197,20 @@ export default function LoginPage() {
                   <label htmlFor="password" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Password
                   </label>
-                  <input
-                    type="password"
+                  <SmoothInput
                     id="password"
-                    placeholder="Enter your password"
-                    className={`text-sm w-full py-2 px-3 border rounded-none bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-orange-500 ${
-                      passwordError ? "border-red-500 focus:ring-red-500" : "border-zinc-300 focus:border-orange-500"
-                    } transition-all`}
+                    type="password"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (passwordError) setPasswordError("");
                     }}
-                    aria-invalid={!!passwordError}
-                    aria-describedby="password-error"
+                    error={!!passwordError}
+                    autoComplete="current-password"
                   />
                   {passwordError && (
-                    <p id="password-error" className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                      {passwordError}
-                    </p>
+                    <p className="text-[#E61E32] text-xs mt-1 font-medium">{passwordError}</p>
                   )}
                 </div>
 
@@ -221,7 +220,7 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 bg-white border-zinc-300 rounded-none text-orange-500 focus:ring-orange-500 cursor-pointer"
+                    className="h-4 w-4 rounded border-zinc-300 text-[#E61E32] focus:ring-[#E61E32] accent-[#E61E32] cursor-pointer"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-xs text-zinc-600 cursor-pointer select-none">
                     Remember this device
@@ -237,16 +236,28 @@ export default function LoginPage() {
                   onExpire={() => setTurnstileToken("")}
                 />
                 {securityError && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {securityError}
-                  </p>
+                  <p className="text-[#E61E32] text-xs mt-1 font-medium">{securityError}</p>
                 )}
 
                 <button
                   type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-none transition-colors cursor-pointer mt-2 shadow-sm"
+                  className="group w-full bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer mt-2 shadow-sm text-sm flex items-center justify-center gap-2"
                 >
-                  Sign In
+                  <span>Sign In to Console</span>
+                  <svg
+                    className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.2}
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
+                  </svg>
                 </button>
               </form>
             </div>

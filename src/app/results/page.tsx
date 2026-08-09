@@ -651,6 +651,7 @@ export default function ResultsPage() {
             ) : answerData ? (
               (() => {
                 const isTraining01 = selectedExam?.name.toLowerCase().includes("redlix training exam 01");
+                const isPhase02 = selectedExam?.name.toLowerCase().includes("redlix phase - 02") || selectedExam?.name.toLowerCase().includes("final phase");
 
                 if (isTraining01) {
                   // Training Exam 01 Grading & Presentation

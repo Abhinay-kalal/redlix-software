@@ -1275,19 +1275,11 @@ export default function ExamSessionPage() {
       return (
         <div className="min-h-screen bg-zinc-100 flex items-center justify-center font-sans p-6 select-none text-zinc-900">
           <div className="bg-white border border-zinc-200 p-10 max-w-md w-full text-center space-y-6 shadow-sm">
-            {/* Lottie animation */}
-            <Script
-              src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js"
-              type="module"
-              strategy="afterInteractive"
-            />
             <div className="flex justify-center">
-              {/* @ts-ignore */}
-              <dotlottie-wc
-                src="https://lottie.host/41df1d4a-e726-48b9-8c63-95896d087232/he0C1Dd3Ne.lottie"
-                style={{ width: "180px", height: "180px" }}
-                autoplay
-                loop
+              <iframe
+                src="https://lottie.host/embed/41df1d4a-e726-48b9-8c63-95896d087232/he0C1Dd3Ne.lottie"
+                style={{ width: "180px", height: "180px", border: "none", overflow: "hidden" }}
+                title="Exam Completion Animation"
               />
             </div>
             <div className="space-y-1">
@@ -1394,27 +1386,27 @@ export default function ExamSessionPage() {
   return (
     <div className="h-screen w-screen overflow-hidden bg-zinc-50 font-sans text-zinc-900 flex flex-col select-none">
       {}
-      <header className="bg-orange-500 px-6 py-3 flex items-center justify-between shrink-0 border-b border-orange-600 shadow-sm">
-        <div className="flex items-center gap-3">
-          {exam.company_logo ? (
-            <img src={exam.company_logo} alt="" className="w-7 h-7 object-contain" />
-          ) : (
-            <img
-              src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
-              alt=""
-              className="w-7 h-7 object-contain"
-            />
-          )}
-          <div>
-            <p className="text-white font-bold text-sm leading-tight">{exam.name}</p>
-            <p className="text-orange-100 text-[10px]">{exam.company_name}</p>
+      <header className="bg-[#E61E32] px-6 py-3 flex items-center justify-between shrink-0 border-b border-[#d01729] shadow-xs">
+        <div className="flex items-center gap-3.5">
+          <img
+            src="https://ik.imagekit.io/dypkhqxip/logotraining?updatedAt=1783099023149"
+            alt="Redlix Secure"
+            className="h-7 w-auto object-contain shrink-0"
+          />
+          <div className="border-l border-white/20 pl-3">
+            <p className="text-white font-semibold text-sm leading-tight">{exam.name}</p>
+            <p className="text-white/75 text-[10px]">{exam.company_name}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
             <p className="text-white text-xs font-semibold">{candidateName}</p>
-            <p className="text-orange-100 text-[10px] font-mono">{hallTicketNumber}</p>
+            <p className="text-white/70 text-[10px] font-mono">{hallTicketNumber}</p>
+          </div>
+          <div className="inline-flex items-center gap-1.5 bg-white/20 border border-white/30 px-2.5 py-1 rounded-full text-white text-[10px] font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE
           </div>
         </div>
       </header>
@@ -1442,7 +1434,7 @@ export default function ExamSessionPage() {
             {}
             <div className="flex items-center justify-between border-b border-zinc-200 pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-orange-600 font-mono">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#E61E32] font-mono">
                   {currentQuestion.section === "A"
                     ? "Section A: Multiple Choice Questions"
                     : "Section B: Coding Challenges"}
@@ -1451,13 +1443,13 @@ export default function ExamSessionPage() {
                   Question {currentQuestion.number} of {questions.filter(q => q.section === currentQuestion.section).length} ({currentQuestion.type === "mcq" ? "MCQ" : currentQuestion.type === "open" ? "Open-Ended" : "Coding"})
                 </h2>
               </div>
-              <span className="text-xs bg-zinc-100 text-zinc-700 px-2.5 py-1 border border-zinc-200 font-mono font-bold">
+              <span className="text-xs bg-zinc-100 text-zinc-700 px-2.5 py-1 rounded-lg border border-zinc-200 font-mono font-bold">
                 {currentQuestion.marks} Marks
               </span>
             </div>
 
             {/* Question Text */}
-            <div className="bg-white border border-zinc-200 p-6 shadow-sm">
+            <div className="bg-white border border-zinc-200/90 rounded-xl p-6 shadow-xs">
               <p className="text-sm text-zinc-800 leading-relaxed font-medium whitespace-pre-wrap font-sans">
                 {currentQuestion.questionText}
               </p>
@@ -1473,16 +1465,16 @@ export default function ExamSessionPage() {
                     <button
                       key={opt}
                       onClick={() => handleAnswerChange(letter)}
-                      className={`w-full text-left px-5 py-4 border transition-all cursor-pointer flex items-center gap-4 rounded-none ${
+                      className={`w-full text-left px-5 py-3.5 border transition-all cursor-pointer flex items-center gap-4 rounded-xl ${
                         isSelected
-                          ? "bg-orange-50/50 border-orange-500 text-orange-950 font-semibold"
-                          : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                          ? "bg-[#E61E32]/5 border-[#E61E32] text-zinc-900 font-semibold"
+                          : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300"
                       }`}
                     >
                       <span
                         className={`w-5 h-5 flex items-center justify-center text-xs font-mono font-bold border rounded-full ${
                           isSelected
-                            ? "bg-orange-500 border-orange-500 text-white"
+                            ? "bg-[#E61E32] border-[#E61E32] text-white"
                             : "border-zinc-300 text-zinc-400 bg-white"
                         }`}
                       >
@@ -1503,7 +1495,7 @@ export default function ExamSessionPage() {
                     value={activeAnswer}
                     onChange={(e) => handleAnswerChange(e.target.value)}
                     placeholder="Type your detailed diagnostic steps, analysis, and recommendations here..."
-                    className="w-full h-80 p-4 bg-[#1e1e1e] text-zinc-200 border border-zinc-700 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-orange-500 rounded-none shadow-md"
+                    className="w-full h-80 p-4 bg-[#1e1e1e] text-zinc-200 border border-zinc-700 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[#E61E32] rounded-lg shadow-md"
                     spellCheck={false}
                   />
                 </div>
@@ -1610,13 +1602,13 @@ export default function ExamSessionPage() {
             <div className="flex gap-2">
               <button
                 onClick={handleClearResponse}
-                className="px-4 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+                className="px-4 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-semibold rounded-lg cursor-pointer transition-colors"
               >
                 Clear Response
               </button>
               <button
                 onClick={handleMarkForReview}
-                className="px-4 py-2 border border-indigo-600 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+                className="px-4 py-2 border border-indigo-500 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 text-xs font-semibold rounded-lg cursor-pointer transition-colors"
               >
                 Mark for Review & Next
               </button>
@@ -1626,7 +1618,7 @@ export default function ExamSessionPage() {
               <button
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
-                className={`px-4 py-2 border border-zinc-300 text-zinc-700 bg-white text-xs font-bold uppercase tracking-wider rounded-none transition-colors ${
+                className={`px-4 py-2 border border-zinc-300 text-zinc-700 bg-white text-xs font-semibold rounded-lg transition-colors ${
                   currentIndex === 0 ? "opacity-40 cursor-not-allowed" : "hover:bg-zinc-50 cursor-pointer"
                 }`}
               >
@@ -1634,7 +1626,7 @@ export default function ExamSessionPage() {
               </button>
               <button
                 onClick={handleSaveAndNext}
-                className="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+                className="px-5 py-2 bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-semibold rounded-lg cursor-pointer border-none transition-colors"
               >
                 {currentIndex === questions.length - 1 ? "Save Response" : "Save & Next"}
               </button>
@@ -1670,7 +1662,7 @@ export default function ExamSessionPage() {
                 </span>
                 {/* Visual Speaking Indicator */}
                 <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 px-2 py-1 rounded-none text-[8px] font-mono text-white tracking-wider uppercase z-20">
-                  <span className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? "bg-orange-500 animate-pulse" : "bg-zinc-500"}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? "bg-[#E61E32] animate-pulse" : "bg-zinc-500"}`} />
                   {isSpeaking ? "Speaking" : "Silent"}
                 </div>
               </div>
@@ -1696,7 +1688,7 @@ export default function ExamSessionPage() {
                 <div className="min-w-0 space-y-1">
                   <p className="text-sm font-extrabold text-zinc-900 leading-tight">{candidateName}</p>
                   <p className="text-[11px] font-mono text-zinc-500 font-semibold">{hallTicketNumber}</p>
-                  <div className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5">
+                  <div className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
                     <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                     Verified
                   </div>
@@ -1709,7 +1701,7 @@ export default function ExamSessionPage() {
               <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">Time Remaining</span>
               <span
                 className={`font-mono text-base font-bold ${
-                  timeLeft < 300 ? "text-red-400 animate-pulse" : "text-orange-400"
+                  timeLeft < 300 ? "text-red-400 animate-pulse" : "text-white"
                 }`}
               >
                 {formatTime(timeLeft)}
@@ -1801,7 +1793,7 @@ export default function ExamSessionPage() {
             <div className="p-4 bg-white">
               <button
                 onClick={() => setShowCodeModal(true)}
-                className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-wider uppercase rounded-none cursor-pointer border-none transition-colors"
+                className="w-full py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-xs rounded-lg cursor-pointer border-none transition-colors"
               >
                 Submit Exam
               </button>
@@ -1815,7 +1807,7 @@ export default function ExamSessionPage() {
       {/* 6-digit submit code modal */}
       {showCodeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans select-none">
-          <div className="bg-white border border-zinc-200 w-full max-w-sm p-6 space-y-5 shadow-xl">
+          <div className="bg-white border border-zinc-200/90 rounded-xl w-full max-w-sm p-6 space-y-5 shadow-xl">
             <div>
               <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider font-mono">Enter Submit Code</h3>
               <p className="text-xs text-zinc-500 mt-1">Ask your exam invigilator for the 6-digit submission code to finalise your exam.</p>
@@ -1831,7 +1823,7 @@ export default function ExamSessionPage() {
                   setSubmitCodeInput(e.target.value.replace(/\D/g, "").slice(0, 6));
                   if (submitCodeError) setSubmitCodeError("");
                 }}
-                className={`w-full text-center text-2xl font-mono tracking-[0.5em] py-3 border rounded-none bg-white text-zinc-900 placeholder-zinc-300 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                className={`w-full text-center text-2xl font-mono tracking-[0.5em] py-3 border rounded-lg bg-white text-zinc-900 placeholder-zinc-300 focus:outline-none focus:ring-2 focus:ring-[#E61E32] ${
                   submitCodeError ? "border-red-500 focus:ring-red-400" : "border-zinc-300"
                 }`}
                 autoFocus
@@ -1844,7 +1836,7 @@ export default function ExamSessionPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowCodeModal(false); setSubmitCodeInput(""); setSubmitCodeError(""); }}
-                className="flex-1 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
+                className="flex-1 py-2 border border-zinc-300 text-zinc-700 bg-white hover:bg-zinc-50 text-xs font-semibold rounded-lg cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1876,7 +1868,7 @@ export default function ExamSessionPage() {
                     setIsVerifyingCode(false);
                   }
                 }}
-                className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer border-none transition-colors"
+                className="flex-1 py-2 bg-[#E61E32] hover:bg-[#d01729] disabled:opacity-50 text-white text-xs font-semibold rounded-lg cursor-pointer border-none transition-colors"
               >
                 {isVerifyingCode ? "Verifying..." : "Confirm Submit"}
               </button>

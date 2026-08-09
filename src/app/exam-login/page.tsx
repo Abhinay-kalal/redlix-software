@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
+import { SmoothInput } from "@/components/ui/smooth-input";
 import { getVisitorId } from "@/utils/fingerprint";
 import Script from "next/script";
 
@@ -17,6 +18,8 @@ function ExamLoginContent() {
   const [hallTicket, setHallTicket] = useState("");
   const [nameError, setNameError] = useState("");
   const [htError, setHtError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsError, setTermsError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("Verifying credentials...");
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -79,6 +82,13 @@ function ExamLoginContent() {
       valid = false;
     } else {
       setHtError("");
+    }
+
+    if (!acceptedTerms) {
+      setTermsError("Please accept the terms and conditions to proceed.");
+      valid = false;
+    } else {
+      setTermsError("");
     }
 
     if (!turnstileToken) {
@@ -212,9 +222,9 @@ function ExamLoginContent() {
   if (isUnsupportedDevice) {
     return (
       <div className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900">
-        <div className="w-full max-w-md bg-white border border-zinc-200 p-8 text-center space-y-6 shadow-md">
-          <div className="w-16 h-16 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center mx-auto">
-            <svg className="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <div className="w-full max-w-md bg-white border border-zinc-200 p-8 text-center space-y-6 shadow-lg rounded-2xl">
+          <div className="w-16 h-16 rounded-full bg-[#E61E32]/10 border border-[#E61E32]/20 flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
@@ -226,7 +236,7 @@ function ExamLoginContent() {
             </p>
           </div>
 
-          <div className="bg-zinc-50 border border-zinc-200 p-4 space-y-2 text-left">
+          <div className="bg-zinc-50 border border-zinc-200 p-4 space-y-2 text-left rounded-xl">
             <p className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">Restricted Devices:</p>
             <ul className="text-xs text-zinc-650 space-y-1 list-disc pl-4">
               <li>Mobile Smart Phones (iOS, Android)</li>
@@ -244,60 +254,58 @@ function ExamLoginContent() {
   }
 
   return (
-    <FloatingPathsBackground position={-1} className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 font-sans text-zinc-900 overflow-hidden">
-      <div className="w-full max-w-4xl flex flex-col md:flex-row shadow-lg border border-zinc-200 bg-white relative z-10">
+    <FloatingPathsBackground position={-1} className="min-h-screen bg-zinc-100 flex items-center justify-center p-4 md:p-6 font-sans text-zinc-900 overflow-hidden relative">
+      <div className="w-full max-w-5xl flex flex-col md:flex-row shadow-md border border-zinc-200/80 bg-white relative z-10 rounded-2xl overflow-hidden">
 
-        <div className="bg-zinc-50 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200">
+        {/* Left Info Panel */}
+        <div className="bg-zinc-50/80 p-8 md:p-12 md:w-1/2 flex flex-col justify-between border-b md:border-b-0 md:border-r border-zinc-200/80">
           <div className="space-y-6">
-            <div className="flex items-center">
+            <div className="flex items-center -ml-1">
               <img
                 src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
-                alt="Redlix Secure Logo"
-                className="w-32 h-10 object-contain shrink-0"
+                alt="Redlix Logo"
+                className="h-12 md:h-14 w-auto object-contain object-left shrink-0"
               />
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-medium leading-snug tracking-tight mt-6 text-zinc-900">
-              Candidate Exam Portal
-            </h1>
-            <p className="text-zinc-500 text-sm max-w-xs leading-relaxed">
-              Enter your registered name and hall ticket number to access your assigned examination.
-            </p>
+            <div className="space-y-2 mt-4">
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-zinc-900 font-inter font-['Inter',sans-serif]">
+                Candidate Exam Portal
+              </h1>
+              <p className="text-zinc-600 text-sm leading-relaxed">
+                Enter your full name and hall ticket number to access your assigned examination.
+              </p>
+            </div>
+
             <div className="flex justify-center pt-2">
-              <Script
-                src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.14/dist/dotlottie-wc.js"
-                type="module"
-                strategy="afterInteractive"
-              />
-              {/* @ts-ignore */}
-              <dotlottie-wc
-                src="https://lottie.host/e6e11b63-fa23-46e2-8a7c-d5f6ec2d193f/Y5lstf8SOf.lottie"
-                style={{ width: "260px", height: "260px" }}
-                autoplay
-                loop
+              <iframe
+                src="https://lottie.host/embed/e9948351-dd15-427f-bde1-b547486d6c83/atd20DWZjT.lottie"
+                style={{ width: "280px", height: "280px", border: "none", overflow: "hidden" }}
+                title="Candidate Proctored Exam Animation"
               />
             </div>
           </div>
 
-          <p className="text-[10px] text-zinc-400 mt-8">
-            For support, contact your examination controller
+          <p className="text-xs text-zinc-500 mt-6">
+            Facing issues? Contact <span className="text-[#E61E32] font-semibold underline underline-offset-2 decoration-[#E61E32] cursor-pointer">Exam Administration</span>.
           </p>
         </div>
 
+        {/* Right Form Panel */}
         <div className="p-8 md:p-12 md:w-1/2 flex flex-col justify-center bg-white min-h-[400px]">
 
           {isLoading ? (
             <div className="py-8 flex flex-col items-center justify-center text-center gap-6">
               <div className="relative w-14 h-14">
-                <div className="absolute inset-0 rounded-full border-2 border-t-orange-500 border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
+                <div className="absolute inset-0 rounded-full border-2 border-t-[#E61E32] border-r-zinc-200 border-b-zinc-200 border-l-zinc-200 animate-spin" />
               </div>
               <p className="text-zinc-700 font-medium text-sm">{loadingMsg}</p>
             </div>
           ) : (
             <div className="w-full max-w-sm mx-auto">
               <div className="mb-6">
-                <h2 className="text-xl font-medium tracking-tight text-zinc-900">Sign In to Exam</h2>
-                <p className="text-xs text-zinc-500 mt-1">Your credentials are on your hall ticket / admit card</p>
+                <h2 className="text-xl font-semibold tracking-tight text-zinc-900 font-inter font-['Inter',sans-serif]">Sign In to Exam</h2>
+                <p className="text-xs text-zinc-500 mt-1">Find your hall ticket number on your admit card.</p>
               </div>
 
               <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
@@ -306,19 +314,17 @@ function ExamLoginContent() {
                   <label htmlFor="candidate-name" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Full Name
                   </label>
-                  <input
+                  <SmoothInput
                     id="candidate-name"
                     type="text"
-                    placeholder="As registered (e.g. Jean Doe)"
+                    placeholder="Enter your full name"
                     value={name}
                     onChange={(e) => { setName(e.target.value); if (nameError) setNameError(""); }}
-                    className={`text-sm w-full py-2 px-3 border rounded-none bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-orange-500 ${
-                      nameError ? "border-red-500 focus:ring-red-500" : "border-zinc-300 focus:border-orange-500"
-                    } transition-all`}
+                    error={!!nameError}
                     autoComplete="name"
                   />
                   {nameError && (
-                    <p className="text-red-500 text-xs mt-1">{nameError}</p>
+                    <p className="text-[#E61E32] text-xs mt-1 font-medium">{nameError}</p>
                   )}
                 </div>
 
@@ -326,20 +332,39 @@ function ExamLoginContent() {
                   <label htmlFor="hall-ticket" className="block text-xs font-medium text-zinc-700 mb-1.5">
                     Hall Ticket Number
                   </label>
-                  <input
+                  <SmoothInput
                     id="hall-ticket"
                     type="text"
                     placeholder="e.g. 26AI123456"
                     value={hallTicket}
                     onChange={(e) => { setHallTicket(e.target.value.toUpperCase()); if (htError) setHtError(""); }}
-                    className={`text-sm w-full py-2 px-3 border rounded-none bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono tracking-widest ${
-                      htError ? "border-red-500 focus:ring-red-500" : "border-zinc-300 focus:border-orange-500"
-                    } transition-all`}
+                    error={!!htError}
+                    className="font-mono tracking-widest"
                     autoComplete="off"
                     spellCheck={false}
                   />
                   {htError && (
-                    <p className="text-red-500 text-xs mt-1">{htError}</p>
+                    <p className="text-[#E61E32] text-xs mt-1 font-medium">{htError}</p>
+                  )}
+                </div>
+
+                <div className="pt-0.5">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => {
+                        setAcceptedTerms(e.target.checked);
+                        if (termsError) setTermsError("");
+                      }}
+                      className="w-4 h-4 rounded border-zinc-300 text-[#E61E32] focus:ring-[#E61E32] accent-[#E61E32] cursor-pointer shrink-0"
+                    />
+                    <span className="text-xs text-zinc-600 leading-tight">
+                      I accept the <span className="text-[#E61E32] font-semibold underline underline-offset-2 decoration-[#E61E32]">terms and conditions</span>
+                    </span>
+                  </label>
+                  {termsError && (
+                    <p className="text-[#E61E32] text-xs mt-1 font-medium">{termsError}</p>
                   )}
                 </div>
 
@@ -352,14 +377,28 @@ function ExamLoginContent() {
                   onExpire={() => setTurnstileToken("")}
                 />
                 {securityError && (
-                  <p className="text-red-500 text-xs mt-1">{securityError}</p>
+                  <p className="text-[#E61E32] text-xs mt-1 font-medium">{securityError}</p>
                 )}
 
                 <button
                   type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-4 rounded-none transition-colors cursor-pointer mt-2 shadow-sm text-sm"
+                  className="group w-full bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer mt-2 shadow-sm text-sm flex items-center justify-center gap-2"
                 >
-                  Enter Exam →
+                  <span>Start Exam</span>
+                  <svg
+                    className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.2}
+                      d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+                    />
+                  </svg>
                 </button>
               </form>
             </div>

@@ -152,100 +152,120 @@ export default function ExamPage() {
   return (
     <div className="min-h-screen bg-zinc-50 font-sans text-zinc-900 flex flex-col">
 
-      {}
-      <header className="bg-orange-500 border-b border-orange-600 shadow-sm shrink-0">
-        <div className="max-w-5xl mx-auto px-8 py-5 flex items-center justify-between gap-4">
-          {}
-          <div className="flex items-center gap-4 min-w-0">
-            {exam.company_logo
-              ? <img src={exam.company_logo} alt={exam.company_name} className="w-10 h-10 object-contain rounded-none shrink-0" />
-              : <img src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493" alt="Redlix Secure" className="w-10 h-10 object-contain shrink-0" />
-            }
-            <div className="min-w-0">
-              <p className="text-white font-bold text-base leading-tight truncate">{exam.name}</p>
-              <p className="text-orange-100 text-xs font-medium truncate mt-0.5">{exam.company_name}</p>
+      {/* Top Header */}
+      <header className="bg-[#E61E32] border-b border-[#d01729] shadow-xs shrink-0">
+        <div className="max-w-5xl mx-auto px-6 md:px-8 py-3.5 flex items-center justify-between gap-4">
+          
+          {/* Logo & Exam Title */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <img
+              src="https://ik.imagekit.io/dypkhqxip/logotraining?updatedAt=1783099023149"
+              alt="Redlix Secure"
+              className="h-8 w-auto object-contain shrink-0"
+            />
+            <div className="min-w-0 border-l border-white/20 pl-3">
+              <p className="text-white font-semibold text-base font-inter leading-tight truncate">{exam.name}</p>
+              <p className="text-white/80 text-xs font-medium truncate mt-0.5">{exam.company_name}</p>
             </div>
           </div>
 
-          {}
+          {/* Real-time Status Badge */}
           <div className="shrink-0 text-right">
             {isStarted ? (
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-white text-xs font-bold">Exam Open</p>
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs border border-white/30 px-3 py-1 rounded-full text-white text-xs font-semibold shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Exam Open</span>
               </div>
             ) : !isStarted && countdown.total > 0 ? (
-              <div>
-                <p className="text-orange-200 text-[9px] font-bold uppercase tracking-widest mb-1">Starts in</p>
-                <p className="text-white font-bold text-xl tabular-nums tracking-tight">
-                  {countdown.h}<span className="text-orange-200 mx-0.5">:</span>{countdown.m}<span className="text-orange-200 mx-0.5">:</span>{countdown.s}
-                </p>
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs border border-white/30 px-3 py-1 rounded-full text-white text-xs font-semibold shadow-xs">
+                <span className="text-white/80 text-[11px] font-normal">Starts in</span>
+                <span className="tabular-nums font-mono font-bold tracking-tight">
+                  {countdown.h}:{countdown.m}:{countdown.s}
+                </span>
               </div>
             ) : (
-              <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${isChecking ? "bg-yellow-300 animate-ping" : "bg-orange-300 animate-pulse"}`} />
-                  <p className="text-orange-100 text-xs font-medium">Waiting for admin</p>
-                </div>
-                <p className="text-orange-200 text-[10px] tabular-nums">
-                  {isChecking ? "Checking..." : `Next check in ${nextCheck}s`}
-                </p>
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xs border border-white/30 px-3 py-1 rounded-full text-white text-xs font-semibold shadow-xs">
+                <span className={`w-2 h-2 rounded-full ${isChecking ? "bg-amber-300 animate-ping" : "bg-amber-300 animate-pulse"}`} />
+                <span>Waiting for Admin</span>
               </div>
             )}
           </div>
         </div>
       </header>
 
-      {}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-10 flex flex-col gap-8">
+      {/* Main Container */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-8 md:py-10 flex flex-col gap-5">
 
-        {}
-        <div className="bg-white border border-zinc-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-5">
-          {photoUrl && (
-            <img src={photoUrl} alt={candidateName} className="w-16 h-20 object-cover border border-zinc-300 shrink-0" />
+        {/* Candidate Profile Card */}
+        <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-6">
+          {photoUrl ? (
+            <img src={photoUrl} alt={candidateName} className="w-18 h-18 aspect-square object-cover rounded-xl border border-zinc-200/90 shrink-0 shadow-xs" />
+          ) : (
+            <div className="w-18 h-18 aspect-square rounded-xl bg-zinc-50 border border-zinc-200/90 flex items-center justify-center shrink-0 shadow-xs p-2.5">
+              <img src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493" alt="Candidate Logo" className="w-11 h-11 object-contain" />
+            </div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-3 flex-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-4 flex-1">
             <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Candidate Name</p>
-              <p className="text-sm font-semibold text-zinc-800 mt-0.5">{candidateName}</p>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Candidate Name</p>
+              <p className="text-sm font-semibold text-zinc-900 font-inter mt-1">{candidateName}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Hall Ticket No.</p>
-              <p className="text-sm font-mono font-semibold text-zinc-800 mt-0.5">{hallTicketNumber}</p>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Hall Ticket No.</p>
+              <p className="text-sm font-mono font-semibold text-zinc-900 mt-1">{hallTicketNumber}</p>
             </div>
             <div>
-              <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Registration No.</p>
-              <p className="text-sm font-mono font-semibold text-zinc-800 mt-0.5">{registrationNumber}</p>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Registration No.</p>
+              <p className="text-sm font-mono font-semibold text-zinc-900 mt-1">{registrationNumber}</p>
             </div>
           </div>
         </div>
 
-        {}
-        {isStarted && (
-          <div className="bg-orange-50 border border-orange-200 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Exam Action Banner */}
+        {isStarted ? (
+          <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs py-3.5 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <div>
-                <p className="text-sm font-bold text-zinc-900">Exam is now open</p>
-                <p className="text-xs text-zinc-500 mt-0.5">The administrator has enabled access. You may begin.</p>
+                <p className="text-xs font-semibold text-zinc-900 font-inter">Exam is now open</p>
+                <p className="text-[11px] text-zinc-500 mt-0.5">The administrator has enabled access. Click below to enter the verification lobby.</p>
               </div>
             </div>
             <button
               onClick={() => router.push("/exam-ready")}
-              className="px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-none shadow-sm transition-colors cursor-pointer shrink-0"
+              className="px-5 py-2 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer shrink-0 border-none flex items-center justify-center gap-1.5"
             >
-              Start Exam →
+              <span>Start Exam</span>
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
             </button>
+          </div>
+        ) : (
+          <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs py-6 px-8 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center mx-auto">
+              <span className="material-symbols-outlined text-lg animate-spin">hourglass_empty</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-zinc-900 font-inter">Waiting for Administrator Access</h3>
+              <p className="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed">
+                Your hall ticket is verified. Please keep this window open; exam access will be automatically unlocked when the administrator enables the test.
+              </p>
+            </div>
+            <div className="pt-1">
+              <span className="inline-flex items-center gap-2 text-[11px] font-semibold text-zinc-500 bg-zinc-50 px-3 py-1 rounded-full border border-zinc-200/80">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>{isChecking ? "Checking server status..." : `Checking status automatically in ${nextCheck}s`}</span>
+              </span>
+            </div>
           </div>
         )}
 
       </main>
 
-      {}
-      <footer className="border-t border-zinc-200 bg-white py-3 px-6 shrink-0">
+      {/* Footer */}
+      <footer className="border-t border-zinc-200/90 bg-zinc-100 py-3.5 px-6 shrink-0 text-xs text-zinc-500">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <p className="text-[10px] text-zinc-400">Powered by <span className="font-semibold text-zinc-600">Redlix Secure</span></p>
-          <p className="text-[10px] text-zinc-400 font-mono">{hallTicketNumber}</p>
+          <p className="font-medium text-xs">Powered by <span className="font-semibold text-zinc-800">Redlix Secure</span></p>
+          <p className="font-mono text-xs text-zinc-500">{hallTicketNumber}</p>
         </div>
       </footer>
     </div>

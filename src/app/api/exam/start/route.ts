@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,20 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secure-admin-token-2026";
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY ??
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      {
-        global: {
-          headers: {
-            "x-admin-token": ADMIN_TOKEN,
-            "x-candidate-hall-ticket": hallTicketNumber,
-          },
-        },
-      }
-    );
+    const supabase = getSupabaseAdminClient();
 
     // 1. Check if there is an EXISTING active session with a DIFFERENT visitorId
     const { data: existing, error: fetchError } = await supabase
