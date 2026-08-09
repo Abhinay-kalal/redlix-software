@@ -583,9 +583,7 @@ function EditRegistrationContent() {
             </div>
           </div>
 
-          <div id="hall-ticket-print-area" className="bg-white border border-zinc-200/90 rounded-2xl p-8 shadow-xs font-sans text-zinc-700 text-left space-y-6 relative overflow-hidden print:border-none print:shadow-none print:p-0 w-full">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-[#E61E32]" />
-
+          <div id="hall-ticket-print-area" className="bg-white border border-zinc-200/90 rounded-2xl p-5 sm:p-8 shadow-xs font-sans text-zinc-700 text-left space-y-6 relative overflow-hidden print:border-none print:shadow-none print:p-0 w-full">
             <div className="border-b border-zinc-200/80 pb-5 pt-1 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left w-full md:w-auto justify-center sm:justify-start">
                 <div className="w-12 h-12 bg-zinc-100 border border-zinc-200 rounded-xl flex items-center justify-center font-bold text-zinc-500 uppercase tracking-wider text-sm select-none">
