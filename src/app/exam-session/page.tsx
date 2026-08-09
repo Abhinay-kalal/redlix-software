@@ -29,6 +29,7 @@ import { TEST_SUITE } from "./testCases";
 import { TRAINING01_QUESTIONS } from "./training01Questions";
 import { gradeTraining01Full } from "./training01AnswerKey";
 import { PHASE02_QUESTIONS } from "./phase02Questions";
+import { MARKETING_QUESTIONS } from "./marketingQuestions";
 
 interface CodeEditorProps {
   value: string;
@@ -507,7 +508,12 @@ export default function ExamSessionPage() {
 
         // ── Redlix Training Exam 01 ─────────────────────────────────────────
         const examNameLower = (parsed.exam.name || "").toLowerCase();
-        if (examNameLower.includes("redlix training exam 01")) {
+        if (examNameLower.includes("marketing")) {
+          // Use the dedicated 50 MCQs Marketing Wing question bank
+          loadedQuestions = MARKETING_QUESTIONS.map((q) => ({ ...q }));
+          // 3 Hours (180 Minutes) duration
+          setTimeLeft(180 * 60);
+        } else if (examNameLower.includes("redlix training exam 01")) {
           // Use the dedicated training question bank (no shuffle needed)
           loadedQuestions = TRAINING01_QUESTIONS.map((q) => ({ ...q }));
           setIsTraining01(true);
