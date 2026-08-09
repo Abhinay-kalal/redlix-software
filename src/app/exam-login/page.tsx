@@ -6,11 +6,13 @@ import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
 import { SmoothInput } from "@/components/ui/smooth-input";
 import { getVisitorId } from "@/utils/fingerprint";
+import { createClient } from "@/utils/supabase/client";
 import Script from "next/script";
 
 function ExamLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const supabase = createClient();
 
   const examIdParam = searchParams.get("examId");
 
@@ -27,6 +29,139 @@ function ExamLoginContent() {
   const visitorIdRef = useRef<string>("");
 
   const [isUnsupportedDevice, setIsUnsupportedDevice] = useState(false);
+
+  // Join with Code state variables
+  const [isJoinWithCode, setIsJoinWithCode] = useState(false);
+  const [quickExamCode, setQuickExamCode] = useState("");
+  const [availableExams, setAvailableExams] = useState<any[]>([]);
+  const [quickPhoto, setQuickPhoto] = useState<string>("");
+  const [quickName, setQuickName] = useState("");
+  const [quickEmail, setQuickEmail] = useState("");
+  const [quickError, setQuickError] = useState("");
+  const [isQuickSubmitting, setIsQuickSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const { data } = await supabase
+          .from("exams")
+          .select("id, name, company_name, date, time")
+          .order("id", { ascending: true });
+        if (data && data.length > 0) {
+          setAvailableExams(data);
+          setQuickExamCode(String(data[0].id));
+        }
+      } catch (err) {
+        console.error("Failed to fetch exams:", err);
+      }
+    };
+    fetchExams();
+  }, []);
+
+  const handleQuickPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setQuickError("Candidate photo must be under 2MB in size.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setQuickPhoto(reader.result as string);
+      setQuickError("");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleQuickJoinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickName.trim()) {
+      setQuickError("Please enter your full name.");
+      return;
+    }
+    if (!quickEmail.trim()) {
+      setQuickError("Please enter your email address.");
+      return;
+    }
+    if (!quickPhoto) {
+      setQuickError("Please upload your candidate verification photo.");
+      return;
+    }
+
+    setIsQuickSubmitting(true);
+    setQuickError("");
+
+    try {
+      const selectedExamId = Number(quickExamCode);
+      const { data: targetExam, error: examErr } = await supabase
+        .from("exams")
+        .select("*")
+        .eq("id", selectedExamId)
+        .single();
+
+      if (examErr || !targetExam) {
+        setQuickError("Selected examination reference was not found.");
+        setIsQuickSubmitting(false);
+        return;
+      }
+
+      const regNum = String(Math.floor(100000 + Math.random() * 900000));
+      const htNum = "26AI" + String(Math.floor(100000 + Math.random() * 900000));
+
+      const { data: existingReg } = await supabase
+        .from("registrations")
+        .select("*")
+        .eq("exam_id", selectedExamId)
+        .eq("email", quickEmail.trim())
+        .maybeSingle();
+
+      let candidateData;
+      if (existingReg) {
+        candidateData = existingReg;
+      } else {
+        const { data: newReg, error: insertErr } = await supabase
+          .from("registrations")
+          .insert({
+            exam_id: selectedExamId,
+            candidate_name: quickName.trim(),
+            email: quickEmail.trim(),
+            phone: "+91 9876543210",
+            college: "Student Forge Portal",
+            department: "General",
+            year_of_study: "1st Year",
+            photo_url: quickPhoto,
+            registration_number: regNum,
+            hall_ticket_number: htNum,
+          })
+          .select()
+          .single();
+
+        if (insertErr) {
+          setQuickError(insertErr.message);
+          setIsQuickSubmitting(false);
+          return;
+        }
+        candidateData = newReg;
+      }
+
+      sessionStorage.setItem(
+        "exam_session",
+        JSON.stringify({
+          candidateName: candidateData.candidate_name,
+          hallTicketNumber: candidateData.hall_ticket_number,
+          registrationNumber: candidateData.registration_number,
+          photoUrl: candidateData.photo_url || quickPhoto,
+          visitorId: visitorIdRef.current,
+          exam: targetExam,
+        })
+      );
+
+      router.push("/exam");
+    } catch (err: any) {
+      setQuickError(err.message || "Quick registration failed. Please try again.");
+      setIsQuickSubmitting(false);
+    }
+  };
 
   // Eagerly collect fingerprint in the background so it's ready when the form submits
   useEffect(() => {
@@ -301,6 +436,124 @@ function ExamLoginContent() {
               </div>
               <p className="text-zinc-700 font-medium text-sm">{loadingMsg}</p>
             </div>
+          ) : isJoinWithCode ? (
+            <div className="w-full max-w-sm mx-auto">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-xl font-semibold tracking-tight text-zinc-900 font-inter">Join with Code</h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">Quick candidate registration &amp; hall ticket entry</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsJoinWithCode(false)}
+                  className="text-xs text-[#E61E32] hover:underline font-semibold cursor-pointer flex items-center gap-1"
+                >
+                  ← Sign In
+                </button>
+              </div>
+
+              {quickError && (
+                <div className="p-3 bg-red-50 border border-red-200/80 rounded-xl text-red-800 text-xs font-semibold flex items-center gap-2 mb-4">
+                  <span className="material-symbols-rounded text-sm shrink-0">error</span>
+                  <span>{quickError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleQuickJoinSubmit} className="flex flex-col gap-3.5" noValidate>
+                <div>
+                  <label htmlFor="quick-exam-select" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Select Examination / Paper *
+                  </label>
+                  <select
+                    id="quick-exam-select"
+                    value={quickExamCode}
+                    onChange={(e) => setQuickExamCode(e.target.value)}
+                    className="w-full text-xs py-2.5 px-3 border border-zinc-200 rounded-lg bg-white font-medium text-zinc-800 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32]"
+                  >
+                    {availableExams.map((ex) => (
+                      <option key={ex.id} value={ex.id}>
+                        {ex.name} ({ex.company_name})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="quick-photo-input" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Candidate Verification Photo *
+                  </label>
+                  <div className="flex items-center gap-3 p-2.5 bg-zinc-50 border border-zinc-200 rounded-lg">
+                    <div className="w-10 h-12 bg-white border border-zinc-200 rounded-md overflow-hidden shrink-0 flex items-center justify-center relative shadow-xs">
+                      {quickPhoto ? (
+                        <img src={quickPhoto} alt="Photo Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] text-zinc-400 font-medium">Photo</span>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <input
+                        id="quick-photo-input"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleQuickPhotoUpload}
+                        className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border file:border-zinc-200 file:text-[11px] file:font-semibold file:bg-white file:text-zinc-800 hover:file:bg-zinc-100 cursor-pointer w-full"
+                      />
+                      <p className="text-[10px] text-zinc-400">Passport photo (Max 2MB)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="quick-name" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    id="quick-name"
+                    type="text"
+                    required
+                    placeholder="e.g. Jean Doe"
+                    value={quickName}
+                    onChange={(e) => setQuickName(e.target.value)}
+                    className="w-full text-xs py-2.5 px-3 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="quick-email" className="block text-xs font-medium text-zinc-700 mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    id="quick-email"
+                    type="email"
+                    required
+                    placeholder="e.g. jean.doe@edu.in"
+                    value={quickEmail}
+                    onChange={(e) => setQuickEmail(e.target.value)}
+                    className="w-full text-xs py-2.5 px-3 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] font-medium"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isQuickSubmitting}
+                  className="group w-full bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white font-semibold py-2.5 px-4 rounded-lg transition-all cursor-pointer mt-2 text-xs flex items-center justify-center gap-2 shadow-sm"
+                >
+                  {isQuickSubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-t-transparent border-white animate-spin" />
+                      <span>Generating Hall Ticket &amp; Joining...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Join &amp; Start Exam</span>
+                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
           ) : (
             <div className="w-full max-w-sm mx-auto">
               <div className="mb-6">
@@ -400,6 +653,18 @@ function ExamLoginContent() {
                     />
                   </svg>
                 </button>
+
+                <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs mt-1">
+                  <span className="text-zinc-500 font-medium">Don&apos;t have a Hall Ticket?</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsJoinWithCode(true)}
+                    className="text-[#E61E32] font-bold hover:underline cursor-pointer flex items-center gap-1 bg-red-50 hover:bg-red-100 border border-red-200/80 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <span className="material-symbols-rounded text-sm">key</span>
+                    <span>Join with Code</span>
+                  </button>
+                </div>
               </form>
             </div>
           )}
