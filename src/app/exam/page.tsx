@@ -240,9 +240,13 @@ export default function ExamPage() {
             </button>
           </div>
         ) : (
-          <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs py-6 px-8 text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 border border-amber-200/80 flex items-center justify-center mx-auto">
-              <span className="material-symbols-outlined text-lg animate-spin">hourglass_empty</span>
+          <div className="bg-white border border-zinc-200/90 rounded-xl shadow-xs py-6 px-8 text-center space-y-3 flex flex-col items-center">
+            <div className="flex justify-center -my-3">
+              <iframe
+                src="https://lottie.host/embed/857b77fd-0d14-403a-bdce-4cd63b7b1a56/ZOSbtwaL5v.lottie"
+                style={{ width: "220px", height: "220px", border: "none", overflow: "hidden" }}
+                title="Waiting for Administrator Access Animation"
+              />
             </div>
             <div className="space-y-1">
               <h3 className="text-sm font-semibold text-zinc-900 font-inter">Waiting for Administrator Access</h3>
