@@ -31,6 +31,7 @@ import { gradeTraining01Full } from "./training01AnswerKey";
 import { PHASE02_QUESTIONS } from "./phase02Questions";
 import { MARKETING_QUESTIONS } from "./marketingQuestions";
 import { ANALYTICS_QUESTIONS } from "./analyticsQuestions";
+import { UIUX_QUESTIONS } from "./uiuxQuestions";
 
 interface CodeEditorProps {
   value: string;
@@ -509,7 +510,11 @@ export default function ExamSessionPage() {
 
         // ── Redlix Training Exam 01 ─────────────────────────────────────────
         const examNameLower = (parsed.exam.name || "").toLowerCase();
-        if (examNameLower.includes("data analytics") || examNameLower.includes("analytics")) {
+        if (examNameLower.includes("ui") || examNameLower.includes("ux")) {
+          // Use the dedicated 50 MCQs UI & UX Wing question bank
+          loadedQuestions = UIUX_QUESTIONS.map((q) => ({ ...q }));
+          setTimeLeft(180 * 60);
+        } else if (examNameLower.includes("data analytics") || examNameLower.includes("analytics")) {
           // Use the dedicated 50 MCQs Data Analytics Wing question bank
           loadedQuestions = ANALYTICS_QUESTIONS.map((q) => ({ ...q }));
           setTimeLeft(180 * 60);
