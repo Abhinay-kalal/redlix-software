@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
-const supabase = getSupabaseAdminClient();
-
 export async function GET(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     // Read session cookie
     const emailCookie = req.cookies.get("candidate_session_token")?.value;

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
-const supabase = getSupabaseAdminClient();
-
 const LOCALHOST_BYPASS = "LOCALHOST_BYPASS_TOKEN";
 
 async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
@@ -30,6 +28,7 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     const body = await req.json();
     const { action } = body;

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
-const supabase = getSupabaseAdminClient();
-
 export async function GET(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     const { searchParams } = new URL(req.url);
     const hallTicketNumber = searchParams.get("hallTicketNumber");
@@ -44,6 +43,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     const body = await req.json();
     const { hallTicketNumber, answers } = body as {

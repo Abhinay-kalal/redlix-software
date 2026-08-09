@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
-const supabase = getSupabaseAdminClient();
-
 export async function GET(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   const { searchParams } = new URL(req.url);
   const examId = searchParams.get("examId");
 

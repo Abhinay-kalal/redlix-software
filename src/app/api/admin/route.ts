@@ -4,8 +4,6 @@ import { prisma } from "@/lib/prisma";
 
 const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_SUPABASE_TOKEN ?? "redlix-secure-admin-token-2026";
 
-const supabase = getSupabaseAdminClient();
-
 function isAdminAuthorized(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");
   const cookieToken = req.cookies.get("admin_session_token")?.value;
@@ -71,6 +69,7 @@ export async function GET(req: NextRequest) {
 
   if (resource === "security_logs") {
     try {
+      const supabase = getSupabaseAdminClient();
       const { data, error } = await supabase
         .from("security_logs")
         .select("*")

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/utils/supabase/admin";
 
-const supabase = getSupabaseAdminClient();
-
 export async function GET(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     const { data, error } = await supabase
       .from("piscidrop_company_profile")
@@ -22,6 +21,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const supabase = getSupabaseAdminClient();
   try {
     const body = await req.json();
     const {
