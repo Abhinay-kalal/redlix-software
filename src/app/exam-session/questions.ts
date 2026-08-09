@@ -1,3 +1,8 @@
+export interface TestCaseItem {
+  input: string;
+  expectedOutput: string;
+}
+
 export interface Question {
   id: number;
   type: "mcq" | "coding" | "open";
@@ -7,6 +12,7 @@ export interface Question {
   options?: string[];
   sampleInput?: string;
   sampleOutput?: string;
+  testCases?: TestCaseItem[];
   starterCode?: string;
   marks: number;
 }

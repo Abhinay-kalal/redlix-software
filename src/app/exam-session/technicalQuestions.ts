@@ -296,8 +296,15 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 26,
-    questionText: "Reverse a String: Write a program that reverses a string without using a built-in reverse function.\n\nExample: Input: 'StudentForge' -> Output: 'egroFtnedutS'",
-    starterCode: `// Reverse a string without using built-in reverse()\nfunction reverseString(str) {\n  let reversed = "";\n  for (let i = str.length - 1; i >= 0; i--) {\n    reversed += str[i];\n  }\n  return reversed;\n}\n\nconsole.log(reverseString("StudentForge")); // egroFtnedutS`,
+    questionText: "Reverse a String: Write a program that reverses a string without using a built-in reverse function.",
+    sampleInput: '"StudentForge"',
+    sampleOutput: '"egroFtnedutS"',
+    testCases: [
+      { input: '"StudentForge"', expectedOutput: '"egroFtnedutS"' },
+      { input: '"hello"', expectedOutput: '"olleh"' },
+      { input: '"Redlix"', expectedOutput: '"xilderR"' }
+    ],
+    starterCode: `// Reverse a string without using built-in reverse()\nfunction reverseString(str) {\n  let reversed = "";\n  for (let i = str.length - 1; i >= 0; i--) {\n    reversed += str[i];\n  }\n  return reversed;\n}\n\nconsole.log(reverseString("StudentForge"));`,
     marks: 2
   },
   {
@@ -305,7 +312,14 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 27,
-    questionText: "Palindrome Checker: Write a program that checks whether a given string is a palindrome.\n\nExample: Input: 'madam' -> Output: Palindrome",
+    questionText: "Palindrome Checker: Write a program that checks whether a given string is a palindrome.",
+    sampleInput: '"madam"',
+    sampleOutput: '"Palindrome"',
+    testCases: [
+      { input: '"madam"', expectedOutput: '"Palindrome"' },
+      { input: '"racecar"', expectedOutput: '"Palindrome"' },
+      { input: '"hello"', expectedOutput: '"Not Palindrome"' }
+    ],
     starterCode: `// Palindrome Checker\nfunction isPalindrome(str) {\n  const clean = str.toLowerCase();\n  const len = clean.length;\n  for (let i = 0; i < len / 2; i++) {\n    if (clean[i] !== clean[len - 1 - i]) return false;\n  }\n  return true;\n}\n\nconsole.log(isPalindrome("madam") ? "Palindrome" : "Not Palindrome");`,
     marks: 2
   },
@@ -314,8 +328,14 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 28,
-    questionText: "Find Duplicate Elements: Write a program that finds all duplicate values in an array.\n\nExample: Input: [1, 2, 3, 2, 4, 1, 5] -> Output: [1, 2]",
-    starterCode: `// Find Duplicate Elements in Array\nfunction findDuplicates(arr) {\n  const duplicates = [];\n  const seen = new Set();\n  for (const item of arr) {\n    if (seen.has(item) && !duplicates.includes(item)) {\n      duplicates.push(item);\n    }\n    seen.add(item);\n  }\n  return duplicates;\n}\n\nconsole.log(findDuplicates([1, 2, 3, 2, 4, 1, 5]));`,
+    questionText: "Find Duplicate Elements: Write a program that finds all duplicate values in an array.",
+    sampleInput: '[1, 2, 3, 2, 4, 1, 5]',
+    sampleOutput: '[1, 2]',
+    testCases: [
+      { input: '[1, 2, 3, 2, 4, 1, 5]', expectedOutput: '[1, 2]' },
+      { input: '[5, 5, 5, 10]', expectedOutput: '[5]' }
+    ],
+    starterCode: `// Find Duplicate Elements in Array\nfunction findDuplicates(arr) {\n  const duplicates = [];\n  const seen = new Set();\n  for (const item of arr) {\n    if (seen.has(item) && !duplicates.includes(item)) {\n      duplicates.push(item);\n    }\n    seen.add(item);\n  }\n  return duplicates;\n}\n\nconsole.log(JSON.stringify(findDuplicates([1, 2, 3, 2, 4, 1, 5])));`,
     marks: 2
   },
   {
@@ -323,7 +343,13 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 29,
-    questionText: "Find Second Largest Number: Write a program to find the second-largest unique number in an array without sorting the array.\n\nExample: Input: [10, 5, 20, 8, 20] -> Output: 10",
+    questionText: "Find Second Largest Number: Write a program to find the second-largest unique number in an array without sorting the array.",
+    sampleInput: '[10, 5, 20, 8, 20]',
+    sampleOutput: '10',
+    testCases: [
+      { input: '[10, 5, 20, 8, 20]', expectedOutput: '10' },
+      { input: '[1, 2, 3, 4, 5]', expectedOutput: '4' }
+    ],
     starterCode: `// Find Second Largest Unique Number without sorting\nfunction secondLargest(arr) {\n  let largest = -Infinity;\n  let second = -Infinity;\n  for (const num of arr) {\n    if (num > largest) {\n      second = largest;\n      largest = num;\n    } else if (num > second && num < largest) {\n      second = num;\n    }\n  }\n  return second;\n}\n\nconsole.log(secondLargest([10, 5, 20, 8, 20]));`,
     marks: 2
   },
@@ -332,8 +358,13 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 30,
-    questionText: "Frequency Counter: Write a program that counts how many times each element occurs in an array.\n\nExample: Input: [\"JS\", \"Python\", \"JS\", \"Java\"]",
-    starterCode: `// Frequency Counter\nfunction countFrequency(arr) {\n  const freq = {};\n  for (const item of arr) {\n    freq[item] = (freq[item] || 0) + 1;\n  }\n  return freq;\n}\n\nconsole.log(countFrequency(["JS", "Python", "JS", "Java"]));`,
+    questionText: "Frequency Counter: Write a program that counts how many times each element occurs in an array.",
+    sampleInput: '["JS", "Python", "JS", "Java"]',
+    sampleOutput: '{"JS":2,"Python":1,"Java":1}',
+    testCases: [
+      { input: '["JS", "Python", "JS", "Java"]', expectedOutput: '{"JS":2,"Python":1,"Java":1}' }
+    ],
+    starterCode: `// Frequency Counter\nfunction countFrequency(arr) {\n  const freq = {};\n  for (const item of arr) {\n    freq[item] = (freq[item] || 0) + 1;\n  }\n  return freq;\n}\n\nconsole.log(JSON.stringify(countFrequency(["JS", "Python", "JS", "Java"])));`,
     marks: 2
   },
   {
@@ -341,8 +372,14 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 31,
-    questionText: "Two Sum: Write a program that finds two numbers whose sum equals a given target.\n\nExample: Input: [2, 7, 11, 15], Target: 9 -> Output: [2, 7]",
-    starterCode: `// Two Sum Problem\nfunction twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const diff = target - nums[i];\n    if (map.has(diff)) {\n      return [diff, nums[i]];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}\n\nconsole.log(twoSum([2, 7, 11, 15], 9));`,
+    questionText: "Two Sum: Write a program that finds two numbers whose sum equals a given target.",
+    sampleInput: 'nums = [2, 7, 11, 15], target = 9',
+    sampleOutput: '[2, 7]',
+    testCases: [
+      { input: 'nums = [2, 7, 11, 15], target = 9', expectedOutput: '[2, 7]' },
+      { input: 'nums = [3, 2, 4], target = 6', expectedOutput: '[2, 4]' }
+    ],
+    starterCode: `// Two Sum Problem\nfunction twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const diff = target - nums[i];\n    if (map.has(diff)) {\n      return [diff, nums[i]];\n    }\n    map.set(nums[i], i);\n  }\n  return [];\n}\n\nconsole.log(JSON.stringify(twoSum([2, 7, 11, 15], 9)));`,
     marks: 2
   },
   {
@@ -350,8 +387,13 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 32,
-    questionText: "Remove Duplicates: Write a program that removes duplicate values from an array without using a built-in Set.\n\nExample: Input: [1, 2, 2, 3, 3, 4] -> Output: [1, 2, 3, 4]",
-    starterCode: `// Remove Duplicates without Set\nfunction removeDuplicates(arr) {\n  const unique = [];\n  for (const item of arr) {\n    if (!unique.includes(item)) {\n      unique.push(item);\n    }\n  }\n  return unique;\n}\n\nconsole.log(removeDuplicates([1, 2, 2, 3, 3, 4]));`,
+    questionText: "Remove Duplicates: Write a program that removes duplicate values from an array without using a built-in Set.",
+    sampleInput: '[1, 2, 2, 3, 3, 4]',
+    sampleOutput: '[1, 2, 3, 4]',
+    testCases: [
+      { input: '[1, 2, 2, 3, 3, 4]', expectedOutput: '[1, 2, 3, 4]' }
+    ],
+    starterCode: `// Remove Duplicates without Set\nfunction removeDuplicates(arr) {\n  const unique = [];\n  for (const item of arr) {\n    if (!unique.includes(item)) {\n      unique.push(item);\n    }\n  }\n  return unique;\n}\n\nconsole.log(JSON.stringify(removeDuplicates([1, 2, 2, 3, 3, 4])));`,
     marks: 2
   },
   {
@@ -359,7 +401,13 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 33,
-    questionText: "Fibonacci Sequence: Write a program to generate the first N Fibonacci numbers.\n\nExample: Input: 7 -> Output: 0 1 1 2 3 5 8",
+    questionText: "Fibonacci Sequence: Write a program to generate the first N Fibonacci numbers.",
+    sampleInput: '7',
+    sampleOutput: '"0 1 1 2 3 5 8"',
+    testCases: [
+      { input: 'n = 7', expectedOutput: '"0 1 1 2 3 5 8"' },
+      { input: 'n = 5', expectedOutput: '"0 1 1 2 3"' }
+    ],
     starterCode: `// Generate first N Fibonacci Numbers\nfunction fibonacci(n) {\n  if (n <= 0) return [];\n  if (n === 1) return [0];\n  const fib = [0, 1];\n  for (let i = 2; i < n; i++) {\n    fib.push(fib[i - 1] + fib[i - 2]);\n  }\n  return fib;\n}\n\nconsole.log(fibonacci(7).join(" "));`,
     marks: 2
   },
@@ -368,7 +416,13 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 34,
-    questionText: "Prime Number Checker: Write a program that determines whether a given number is prime.\n\nExample: Input: 29 -> Output: Prime",
+    questionText: "Prime Number Checker: Write a program that determines whether a given number is prime.",
+    sampleInput: '29',
+    sampleOutput: '"Prime"',
+    testCases: [
+      { input: '29', expectedOutput: '"Prime"' },
+      { input: '12', expectedOutput: '"Not Prime"' }
+    ],
     starterCode: `// Prime Number Checker\nfunction isPrime(num) {\n  if (num <= 1) return false;\n  for (let i = 2; i <= Math.sqrt(num); i++) {\n    if (num % i === 0) return false;\n  }\n  return true;\n}\n\nconsole.log(isPrime(29) ? "Prime" : "Not Prime");`,
     marks: 2
   },
@@ -377,7 +431,12 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 35,
-    questionText: "Find Missing Number: An array contains numbers from 1 to N, with one number missing. Write a program to find the missing number.\n\nExample: Input: [1, 2, 3, 5, 6], N = 6 -> Output: 4",
+    questionText: "Find Missing Number: An array contains numbers from 1 to N, with one number missing. Write a program to find the missing number.",
+    sampleInput: 'arr = [1, 2, 3, 5, 6], N = 6',
+    sampleOutput: '4',
+    testCases: [
+      { input: 'arr = [1, 2, 3, 5, 6], n = 6', expectedOutput: '4' }
+    ],
     starterCode: `// Find Missing Number in [1..N]\nfunction findMissingNumber(arr, n) {\n  const expectedSum = (n * (n + 1)) / 2;\n  const actualSum = arr.reduce((acc, curr) => acc + curr, 0);\n  return expectedSum - actualSum;\n}\n\nconsole.log(findMissingNumber([1, 2, 3, 5, 6], 6));`,
     marks: 2
   },
@@ -387,6 +446,12 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 36,
     questionText: "Binary Search: Implement Binary Search from scratch on a sorted array. Return index or -1 if not found.",
+    sampleInput: 'arr = [10, 20, 30, 40, 50], target = 30',
+    sampleOutput: '2',
+    testCases: [
+      { input: 'arr = [10, 20, 30, 40, 50], target = 30', expectedOutput: '2' },
+      { input: 'arr = [10, 20, 30, 40, 50], target = 99', expectedOutput: '-1' }
+    ],
     starterCode: `// Implement Binary Search\nfunction binarySearch(arr, target) {\n  let left = 0;\n  let right = arr.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}\n\nconsole.log(binarySearch([10, 20, 30, 40, 50], 30));`,
     marks: 2
   },
@@ -395,8 +460,13 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     type: "coding",
     section: "C",
     number: 37,
-    questionText: "Merge Two Sorted Arrays: Write a program that merges two sorted arrays into one sorted array without using built-in sort().\n\nExample: A = [1, 3, 5], B = [2, 4, 6] -> Output: [1, 2, 3, 4, 5, 6]",
-    starterCode: `// Merge Two Sorted Arrays\nfunction mergeSortedArrays(arr1, arr2) {\n  const merged = [];\n  let i = 0, j = 0;\n  while (i < arr1.length && j < arr2.length) {\n    if (arr1[i] < arr2[j]) merged.push(arr1[i++]);\n    else merged.push(arr2[j++]);\n  }\n  while (i < arr1.length) merged.push(arr1[i++]);\n  while (j < arr2.length) merged.push(arr2[j++]);\n  return merged;\n}\n\nconsole.log(mergeSortedArrays([1, 3, 5], [2, 4, 6]));`,
+    questionText: "Merge Two Sorted Arrays: Write a program that merges two sorted arrays into one sorted array without using built-in sort().",
+    sampleInput: 'A = [1, 3, 5], B = [2, 4, 6]',
+    sampleOutput: '[1, 2, 3, 4, 5, 6]',
+    testCases: [
+      { input: 'A = [1, 3, 5], B = [2, 4, 6]', expectedOutput: '[1, 2, 3, 4, 5, 6]' }
+    ],
+    starterCode: `// Merge Two Sorted Arrays\nfunction mergeSortedArrays(arr1, arr2) {\n  const merged = [];\n  let i = 0, j = 0;\n  while (i < arr1.length && j < arr2.length) {\n    if (arr1[i] < arr2[j]) merged.push(arr1[i++]);\n    else merged.push(arr2[j++]);\n  }\n  while (i < arr1.length) merged.push(arr1[i++]);\n  while (j < arr2.length) merged.push(arr2[j++]);\n  return merged;\n}\n\nconsole.log(JSON.stringify(mergeSortedArrays([1, 3, 5], [2, 4, 6])));`,
     marks: 2
   },
   {
@@ -405,6 +475,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 38,
     questionText: "Implement a Stack: Implement a Stack data structure with push(), pop(), peek(), and isEmpty().",
+    sampleInput: 'push(10), push(20), peek()',
+    sampleOutput: '20',
+    testCases: [
+      { input: 'push(10), push(20), peek()', expectedOutput: '20' }
+    ],
     starterCode: `// Implement Stack Data Structure\nclass Stack {\n  constructor() {\n    this.items = [];\n  }\n  push(element) {\n    this.items.push(element);\n  }\n  pop() {\n    return this.items.pop();\n  }\n  peek() {\n    return this.items[this.items.length - 1];\n  }\n  isEmpty() {\n    return this.items.length === 0;\n  }\n}\n\nconst stack = new Stack();\nstack.push(10);\nstack.push(20);\nconsole.log(stack.peek());`,
     marks: 2
   },
@@ -414,6 +489,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 39,
     questionText: "Implement a Queue: Implement a Queue data structure with enqueue(), dequeue(), front(), and isEmpty().",
+    sampleInput: 'enqueue("A"), enqueue("B"), front()',
+    sampleOutput: '"A"',
+    testCases: [
+      { input: 'enqueue("A"), enqueue("B"), front()', expectedOutput: '"A"' }
+    ],
     starterCode: `// Implement Queue Data Structure\nclass Queue {\n  constructor() {\n    this.items = [];\n  }\n  enqueue(element) {\n    this.items.push(element);\n  }\n  dequeue() {\n    return this.items.shift();\n  }\n  front() {\n    return this.items[0];\n  }\n  isEmpty() {\n    return this.items.length === 0;\n  }\n}\n\nconst q = new Queue();\nq.enqueue("A");\nq.enqueue("B");\nconsole.log(q.front());`,
     marks: 2
   },
@@ -423,6 +503,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 40,
     questionText: "SQL Employee Analysis: Write an SQL query to find average salary of each department (> 50000).",
+    sampleInput: 'Table: employees (id, name, department, salary)',
+    sampleOutput: 'Department-wise AVG salary > 50000',
+    testCases: [
+      { input: 'SELECT department, AVG(salary) FROM employees GROUP BY department HAVING AVG(salary) > 50000;', expectedOutput: 'Query Verified' }
+    ],
     starterCode: `-- SQL Query for Average Salary per Department (> 50000)\nSELECT department, AVG(salary) AS avg_salary\nFROM employees\nGROUP BY department\nHAVING AVG(salary) > 50000;`,
     marks: 2
   },
@@ -432,6 +517,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 41,
     questionText: "SQL Top Employees: Write an SQL query to return the five employees with the highest salaries.",
+    sampleInput: 'Table: employees (id, name, department, salary)',
+    sampleOutput: 'Top 5 employees ordered by salary DESC',
+    testCases: [
+      { input: 'SELECT * FROM employees ORDER BY salary DESC LIMIT 5;', expectedOutput: 'Query Verified' }
+    ],
     starterCode: `-- SQL Query for Top 5 Highest Paid Employees\nSELECT id, name, department, salary\nFROM employees\nORDER BY salary DESC\nLIMIT 5;`,
     marks: 2
   },
@@ -441,6 +531,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 42,
     questionText: "SQL Duplicate Emails: Write an SQL query that identifies all email addresses appearing more than once.",
+    sampleInput: 'Table: users (id, email)',
+    sampleOutput: 'Emails with COUNT(email) > 1',
+    testCases: [
+      { input: 'SELECT email FROM users GROUP BY email HAVING COUNT(email) > 1;', expectedOutput: 'Query Verified' }
+    ],
     starterCode: `-- SQL Query for Duplicate Email Addresses\nSELECT email\nFROM users\nGROUP BY email\nHAVING COUNT(email) > 1;`,
     marks: 2
   },
@@ -450,6 +545,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 43,
     questionText: "SQL JOIN: Write an SQL query that returns Employee Name and Department Name for every employee.",
+    sampleInput: 'Tables: employees e INNER JOIN departments d ON e.department_id = d.id',
+    sampleOutput: 'Employee Name & Department Name list',
+    testCases: [
+      { input: 'INNER JOIN Query', expectedOutput: 'Query Verified' }
+    ],
     starterCode: `-- SQL INNER JOIN Employees & Departments\nSELECT e.name AS "Employee Name", d.department_name AS "Department Name"\nFROM employees e\nINNER JOIN departments d ON e.department_id = d.id;`,
     marks: 2
   },
@@ -459,6 +559,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 44,
     questionText: "SQL Second Highest Salary: Write an SQL query to find the second-highest unique salary from employees.",
+    sampleInput: 'Table: employees (salary)',
+    sampleOutput: 'Second highest unique salary value',
+    testCases: [
+      { input: 'MAX(salary) subquery', expectedOutput: 'Query Verified' }
+    ],
     starterCode: `-- SQL Query for Second Highest Unique Salary\nSELECT MAX(salary) AS second_highest\nFROM employees\nWHERE salary < (SELECT MAX(salary) FROM employees);`,
     marks: 2
   },
@@ -468,6 +573,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 45,
     questionText: "REST API GET Endpoint: Write Express GET /api/users endpoint returning JSON array of users.",
+    sampleInput: 'GET /api/users',
+    sampleOutput: 'Status 200 JSON Array',
+    testCases: [
+      { input: 'GET /api/users', expectedOutput: 'Status 200 OK' }
+    ],
     starterCode: `// Express GET /api/users Endpoint\nconst express = require('express');\nconst app = express();\n\napp.get('/api/users', (req, res) => {\n  try {\n    const users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }];\n    res.status(200).json(users);\n  } catch (err) {\n    res.status(500).json({ error: 'Server Error' });\n  }\n});`,
     marks: 2
   },
@@ -477,6 +587,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 46,
     questionText: "REST API POST Endpoint: Create POST /api/users accepting name & email with 400 validation.",
+    sampleInput: 'POST /api/users { name, email }',
+    sampleOutput: 'Status 201 Created',
+    testCases: [
+      { input: 'POST /api/users', expectedOutput: 'Status 201 Created' }
+    ],
     starterCode: `// Express POST /api/users Endpoint\nconst express = require('express');\nconst app = express();\napp.use(express.json());\n\napp.post('/api/users', (req, res) => {\n  const { name, email } = req.body;\n  if (!name || !email) {\n    return res.status(400).json({ error: 'Name and email are required' });\n  }\n  res.status(201).json({ id: Date.now(), name, email });\n});`,
     marks: 2
   },
@@ -486,6 +601,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 47,
     questionText: "Authentication Middleware: Write middleware checking for valid authentication token header.",
+    sampleInput: 'Authorization: Bearer secret_token',
+    sampleOutput: 'next() or 401 Unauthorized',
+    testCases: [
+      { input: 'authMiddleware(req, res, next)', expectedOutput: 'Valid authentication' }
+    ],
     starterCode: `// Express Authentication Middleware\nfunction authMiddleware(req, res, next) {\n  const token = req.headers.authorization;\n  if (!token || token !== 'Bearer secret_token') {\n    return res.status(401).json({ error: 'Unauthorized' });\n  }\n  next();\n}`,
     marks: 2
   },
@@ -495,7 +615,12 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 48,
     questionText: "Responsive Web Page: Create responsive HTML/CSS with Header, Nav, Hero, 3 Cards, and Footer.",
-    starterCode: `<!DOCTYPE html>\n<html>\n<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    body { font-family: sans-serif; margin: 0; }\n    header { background: #111; color: white; padding: 1rem; }\n    .hero { background: #f4f4f5; text-align: center; padding: 2rem; }\n    .cards { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; }\n    .card { flex: 1 1 200px; border: 1px solid #ccc; padding: 1rem; }\n    footer { background: #222; color: white; text-align: center; padding: 1rem; }\n  </style>\n</head>\n<body>\n  <header><nav>Home | About</nav></header>\n  <section className="hero"><h1>Hero Title</h1></section>\n  <section className="cards">\n    <div className="card">Card 1</div>\n    <div className="card">Card 2</div>\n    <div className="card">Card 3</div>\n  </section>\n  <footer>Footer</footer>\n</body>\n</html>`,
+    sampleInput: 'Responsive Page Layout',
+    sampleOutput: 'Valid HTML5 Responsive Structure',
+    testCases: [
+      { input: 'HTML/CSS Layout', expectedOutput: 'Layout Verified' }
+    ],
+    starterCode: `<!DOCTYPE html>\n<html>\n<head>\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <style>\n    body { font-family: sans-serif; margin: 0; }\n    header { background: #111; color: white; padding: 1rem; }\n    .hero { background: #f4f4f5; text-align: center; padding: 2rem; }\n    .cards { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; }\n    .card { flex: 1 1 200px; border: 1px solid #ccc; padding: 1rem; }\n    footer { background: #222; color: white; text-align: center; padding: 1rem; }\n  </style>\n</head>\n<body>\n  <header><nav>Home | About</nav></header>\n  <section class="hero"><h1>Hero Title</h1></section>\n  <section class="cards">\n    <div class="card">Card 1</div>\n    <div class="card">Card 2</div>\n    <div class="card">Card 3</div>\n  </section>\n  <footer>Footer</footer>\n</body>\n</html>`,
     marks: 2
   },
   {
@@ -504,7 +629,12 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 49,
     questionText: "JavaScript Search: Create search filter function for array of user objects.",
-    starterCode: `// JavaScript Search Filter\nconst users = [\n  { name: "Ravi", email: "ravi@example.com" },\n  { name: "Priya", email: "priya@example.com" },\n  { name: "Arjun", email: "arjun@example.com" }\n];\n\nfunction searchUsers(query) {\n  const q = query.toLowerCase();\n  return users.filter(user => \n    user.name.toLowerCase().includes(q) || \n    user.email.toLowerCase().includes(q)\n  );\n}\n\nconsole.log(searchUsers("priya"));`,
+    sampleInput: 'query = "priya"',
+    sampleOutput: '[{ name: "Priya", email: "priya@example.com" }]',
+    testCases: [
+      { input: 'searchUsers("priya")', expectedOutput: '[{"name":"Priya","email":"priya@example.com"}]' }
+    ],
+    starterCode: `// JavaScript Search Filter\nconst users = [\n  { name: "Ravi", email: "ravi@example.com" },\n  { name: "Priya", email: "priya@example.com" },\n  { name: "Arjun", email: "arjun@example.com" }\n];\n\nfunction searchUsers(query) {\n  const q = query.toLowerCase();\n  return users.filter(user => \n    user.name.toLowerCase().includes(q) || \n    user.email.toLowerCase().includes(q)\n  );\n}\n\nconsole.log(JSON.stringify(searchUsers("priya")));`,
     marks: 2
   },
   {
@@ -513,6 +643,11 @@ export const TECHNICAL_QUESTIONS: Question[] = [
     section: "C",
     number: 50,
     questionText: "Full-Stack Mini Challenge: Build Task Management API supporting POST, GET, PUT, DELETE /tasks.",
+    sampleInput: 'CRUD endpoints for /tasks',
+    sampleOutput: 'Status 200/201/204 Task Operations',
+    testCases: [
+      { input: 'Task API Endpoints', expectedOutput: 'CRUD Operations Verified' }
+    ],
     starterCode: `// Task Management REST API (CRUD)\nconst express = require('express');\nconst app = express();\napp.use(express.json());\n\nlet tasks = [];\n\napp.post('/tasks', (req, res) => {\n  const { title, description } = req.body;\n  if (!title) return res.status(400).json({ error: 'Title required' });\n  const task = { id: Date.now(), title, description: description || '', status: 'pending', createdAt: new Date() };\n  tasks.push(task);\n  res.status(201).json(task);\n});\n\napp.get('/tasks', (req, res) => res.json(tasks));\n\napp.get('/tasks/:id', (req, res) => {\n  const task = tasks.find(t => t.id == req.params.id);\n  if (!task) return res.status(404).json({ error: 'Task not found' });\n  res.json(task);\n});\n\napp.put('/tasks/:id', (req, res) => {\n  const task = tasks.find(t => t.id == req.params.id);\n  if (!task) return res.status(404).json({ error: 'Task not found' });\n  Object.assign(task, req.body);\n  res.json(task);\n});\n\napp.delete('/tasks/:id', (req, res) => {\n  tasks = tasks.filter(t => t.id != req.params.id);\n  res.status(204).send();\n});`,
     marks: 2
   }
