@@ -2203,24 +2203,24 @@ export default function Dashboard() {
                 </p>
                 <div className="grid grid-cols-4 gap-3">
                   <div className="bg-white border border-orange-200 p-2 text-center">
-                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec A & B MCQs</p>
-                    <p className="text-sm font-bold text-emerald-700 mt-0.5">{technicalGrade.mcqMarks} / 50 Marks</p>
-                    <p className="text-[9px] text-zinc-400">{technicalGrade.mcqCorrect} / 25 correct</p>
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec A MCQs</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">{technicalGrade.secAMarks} / 30</p>
+                    <p className="text-[9px] text-zinc-400">{technicalGrade.secACorrect} / 15 correct</p>
                   </div>
                   <div className="bg-white border border-orange-200 p-2 text-center">
-                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec C Coding</p>
-                    <p className="text-sm font-bold text-indigo-700 mt-0.5">{technicalGrade.codingMarks} / 50 Marks</p>
-                    <p className="text-[9px] text-zinc-400">{technicalGrade.codingAttempted} / 25 attempted</p>
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec B MCQs</p>
+                    <p className="text-sm font-bold text-blue-700 mt-0.5">{technicalGrade.secBMarks} / 20</p>
+                    <p className="text-[9px] text-zinc-400">{technicalGrade.secBCorrect} / 10 correct</p>
                   </div>
                   <div className="bg-white border border-orange-200 p-2 text-center">
                     <p className="text-[9px] text-zinc-500 uppercase font-bold">Total Marks</p>
-                    <p className="text-sm font-bold text-zinc-900 mt-0.5">{technicalGrade.totalMarks} / 100</p>
+                    <p className="text-sm font-bold text-zinc-900 mt-0.5">{technicalGrade.totalMarks} / 50</p>
                     <p className="text-[9px] text-zinc-400">{technicalGrade.percentage}%</p>
                   </div>
                   <div className={`border p-2 text-center ${technicalGrade.isPass ? "bg-emerald-500 border-emerald-600 text-white" : "bg-red-500 border-red-600 text-white"}`}>
                     <p className="text-[9px] uppercase font-bold opacity-80">Status</p>
                     <p className="text-sm font-bold mt-0.5">{technicalGrade.isPass ? "PASSED" : "FAILED"}</p>
-                    <p className="text-[9px] opacity-80">Cut-off: 40%</p>
+                    <p className="text-[9px] opacity-80">Cut-off: 40% (20/50)</p>
                   </div>
                 </div>
               </div>

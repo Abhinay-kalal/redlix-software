@@ -77,8 +77,7 @@ export async function GET(req: NextRequest) {
           const isGeneralCoding = qId >= 101 && qId <= 110;
           const isTrainingCoding = qId >= 1018 && qId <= 1021;
           const isPhase02Open = qId >= 2101 && qId <= 2108;
-          const isTechnicalCoding = qId >= 2026 && qId <= 2050;
-          return (isGeneralCoding || isTrainingCoding || isPhase02Open || isTechnicalCoding) && v && v.toString().trim();
+          return (isGeneralCoding || isTrainingCoding || isPhase02Open) && v && v.toString().trim();
         }).length;
         const attempted = mcqAnswered > 0 || codingAnswered > 0;
         

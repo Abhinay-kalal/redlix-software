@@ -41,16 +41,18 @@ export interface TechnicalGradingResult {
   totalAttempted: number;
   mcqCorrect: number;
   mcqMarks: number;
-  codingAttempted: number;
-  codingMarks: number;
+  secACorrect: number;
+  secAMarks: number;
+  secBCorrect: number;
+  secBMarks: number;
   totalMarks: number;
   percentage: number;
   isPass: boolean;
   questionDetails: Array<{
     id: number;
     number: number;
-    section: "A" | "B" | "C";
-    type: "mcq" | "coding";
+    section: "A" | "B";
+    type: "mcq";
     questionText: string;
     selectedOptionOrCode: string;
     correctOption?: string;
@@ -63,61 +65,52 @@ export function gradeTechnicalFull(answers: Record<number, string>): TechnicalGr
   let totalAttempted = 0;
   let mcqCorrect = 0;
   let mcqMarks = 0;
-  let codingAttempted = 0;
-  let codingMarks = 0;
+  let secACorrect = 0;
+  let secAMarks = 0;
+  let secBCorrect = 0;
+  let secBMarks = 0;
 
   const questionDetails = TECHNICAL_QUESTIONS.map((q) => {
     const userAns = answers[q.id] || "";
     const isAttempted = userAns.trim() !== "";
     if (isAttempted) totalAttempted++;
 
-    if (q.type === "mcq") {
-      const isCorrect = gradeTechnicalMCQ(q.id, userAns);
-      const marksObtained = isCorrect ? q.marks : 0;
-      if (isCorrect) mcqCorrect++;
-      mcqMarks += marksObtained;
-
-      return {
-        id: q.id,
-        number: q.number,
-        section: q.section,
-        type: q.type as "mcq" | "coding",
-        questionText: q.questionText,
-        selectedOptionOrCode: userAns,
-        correctOption: TECHNICAL_ANSWER_KEY[q.id] || "N/A",
-        isCorrect,
-        marks: marksObtained,
-      };
-    } else {
-      // Coding questions (2 marks each)
-      const isMeaningful = isAttempted && userAns.trim().length > 20;
-      if (isMeaningful) codingAttempted++;
-      const marksObtained = isMeaningful ? q.marks : 0;
-      codingMarks += marksObtained;
-
-      return {
-        id: q.id,
-        number: q.number,
-        section: q.section,
-        type: q.type as "mcq" | "coding",
-        questionText: q.questionText,
-        selectedOptionOrCode: userAns,
-        isCorrect: isMeaningful,
-        marks: marksObtained,
-      };
+    const isCorrect = gradeTechnicalMCQ(q.id, userAns);
+    const marksObtained = isCorrect ? q.marks : 0;
+    if (isCorrect) {
+      mcqCorrect++;
+      if (q.section === "A") secACorrect++;
+      else if (q.section === "B") secBCorrect++;
     }
+    mcqMarks += marksObtained;
+    if (q.section === "A") secAMarks += marksObtained;
+    else if (q.section === "B") secBMarks += marksObtained;
+
+    return {
+      id: q.id,
+      number: q.number,
+      section: q.section as "A" | "B",
+      type: "mcq" as const,
+      questionText: q.questionText,
+      selectedOptionOrCode: userAns,
+      correctOption: TECHNICAL_ANSWER_KEY[q.id] || "N/A",
+      isCorrect,
+      marks: marksObtained,
+    };
   });
 
-  const totalMarks = mcqMarks + codingMarks;
-  const percentage = Math.round((totalMarks / 100) * 100);
-  const isPass = totalMarks >= 40;
+  const totalMarks = mcqMarks;
+  const percentage = Math.round((totalMarks / 50) * 100);
+  const isPass = totalMarks >= 20;
 
   return {
     totalAttempted,
     mcqCorrect,
     mcqMarks,
-    codingAttempted,
-    codingMarks,
+    secACorrect,
+    secAMarks,
+    secBCorrect,
+    secBMarks,
     totalMarks,
     percentage,
     isPass,

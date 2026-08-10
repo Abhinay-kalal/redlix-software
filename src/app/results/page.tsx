@@ -587,21 +587,21 @@ export default function ResultsPage() {
                         {isTechnical ? (
                           <tbody className="divide-y divide-zinc-200">
                             <tr className="hover:bg-zinc-50/50 transition-colors">
-                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A & B: MCQs (25 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: Advanced MCQs (15 questions)</td>
                               <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
-                                {searchedCandidate.attempted && techGrade ? `${techGrade.mcqCorrect} / 25 correct` : "0 / 25"}
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.secACorrect} / 15 correct` : "0 / 15"}
                               </td>
                               <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
-                                {searchedCandidate.attempted && techGrade ? `${techGrade.mcqMarks} / 50 pts` : "0 / 50 pts"}
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.secAMarks} / 30 pts` : "0 / 30 pts"}
                               </td>
                             </tr>
                             <tr className="hover:bg-zinc-50/50 transition-colors">
-                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section C: Coding Challenges (25 tasks)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section B: Code Analysis MCQs (10 questions)</td>
                               <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
-                                {searchedCandidate.attempted && techGrade ? `${techGrade.codingAttempted} / 25 attempted` : "0 / 25"}
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.secBCorrect} / 10 correct` : "0 / 10"}
                               </td>
-                              <td className="px-4 py-3 text-center font-mono font-bold text-indigo-700">
-                                {searchedCandidate.attempted && techGrade ? `${techGrade.codingMarks} / 50 pts` : "0 / 50 pts"}
+                              <td className="px-4 py-3 text-center font-mono font-bold text-blue-700">
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.secBMarks} / 20 pts` : "0 / 20 pts"}
                               </td>
                             </tr>
                           </tbody>
@@ -769,23 +769,23 @@ export default function ResultsPage() {
                             </p>
                           </div>
                           <div className={`px-4 py-2 rounded-xl text-center border font-bold text-xs ${tGrade.isPass ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-700 border-red-200"}`}>
-                            <p className="text-lg font-black">{tGrade.totalMarks} / 100</p>
+                            <p className="text-lg font-black">{tGrade.totalMarks} / 50</p>
                             <p className="text-[10px] uppercase tracking-wider">{tGrade.isPass ? "PASSED (≥ 40%)" : "FAILED (< 40%)"}</p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                           <div className="bg-zinc-50 border border-zinc-200/80 p-3 rounded-xl">
-                            <p className="text-[10px] font-bold text-zinc-400 uppercase">MCQ Score (Sec A & B)</p>
-                            <p className="text-sm font-bold text-zinc-900 mt-1">{tGrade.mcqMarks} / 50 Marks</p>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase">Sec A MCQs</p>
+                            <p className="text-sm font-bold text-zinc-900 mt-1">{tGrade.secAMarks} / 30 pts ({tGrade.secACorrect}/15)</p>
                           </div>
                           <div className="bg-zinc-50 border border-zinc-200/80 p-3 rounded-xl">
-                            <p className="text-[10px] font-bold text-indigo-600 uppercase">Coding Score (Sec C)</p>
-                            <p className="text-sm font-bold text-indigo-600 mt-1">{tGrade.codingMarks} / 50 Marks</p>
+                            <p className="text-[10px] font-bold text-blue-600 uppercase">Sec B MCQs</p>
+                            <p className="text-sm font-bold text-blue-600 mt-1">{tGrade.secBMarks} / 20 pts ({tGrade.secBCorrect}/10)</p>
                           </div>
                           <div className="bg-zinc-50 border border-zinc-200/80 p-3 rounded-xl">
-                            <p className="text-[10px] font-bold text-emerald-600 uppercase">Coding Attempted</p>
-                            <p className="text-sm font-bold text-emerald-600 mt-1">{tGrade.codingAttempted} / 25 Tasks</p>
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase">Total Answered</p>
+                            <p className="text-sm font-bold text-emerald-600 mt-1">{tGrade.totalAttempted} / 25 Questions</p>
                           </div>
                           <div className="bg-zinc-50 border border-zinc-200/80 p-3 rounded-xl">
                             <p className="text-[10px] font-bold text-zinc-400 uppercase">Percentage</p>
@@ -796,8 +796,8 @@ export default function ResultsPage() {
 
                       <div className="bg-white border border-zinc-200/90 rounded-2xl overflow-hidden shadow-xs">
                         <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50/80 flex items-center justify-between">
-                          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Technical Wing Evaluation (50 Questions across 3 Sections)</h3>
-                          <span className="text-[10px] font-semibold text-zinc-500">Duration: 120 Mins · Total: 100 Marks</span>
+                          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700">Technical Wing Evaluation (25 Questions across Section A &amp; B)</h3>
+                          <span className="text-[10px] font-semibold text-zinc-500">Duration: 60 Mins · Total: 50 Marks</span>
                         </div>
 
                         <div className="divide-y divide-zinc-100 p-6 space-y-4">
