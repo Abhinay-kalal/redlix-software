@@ -21,11 +21,14 @@ interface Exam {
 
 import { encodeExamId } from "@/utils/secureId";
 
+type TabFilter = "all" | "upcoming" | "past";
+
 export default function ScheduledExams() {
   const supabase = createClient();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [regCounts, setRegCounts] = useState<Record<number, number>>({});
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -62,11 +65,39 @@ export default function ScheduledExams() {
     fetchExams();
   }, []);
 
-  const filteredExams = exams.filter((e) =>
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const isUpcomingExam = (examDateStr: string): boolean => {
+    if (!examDateStr) return true;
+    try {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const datePart = examDateStr.split("·")[0].split(" - ")[0].trim();
+      const examDate = new Date(datePart);
+      if (!isNaN(examDate.getTime())) {
+        examDate.setHours(23, 59, 59, 999);
+        return examDate.getTime() >= now.getTime();
+      }
+    } catch {
+      return true;
+    }
+    return true;
+  };
+
+  const upcomingCount = exams.filter((e) => isUpcomingExam(e.date)).length;
+  const pastCount = exams.filter((e) => !isUpcomingExam(e.date)).length;
+
+  const filteredExams = exams.filter((e) => {
+    const matchesSearch =
+      e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    const isUpcoming = isUpcomingExam(e.date);
+    if (activeTab === "upcoming") return isUpcoming;
+    if (activeTab === "past") return !isUpcoming;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
@@ -100,18 +131,79 @@ export default function ScheduledExams() {
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative max-w-md w-full">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
-            <span className="material-symbols-rounded text-lg">search</span>
+        {/* Search Bar & Date Filter Tabs */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-3 border border-zinc-200/90 rounded-md shadow-xs">
+          {/* Search Input */}
+          <div className="relative max-w-md w-full">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+              <span className="material-symbols-rounded text-lg">search</span>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by exam title or organization..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="block w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search by exam title or organization..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-md text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all shadow-xs"
-          />
+
+          {/* Date Filter Tabs (All, Upcoming Exams, Past Exams) */}
+          <div className="flex items-center gap-1.5 shrink-0 self-start md:self-auto">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-3.5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-2 border ${
+                activeTab === "all"
+                  ? "bg-[#E61E32] text-white border-[#E61E32] shadow-xs"
+                  : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900"
+              }`}
+            >
+              <span>All Exams</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                  activeTab === "all" ? "bg-white/20 text-white" : "bg-zinc-200/80 text-zinc-700"
+                }`}
+              >
+                {exams.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("upcoming")}
+              className={`px-3.5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-2 border ${
+                activeTab === "upcoming"
+                  ? "bg-[#E61E32] text-white border-[#E61E32] shadow-xs"
+                  : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
+              <span>Upcoming Exams</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                  activeTab === "upcoming" ? "bg-white/20 text-white" : "bg-zinc-200/80 text-zinc-700"
+                }`}
+              >
+                {upcomingCount}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("past")}
+              className={`px-3.5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-2 border ${
+                activeTab === "past"
+                  ? "bg-[#E61E32] text-white border-[#E61E32] shadow-xs"
+                  : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900"
+              }`}
+            >
+              <span>Past Exams</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
+                  activeTab === "past" ? "bg-white/20 text-white" : "bg-zinc-200/80 text-zinc-700"
+                }`}
+              >
+                {pastCount}
+              </span>
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -121,96 +213,112 @@ export default function ScheduledExams() {
           </div>
         ) : filteredExams.length === 0 ? (
           <div className="py-16 text-center bg-white border border-zinc-200/90 rounded-md shadow-xs p-8">
-            <p className="text-zinc-500 text-sm font-medium">No scheduled exams found matching your search.</p>
+            <p className="text-zinc-500 text-sm font-medium">No scheduled exams found matching your selection.</p>
           </div>
         ) : (
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredExams.map((exam) => (
-              <div
-                key={exam.id}
-                className="bg-white border border-zinc-200/90 rounded-md shadow-xs hover:shadow-md hover:border-[#E61E32]/25 transition-all duration-200 overflow-hidden flex flex-col"
-              >
-                {/* Cover Image (1200x1200px 1:1 Square Frame) */}
-                <div className="w-full aspect-square relative overflow-hidden bg-zinc-900 shrink-0">
-                  <img
-                    src={
-                      (exam as any).company_logo && (exam as any).company_logo.startsWith("http")
-                        ? (exam as any).company_logo
-                        : exam.name.toLowerCase().includes("technical")
-                        ? "https://ik.imagekit.io/dypkhqxip/technical%20Wing.png"
-                        : exam.name.toLowerCase().includes("marketing")
-                        ? "https://ik.imagekit.io/dypkhqxip/marketing%20Wing.png"
-                        : exam.name.toLowerCase().includes("analytics")
-                        ? "https://ik.imagekit.io/dypkhqxip/Data%20Analytics%20Wing.png"
-                        : exam.name.toLowerCase().includes("ui") || exam.name.toLowerCase().includes("ux")
-                        ? "https://ik.imagekit.io/dypkhqxip/UI%20and%20UX%20Wing.png"
-                        : "/exam-cover.png"
-                    }
-                    alt={exam.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://ik.imagekit.io/dypkhqxip/technical%20Wing.png";
-                    }}
-                  />
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span className="text-[11px] font-semibold bg-white/95 text-zinc-800 px-2.5 py-1 rounded-md border border-zinc-200/90 shadow-xs">
-                      {exam.company_name}
-                    </span>
-                  </div>
-                </div>
+            {filteredExams.map((exam) => {
+              const isUpcoming = isUpcomingExam(exam.date);
+              return (
+                <div
+                  key={exam.id}
+                  className="bg-white border border-zinc-200/90 rounded-md shadow-xs hover:shadow-md hover:border-[#E61E32]/25 transition-all duration-200 overflow-hidden flex flex-col"
+                >
+                  {/* Cover Image (1200x1200px 1:1 Square Frame) */}
+                  <div className="w-full aspect-square relative overflow-hidden bg-zinc-900 shrink-0">
+                    <img
+                      src={
+                        (exam as any).company_logo && (exam as any).company_logo.startsWith("http")
+                          ? (exam as any).company_logo
+                          : exam.name.toLowerCase().includes("technical")
+                          ? "https://ik.imagekit.io/dypkhqxip/technical%20Wing.png"
+                          : exam.name.toLowerCase().includes("marketing")
+                          ? "https://ik.imagekit.io/dypkhqxip/marketing%20Wing.png"
+                          : exam.name.toLowerCase().includes("analytics")
+                          ? "https://ik.imagekit.io/dypkhqxip/Data%20Analytics%20Wing.png"
+                          : exam.name.toLowerCase().includes("ui") || exam.name.toLowerCase().includes("ux")
+                          ? "https://ik.imagekit.io/dypkhqxip/UI%20and%20UX%20Wing.png"
+                          : "/exam-cover.png"
+                      }
+                      alt={exam.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://ik.imagekit.io/dypkhqxip/technical%20Wing.png";
+                      }}
+                    />
+                    <div className="absolute top-3 left-3 flex items-center gap-2">
+                      <span className="text-[11px] font-semibold bg-white/95 text-zinc-800 px-2.5 py-1 rounded-md border border-zinc-200/90 shadow-xs">
+                        {exam.company_name}
+                      </span>
+                    </div>
 
-                {/* Card Body */}
-                <div className="p-5 flex flex-col flex-1 gap-3">
-                  <h3 className="text-xs md:text-sm font-bold text-zinc-900 font-inter leading-snug">
-                    {(() => {
-                      const parts = exam.name.split(" ");
-                      const wingIdx = parts.findIndex((p) => p.toLowerCase() === "wing");
-                      if (wingIdx > 0) {
-                        const mainWord = parts.slice(0, wingIdx).join(" ");
-                        const rest = parts.slice(wingIdx).join(" ");
+                    <div className="absolute top-3 right-3">
+                      {isUpcoming ? (
+                        <span className="text-[10px] font-bold bg-emerald-600 text-white px-2.5 py-1 rounded-md shadow-xs tracking-wider uppercase flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          Upcoming
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold bg-zinc-800/90 text-zinc-200 px-2.5 py-1 rounded-md shadow-xs tracking-wider uppercase">
+                          Past Exam
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-5 flex flex-col flex-1 gap-3">
+                    <h3 className="text-xs md:text-sm font-bold text-zinc-900 font-inter leading-snug">
+                      {(() => {
+                        const parts = exam.name.split(" ");
+                        const wingIdx = parts.findIndex((p) => p.toLowerCase() === "wing");
+                        if (wingIdx > 0) {
+                          const mainWord = parts.slice(0, wingIdx).join(" ");
+                          const rest = parts.slice(wingIdx).join(" ");
+                          return (
+                            <>
+                              <span className="text-[#E61E32]">{mainWord}</span> {rest}
+                            </>
+                          );
+                        }
                         return (
                           <>
-                            <span className="text-[#E61E32]">{mainWord}</span> {rest}
+                            <span className="text-[#E61E32]">{parts[0]}</span> {parts.slice(1).join(" ")}
                           </>
                         );
-                      }
-                      return (
-                        <>
-                          <span className="text-[#E61E32]">{parts[0]}</span> {parts.slice(1).join(" ")}
-                        </>
-                      );
-                    })()}
-                  </h3>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-zinc-500 w-fit">
-                    <span className="material-symbols-rounded text-xs text-zinc-400">calendar_today</span>
-                    {exam.date} · {exam.time}
-                  </span>
+                      })()}
+                    </h3>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-zinc-500 w-fit">
+                      <span className="material-symbols-rounded text-xs text-zinc-400">calendar_today</span>
+                      {exam.date} · {exam.time}
+                    </span>
 
-                  <div className="flex-1" />
+                    <div className="flex-1" />
 
-                  <div className="flex items-center gap-2 pt-2">
-                    <button
-                      onClick={(e) => handleCopyLink(exam.id, e)}
-                      title="Copy Exam Link"
-                      className="px-3 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-zinc-200"
-                    >
-                      <svg className="w-3.5 h-3.5 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <span>{copiedId === exam.id ? "Copied!" : "Copy"}</span>
-                    </button>
+                    <div className="flex items-center gap-2 pt-2">
+                      <button
+                        onClick={(e) => handleCopyLink(exam.id, e)}
+                        title="Copy Exam Link"
+                        className="px-3 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-zinc-200"
+                      >
+                        <svg className="w-3.5 h-3.5 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span>{copiedId === exam.id ? "Copied!" : "Copy"}</span>
+                      </button>
 
-                    <Link
-                      href={`/scheduled-exams/${encodeExamId(exam.id)}`}
-                      className="flex-1 px-4 py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-bold text-xs rounded-md shadow-xs transition-all cursor-pointer text-center block"
-                    >
-                      View Exam →
-                    </Link>
+                      <Link
+                        href={`/scheduled-exams/${encodeExamId(exam.id)}`}
+                        className="flex-1 px-4 py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-bold text-xs rounded-md shadow-xs transition-all cursor-pointer text-center block"
+                      >
+                        View Exam →
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
