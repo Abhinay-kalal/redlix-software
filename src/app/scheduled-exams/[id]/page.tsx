@@ -46,7 +46,9 @@ export default function ExamDetailPage() {
       try {
         const [examsRes, countsRes] = await Promise.all([
           supabase.from("exams").select().order("id", { ascending: false }),
-          fetch("/api/exam/registrations-count").then((r) => r.json()),
+          fetch("/api/exam/registrations-count")
+            .then((r) => (r.ok ? r.json() : { success: false, counts: {} }))
+            .catch(() => ({ success: false, counts: {} })),
         ]);
 
         if (examsRes.error || !examsRes.data) {
@@ -65,7 +67,7 @@ export default function ExamDetailPage() {
           setNotFound(true);
         } else {
           setExam(targetExam);
-          if (countsRes.success && countsRes.counts) {
+          if (countsRes && countsRes.success && countsRes.counts) {
             setRegCount(countsRes.counts[targetExam.id] ?? 0);
           }
         }

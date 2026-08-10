@@ -74,21 +74,6 @@ model candidates {
   created_at DateTime? @default(now()) @db.Timestamp(6)
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model piscidrop_company_profile {
-  id           Int     @id @default(1)
-  name         String  @default("Pisci Drop Pvt Ltd") @db.VarChar(255)
-  description  String? @default("A state-of-the-art secure workspace and automated file logistics node, powering secure assessments globally.")
-  founder      String? @default("Marcus Aurelius") @db.VarChar(255)
-  date_started String? @default("January 15, 2024") @db.VarChar(255)
-  website      String? @default("piscidrop.com") @db.VarChar(255)
-  phone        String? @default("+91 98765 43210") @db.VarChar(255)
-  email        String? @default("support@piscidrop.com") @db.VarChar(255)
-  address      String? @default("108 Silicon Hills, Block A, ORR, Bangalore, KA, India, 560103")
-  logo_url     String? @default("https://ik.imagekit.io/dypkhqxip/picsihoriz?updatedAt=1778919009480")
-}
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model security_logs {
   id         BigInt   @id @default(autoincrement())
@@ -167,6 +152,15 @@ model SystemSettings {
   updated_at                DateTime @default(now()) @updatedAt
 
   @@map("system_settings")
+}
+
+model Organizer {
+  id           String    @id @default(cuid())
+  fullName     String
+  email        String    @unique
+  password     String
+  organization String?
+  createdAt    DateTime  @default(now())
 }
 
 

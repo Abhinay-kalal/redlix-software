@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Scheduled Exams Directory | Redlix Secure",
-  description: "View the official directory of upcoming, active, and completed secure online examinations conducted via Redlix Secure.",
+  title: "Scheduled Exams | Redlix Secure",
+  description: "View and register for active scheduled examinations on Redlix.",
 };
 
 export default function ScheduledExamsLayout({

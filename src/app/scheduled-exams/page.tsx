@@ -45,13 +45,15 @@ export default function ScheduledExams() {
     try {
       const [examsRes, countsRes] = await Promise.all([
         supabase.from("exams").select().order("id", { ascending: false }),
-        fetch("/api/exam/registrations-count").then(res => res.json())
+        fetch("/api/exam/registrations-count")
+          .then((res) => (res.ok ? res.json() : { success: false, counts: {} }))
+          .catch(() => ({ success: false, counts: {} }))
       ]);
 
       if (!examsRes.error && examsRes.data) {
         setExams(examsRes.data);
       }
-      if (countsRes.success && countsRes.counts) {
+      if (countsRes && countsRes.success && countsRes.counts) {
         setRegCounts(countsRes.counts);
       }
     } catch (err) {
@@ -62,6 +64,7 @@ export default function ScheduledExams() {
   };
 
   useEffect(() => {
+    document.title = "Scheduled Exams | Redlix Secure";
     fetchExams();
   }, []);
 
@@ -103,17 +106,17 @@ export default function ScheduledExams() {
     <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
       
       {/* Top Header */}
-      <header className="sticky top-0 z-50 bg-[#E61E32] border-b border-[#d01729] py-4.5 md:py-5 px-6 md:px-8 shadow-xs">
+      <header className="sticky top-0 z-50 bg-[#E61E32] border-b border-[#d01729] py-2.5 px-6 md:px-8 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             {/* Logo directly on red navbar with a soft white shade glow */}
             <img
-              src="https://ik.imagekit.io/dypkhqxip/logotraining?updatedAt=1783099023149"
+              src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
               alt="Redlix Official Logo"
-              className="h-8 md:h-9 w-auto object-contain shrink-0"
+              className="h-7 md:h-7.5 w-auto object-contain shrink-0 brightness-0 invert"
             />
             <div className="flex items-center gap-2 border-l border-white/20 pl-3">
-              <span className="font-semibold text-xs md:text-sm text-white font-inter">Scheduled Exams</span>
+              <span className="font-semibold text-xs text-white font-inter">Scheduled Exams</span>
             </div>
           </Link>
         </div>
@@ -130,9 +133,9 @@ export default function ScheduledExams() {
           </p>
         </div>
 
-        {/* Search Bar & Date Filter Tabs */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-3 border border-zinc-200/90 rounded-md shadow-xs">
-          {/* Search Input */}
+        {/* Modern Search & Segmented Filter Controls */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          {/* Search Input Box */}
           <div className="relative max-w-md w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
               <span className="material-symbols-rounded text-lg">search</span>
@@ -142,24 +145,26 @@ export default function ScheduledExams() {
               placeholder="Search by exam title or organization..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-4 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all"
+              className="block w-full pl-10 pr-4 py-2 bg-white border border-zinc-200 rounded-md text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/15 focus:border-[#E61E32] transition-all shadow-2xs"
             />
           </div>
 
-          {/* Date Filter Tabs (All, Upcoming Exams, Past Exams) */}
-          <div className="flex items-center gap-1.5 shrink-0 self-start md:self-auto">
+          {/* Segmented Tab Filter Controls */}
+          <div className="flex items-center gap-1 bg-zinc-200/60 p-1 rounded-md border border-zinc-200/80 shrink-0 self-start sm:self-auto shadow-inner">
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-3.5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-2 border ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "all"
-                  ? "bg-[#E61E32] text-white border-[#E61E32] shadow-xs"
-                  : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900"
+                  ? "bg-white text-zinc-900 shadow-2xs font-bold border border-zinc-200/80"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50"
               }`}
             >
               <span>All Exams</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
-                  activeTab === "all" ? "bg-white/20 text-white" : "bg-zinc-200/80 text-zinc-700"
+                className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
+                  activeTab === "all"
+                    ? "bg-[#E61E32] text-white font-bold"
+                    : "bg-zinc-200 text-zinc-600 font-medium"
                 }`}
               >
                 {exams.length}
@@ -168,17 +173,19 @@ export default function ScheduledExams() {
 
             <button
               onClick={() => setActiveTab("upcoming")}
-              className={`px-3.5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-2 border ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "upcoming"
-                  ? "bg-[#E61E32] text-white border-[#E61E32] shadow-xs"
-                  : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900"
+                  ? "bg-white text-zinc-900 shadow-2xs font-bold border border-zinc-200/80"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50"
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
-              <span>Upcoming Exams</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+              <span>Upcoming</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
-                  activeTab === "upcoming" ? "bg-white/20 text-white" : "bg-zinc-200/80 text-zinc-700"
+                className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
+                  activeTab === "upcoming"
+                    ? "bg-emerald-600 text-white font-bold"
+                    : "bg-zinc-200 text-zinc-600 font-medium"
                 }`}
               >
                 {upcomingCount}
@@ -187,16 +194,18 @@ export default function ScheduledExams() {
 
             <button
               onClick={() => setActiveTab("past")}
-              className={`px-3.5 py-2 text-xs font-bold rounded-md transition-all cursor-pointer flex items-center gap-2 border ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "past"
-                  ? "bg-[#E61E32] text-white border-[#E61E32] shadow-xs"
-                  : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100 hover:text-zinc-900"
+                  ? "bg-white text-zinc-900 shadow-2xs font-bold border border-zinc-200/80"
+                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50"
               }`}
             >
               <span>Past Exams</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
-                  activeTab === "past" ? "bg-white/20 text-white" : "bg-zinc-200/80 text-zinc-700"
+                className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
+                  activeTab === "past"
+                    ? "bg-zinc-800 text-white font-bold"
+                    : "bg-zinc-200 text-zinc-600 font-medium"
                 }`}
               >
                 {pastCount}

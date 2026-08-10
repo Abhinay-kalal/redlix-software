@@ -111,6 +111,7 @@ export default function HackathonsPage() {
   };
 
   useEffect(() => {
+    document.title = "Redlix Hackathons & Engineering Sprints";
     fetchHackathons();
   }, []);
 
@@ -219,39 +220,54 @@ export default function HackathonsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 font-poppins text-zinc-900 flex flex-col">
-      {/* HERO BANNER SECTION (Matches User Screenshot) */}
-      <div className="relative w-full bg-zinc-100 py-16 px-6 md:px-16 flex flex-col justify-between overflow-hidden min-h-[460px] border-b border-zinc-200">
-        {/* Background Image Layer */}
+    <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
+      
+      {/* HERO BANNER SECTION */}
+      <div className="relative w-full bg-zinc-950 py-12 md:py-16 px-6 md:px-12 flex flex-col justify-between overflow-hidden border-b border-zinc-900">
+        {/* Background Image Layer with Dark Gradient Overlay */}
         <div className="absolute inset-0 z-0 select-none pointer-events-none">
           <img 
             src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1600&q=80" 
             alt="Background Audience" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover opacity-20 scale-105"
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/95 to-zinc-950/80" />
         </div>
 
         {/* Inner Hero Content Container */}
-        <div className="relative z-10 w-full max-w-6xl mx-auto flex-1 flex flex-col justify-between">
-          {/* Top Bar */}
-          <div className="flex justify-between items-center w-full mb-6">
-            {/* Logo Redlix Image */}
-            <img 
-              src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
-              alt="Redlix Logo"
-              className="h-10 md:h-14 w-auto object-contain select-none"
-            />
+        <div className="relative z-10 w-full max-w-7xl mx-auto flex-1 flex flex-col justify-between space-y-8 md:space-y-10">
+          {/* Top Navbar */}
+          <div className="flex justify-between items-center w-full">
+            {/* Logo directly on hero header */}
+            <Link href="/hackathons" className="flex items-center gap-3">
+              <img 
+                src="https://ik.imagekit.io/dypkhqxip/redlix%20new?updatedAt=1781042212493"
+                alt="Logo"
+                className="h-7 md:h-8.5 w-auto object-contain select-none"
+              />
+              <div className="flex items-center gap-2 border-l border-white/20 pl-3">
+                <span className="font-medium text-xs md:text-sm text-zinc-200 font-inter tracking-wide">Hackathons &amp; Sprints</span>
+              </div>
+            </Link>
             
-            {/* Actions */}
-            <div className="flex items-center gap-3">
+            {/* Actions: Host Button + Location Selector */}
+            <div className="flex items-center gap-2.5">
+              <Link 
+                href="/organizer-login"
+                className="bg-[#E61E32] hover:bg-[#d01729] active:scale-98 text-white text-xs font-semibold px-4 py-2 rounded-md flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              >
+                <Plus className="h-4 w-4 text-white stroke-[2.5]" />
+                <span>Host</span>
+              </Link>
+
               <div className="relative">
                 <button 
                   onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                  className="border border-white/20 bg-black/40 hover:bg-black/60 text-white text-[10px] md:text-xs font-semibold px-4.5 py-2 rounded flex items-center gap-1.5 transition-all cursor-pointer shadow-md backdrop-blur-xs"
+                  className="border border-zinc-800 bg-zinc-900/90 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-200 text-xs font-medium px-4 py-2 rounded-md flex items-center gap-2 transition-all cursor-pointer shadow-xs backdrop-blur-md"
                 >
-                  <MapPin className="h-3.5 w-3.5 text-white/80" />
+                  <MapPin className="h-3.5 w-3.5 text-[#E61E32]" />
                   <span>{selectedLocation}</span>
-                  <span className="text-[8px] text-white/60">▼</span>
+                  <span className="text-[9px] text-zinc-400">▼</span>
                 </button>
 
                 {showLocationDropdown && (
@@ -260,10 +276,10 @@ export default function HackathonsPage() {
                       className="fixed inset-0 z-40 bg-transparent" 
                       onClick={() => setShowLocationDropdown(false)}
                     />
-                    <div className="absolute right-0 mt-1.5 w-48 max-h-56 overflow-y-auto bg-white border border-zinc-200 shadow-md z-50 rounded py-1 text-left">
+                    <div className="absolute right-0 mt-2 w-52 max-h-60 overflow-y-auto bg-zinc-900 border border-zinc-800 shadow-2xl z-50 rounded-md py-1 text-left text-zinc-100">
                       <button
                         onClick={() => handleSelectState("Select your location")}
-                        className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-zinc-500 font-medium text-[11px] border-b border-zinc-100 transition-colors"
+                        className="w-full text-left px-3.5 py-2 hover:bg-zinc-800 text-zinc-400 font-medium text-xs border-b border-zinc-800 transition-colors"
                       >
                         All Locations
                       </button>
@@ -271,7 +287,7 @@ export default function HackathonsPage() {
                         <button
                           key={state}
                           onClick={() => handleSelectState(state)}
-                          className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-zinc-700 text-[11px] transition-colors"
+                          className="w-full text-left px-3.5 py-1.5 hover:bg-zinc-800 text-zinc-200 text-xs font-medium transition-colors"
                         >
                           {state}
                         </button>
@@ -284,166 +300,184 @@ export default function HackathonsPage() {
           </div>
 
           {/* Hero Typography & Text */}
-          <div className="space-y-2 max-w-3xl mb-5">
-            <p className="text-white/80 font-semibold text-[9px] md:text-xs tracking-wider uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-              Unleash the Possibilities!
-            </p>
-            <h1 className="text-xl md:text-2xl font-black text-white leading-tight tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-              Elevate Your Experience with <span className="text-red-500">Redlix Events</span>
+          <div className="space-y-2 max-w-3xl">
+            <h1 className="text-2xl md:text-3xl font-medium text-white leading-snug tracking-tight font-inter">
+              Build &amp; Compete in <span className="text-[#E61E32]">Global Developer Sprints</span>
             </h1>
-            <p className="text-[11px] md:text-xs text-white/90 font-medium leading-relaxed max-w-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-              Discover high-impact hackathons and workshops. Join the Redlix community to expand your skills and build future-ready projects.
+            <p className="text-sm md:text-base text-zinc-300 font-normal leading-relaxed max-w-2xl">
+              Solve real engineering challenges, collaborate with developer teams, and build industry-grade projects.
             </p>
-          </div>          {/* Search & Category Widget Bar */}
-          <div className="bg-red-650 p-3 md:p-4 rounded-xl flex flex-col md:flex-row gap-3 items-center max-w-3xl w-full border border-red-700/20">
+          </div>
+
+          {/* State-of-the-Art Search & Category Filter Bar */}
+          <div className="bg-zinc-900/95 backdrop-blur-xl p-2 rounded-lg flex flex-col md:flex-row gap-2 items-center max-w-4xl w-full border border-zinc-800/90 shadow-2xl transition-all duration-300 focus-within:border-[#E61E32]/60 focus-within:ring-1 focus-within:ring-[#E61E32]/30">
+            
             {/* Category Dropdown */}
-            <div className="w-full md:w-56 px-4 py-1.5 text-left border-b md:border-b-0 md:border-r border-white/20">
-              <label className="block text-[9px] font-semibold text-red-100/80 uppercase tracking-wider">Category</label>
+            <div className="w-full md:w-52 px-3.5 py-2 text-left border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col justify-center">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-inter">
+                Category
+              </label>
               <div className="relative mt-1 flex items-center">
                 <select 
                   value={filter} 
                   onChange={(e) => setFilter(e.target.value as any)}
-                  className="w-full bg-transparent text-xs md:text-sm text-white font-semibold focus:outline-none appearance-none pr-8 py-1 cursor-pointer"
+                  className="w-full bg-transparent text-sm text-white font-medium focus:outline-none appearance-none pr-6 py-0.5 cursor-pointer font-inter"
                 >
-                  <option value="all" className="bg-white text-zinc-800">Browse all</option>
-                  <option value="active" className="bg-white text-zinc-800">Active</option>
-                  <option value="past" className="bg-white text-zinc-800">Past</option>
+                  <option value="all" className="bg-zinc-900 text-white">All Events</option>
+                  <option value="active" className="bg-zinc-900 text-white">Active Events</option>
+                  <option value="past" className="bg-zinc-900 text-white">Concluded Events</option>
                 </select>
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/80 pointer-events-none">▼</span>
+                <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 pointer-events-none">
+                  ▼
+                </span>
               </div>
             </div>
             
             {/* Search Query Input */}
-            <div className="w-full md:flex-1 px-4 py-1.5 text-left">
-              <label className="block text-[9px] font-semibold text-red-100/80 uppercase tracking-wider">Query</label>
-              <div className="relative mt-1 flex items-center">
+            <div className="w-full md:flex-1 px-3.5 py-2 text-left flex flex-col justify-center">
+              <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-inter">
+                Search
+              </label>
+              <div className="relative mt-1 flex items-center gap-2.5">
+                <Search className="w-4 h-4 text-zinc-400 shrink-0" />
                 <input 
                   type="text"
-                  placeholder="Search for interest, location, date..."
+                  placeholder="Search by title, technology, location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent text-xs md:text-sm text-white font-medium focus:outline-none placeholder-red-100/50 py-1"
+                  className="w-full bg-transparent text-sm text-white font-medium focus:outline-none placeholder-zinc-500 py-0.5 font-inter"
                 />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="text-zinc-400 hover:text-white text-xs font-bold px-1 transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* White Search Button */}
-            <button className="w-full md:w-auto px-8 py-3.5 bg-white hover:bg-zinc-50 text-red-650 font-bold text-xs uppercase tracking-wider rounded-lg transition-all cursor-pointer shrink-0">
-              Search
+            {/* Redlix Red Search Button */}
+            <button className="w-full md:w-auto px-8 py-3 bg-[#E61E32] hover:bg-[#d01729] active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-md transition-all cursor-pointer shrink-0 shadow-[0_4px_16px_rgba(230,30,50,0.35)] hover:shadow-[0_6px_24px_rgba(230,30,50,0.5)] flex items-center justify-center gap-2">
+              <Search className="w-3.5 h-3.5" />
+              <span>Search</span>
             </button>
           </div>
         </div>
       </div>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto p-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-6">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center">
-            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
-            <p className="text-zinc-500 text-xs">Retrieving hackathon catalog...</p>
+            <Loader2 className="w-10 h-10 text-[#E61E32] animate-spin mb-4" />
+            <p className="text-zinc-500 text-xs font-semibold">Loading hackathon catalog...</p>
           </div>
         ) : filteredHackathons.length === 0 ? (
-          <div className="py-20 text-center bg-white border border-zinc-200 shadow-sm p-8 flex flex-col items-center justify-center space-y-3">
+          <div className="py-20 text-center bg-white border border-zinc-200/90 rounded-md shadow-xs p-8 flex flex-col items-center justify-center space-y-3">
             <Info className="h-8 w-8 text-zinc-400" />
-            <p className="text-zinc-500 text-sm font-semibold">No hackathons match the criteria.</p>
+            <p className="text-zinc-600 text-sm font-semibold">No hackathons found matching your search.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 max-w-6xl mx-auto w-full">
+          <div className="grid grid-cols-1 gap-6 max-w-7xl mx-auto w-full">
             {filteredHackathons.map((h) => {
               const active = isHackathonActive(h.endDate);
               const CardContent = (
-                <div className="bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] flex flex-col md:flex-row justify-between transition-all duration-300 relative overflow-hidden group rounded-2xl h-full">
-                  {/* Card Image */}
-                  <div className="relative h-48 md:h-auto md:w-80 overflow-hidden bg-zinc-100 border-b md:border-b-0 md:border-r border-zinc-100 shrink-0">
+                <div className="bg-white border border-zinc-200/90 rounded-md shadow-xs hover:shadow-md hover:border-[#E61E32]/30 flex flex-col md:flex-row justify-between transition-all duration-200 overflow-hidden group h-full">
+                  {/* Card Image Cover Frame */}
+                  <div className="relative h-52 md:h-auto md:w-80 overflow-hidden bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-200/80 shrink-0">
                     {h.image ? (
                       <img 
                         src={h.image} 
                         alt={h.title}
-                        className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-red-50 to-zinc-100 flex items-center justify-center min-h-[160px]">
-                        <div className="text-[10px] text-red-650/70 font-semibold tracking-wider uppercase">Redlix Sprint</div>
+                      <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-zinc-950 flex flex-col items-center justify-center p-6 text-center">
+                        <Code className="w-8 h-8 text-[#E61E32] mb-2" />
+                        <span className="text-xs text-white font-bold tracking-wider uppercase">Redlix Hackathon</span>
                       </div>
                     )}
                     
                     {/* Status badge absolute */}
-                    <div className="absolute top-2.5 right-2.5 flex gap-1.5">
-                      <span className={`text-[8px] font-bold tracking-wider uppercase px-2 py-1 bg-white rounded-md shadow-xs ${
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md shadow-xs ${
                         active 
-                          ? "text-emerald-700" 
-                          : "text-zinc-550"
+                          ? "bg-emerald-600 text-white" 
+                          : "bg-zinc-800 text-zinc-300"
                       }`}>
                         {active ? "Active" : "Closed"}
                       </span>
                     </div>
 
-                    <div className="absolute bottom-2.5 left-2.5 flex gap-1.5">
-                      <span className="text-[8px] font-bold tracking-wider uppercase px-2 py-1 bg-zinc-900/80 text-white backdrop-blur-xs rounded-md">
+                    <div className="absolute bottom-3 left-3 flex gap-2">
+                      <span className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 bg-zinc-950/90 text-white backdrop-blur-xs rounded-md border border-white/10">
                         {h.type}
                       </span>
-                      <span className={`text-[8px] font-bold tracking-wider uppercase px-2 py-1 rounded-md ${
-                        h.hasFee ? "bg-red-650 text-white" : "bg-emerald-600 text-white"
+                      <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md ${
+                        h.hasFee ? "bg-[#E61E32] text-white" : "bg-emerald-600 text-white"
                       }`}>
                         {h.hasFee ? `$${h.registrationFee.toFixed(2)} Fee` : "Free Entry"}
                       </span>
                     </div>
                   </div>
 
+                  {/* Card Content Details */}
                   <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                     <div className="space-y-4">
                       {/* Title & Description */}
-                      <div className="space-y-1.5 pb-4 border-b border-zinc-100/80">
-                        <h3 className="text-base md:text-lg font-extrabold text-zinc-955 tracking-tight leading-snug group-hover:text-red-650 transition-colors">
+                      <div className="space-y-1.5 pb-3 border-b border-zinc-100">
+                        <h3 className="text-base md:text-lg font-bold text-zinc-900 tracking-tight leading-snug group-hover:text-[#E61E32] transition-colors">
                           {h.title}
                         </h3>
                         {h.description && (
-                          <p className="text-sm text-zinc-650 leading-relaxed font-normal line-clamp-2">
+                          <p className="text-xs text-zinc-600 leading-relaxed font-normal line-clamp-2">
                             {h.description}
                           </p>
                         )}
                       </div>
 
                       {/* Timeline & Team size */}
-                      <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-zinc-600 bg-zinc-50/70 p-3.5 rounded-xl">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-red-650 shrink-0" />
+                      <div className="grid grid-cols-2 gap-3 text-xs font-semibold text-zinc-700 bg-zinc-50 border border-zinc-200/70 p-3 rounded-md">
+                        <div className="flex items-center gap-2.5">
+                          <Calendar className="h-4 w-4 text-[#E61E32] shrink-0" />
                           <div>
-                            <p className="text-[9px] text-zinc-450 uppercase font-bold tracking-wider">Timeline</p>
-                            <p className="text-zinc-800 font-bold">{formatDate(h.startDate)} - {formatDate(h.endDate)}</p>
+                            <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">Timeline</p>
+                            <p className="text-zinc-900 font-bold">{formatDate(h.startDate)} - {formatDate(h.endDate)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-red-650 shrink-0" />
+                        <div className="flex items-center gap-2.5">
+                          <Users className="h-4 w-4 text-[#E61E32] shrink-0" />
                           <div>
-                            <p className="text-[9px] text-zinc-450 uppercase font-bold tracking-wider">Team Limit</p>
-                            <p className="text-zinc-800 font-bold">Max {h.teamSize} Member{h.teamSize > 1 ? "s" : ""}</p>
+                            <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">Team Size</p>
+                            <p className="text-zinc-900 font-bold">Max {h.teamSize} Member{h.teamSize > 1 ? "s" : ""}</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Prize Pool Display */}
                       {(h.prizeFirst || h.prizeSecond || h.prizeThird) && (
-                        <div className="bg-zinc-50/70 p-3.5 rounded-xl space-y-2">
-                          <p className="text-[9px] text-zinc-455 uppercase font-bold tracking-wider">
+                        <div className="bg-zinc-50 border border-zinc-200/70 p-3 rounded-md space-y-2">
+                          <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">
                             Prize Pool
                           </p>
-                          <div className="grid grid-cols-3 gap-2 text-10px md:text-xs">
+                          <div className="grid grid-cols-3 gap-2 text-xs">
                             {h.prizeFirst && (
-                              <div className="bg-white p-2 text-center rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                                <span className="block font-semibold text-zinc-400 uppercase text-[8px] tracking-wider">1st</span>
-                                <span className="font-black text-red-650">{h.prizeFirst}</span>
+                              <div className="bg-white p-2 text-center rounded-md border border-zinc-200/80 shadow-2xs">
+                                <span className="block font-semibold text-zinc-400 uppercase text-[8px] tracking-wider">1st Prize</span>
+                                <span className="font-black text-[#E61E32] text-xs">{h.prizeFirst}</span>
                               </div>
                             )}
                             {h.prizeSecond && (
-                              <div className="bg-white p-2 text-center rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                                <span className="block font-semibold text-zinc-400 uppercase text-[8px] tracking-wider">2nd</span>
-                                <span className="font-black text-zinc-750">{h.prizeSecond}</span>
+                              <div className="bg-white p-2 text-center rounded-md border border-zinc-200/80 shadow-2xs">
+                                <span className="block font-semibold text-zinc-400 uppercase text-[8px] tracking-wider">2nd Prize</span>
+                                <span className="font-bold text-zinc-800 text-xs">{h.prizeSecond}</span>
                               </div>
                             )}
                             {h.prizeThird && (
-                              <div className="bg-white p-2 text-center rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                                <span className="block font-semibold text-zinc-400 uppercase text-[8px] tracking-wider">3rd</span>
-                                <span className="font-black text-zinc-650">{h.prizeThird}</span>
+                              <div className="bg-white p-2 text-center rounded-md border border-zinc-200/80 shadow-2xs">
+                                <span className="block font-semibold text-zinc-400 uppercase text-[8px] tracking-wider">3rd Prize</span>
+                                <span className="font-bold text-zinc-700 text-xs">{h.prizeThird}</span>
                               </div>
                             )}
                           </div>
@@ -453,13 +487,13 @@ export default function HackathonsPage() {
                       {/* Perks display */}
                       {h.perks && (
                         <div className="space-y-1.5">
-                          <p className="text-[9px] text-zinc-455 uppercase font-bold tracking-wider">What You Gain</p>
+                          <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">What You Gain</p>
                           <div className="flex flex-wrap gap-1.5">
                             {h.perks.split(/[,\n]/).map((perk, idx) => {
                               const cleanPerk = perk.trim();
                               if (!cleanPerk) return null;
                               return (
-                                <span key={idx} className="bg-red-50/60 text-red-750 text-[10px] px-2.5 py-1 font-semibold rounded-md">
+                                <span key={idx} className="bg-red-50 text-[#E61E32] text-[11px] px-2.5 py-1 font-semibold rounded-md border border-red-100">
                                   ✓ {cleanPerk}
                                 </span>
                               );
@@ -471,13 +505,13 @@ export default function HackathonsPage() {
                       {/* Phases display */}
                       {h.phases && (
                         <div className="space-y-1.5">
-                          <p className="text-[9px] text-zinc-455 uppercase font-bold tracking-wider">Evaluation Phases</p>
+                          <p className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">Evaluation Phases</p>
                           <div className="flex flex-wrap gap-1.5">
                             {h.phases.split(/[,\n]/).map((phase, idx) => {
                               const cleanPhase = phase.trim();
                               if (!cleanPhase) return null;
                               return (
-                                <span key={idx} className="bg-zinc-100/80 text-zinc-650 text-[10px] px-3 py-1 font-semibold rounded-md">
+                                <span key={idx} className="bg-zinc-100 text-zinc-700 text-[11px] px-3 py-1 font-semibold rounded-md border border-zinc-200/60">
                                   {cleanPhase}
                                 </span>
                               );
@@ -488,14 +522,14 @@ export default function HackathonsPage() {
                     </div>
 
                     {/* Actions footer */}
-                    <div className="pt-3.5 border-t border-zinc-100/80 flex items-center justify-between mt-2">
-                      <span className="text-[10px] text-zinc-450 font-mono">ID: {h.id.substring(0, 8)}...</span>
+                    <div className="pt-3 border-t border-zinc-100 flex items-center justify-between mt-2">
+                      <span className="text-[10px] text-zinc-400 font-mono">ID: {h.id.substring(0, 8)}...</span>
                       {active ? (
-                        <span className="text-xs md:text-sm text-red-650 font-bold group-hover:underline flex items-center gap-1">
-                          Register now <ArrowRight className="h-3.5 w-3.5" />
+                        <span className="text-xs text-[#E61E32] font-bold group-hover:underline flex items-center gap-1">
+                          Register for Hackathon <ArrowRight className="h-3.5 w-3.5" />
                         </span>
                       ) : (
-                        <span className="text-zinc-400 font-medium italic text-xs">Closed</span>
+                        <span className="text-zinc-400 font-semibold italic text-xs">Event Concluded</span>
                       )}
                     </div>
                   </div>
@@ -519,43 +553,46 @@ export default function HackathonsPage() {
           </div>
         )}
 
-        {/* Community Banner Block (Matches User Screenshot) */}
-        <div className="bg-white border border-zinc-200 p-8 rounded-xl space-y-4 shadow-xs mt-12">
-          <p className="text-[11px] text-zinc-500 font-medium">
-            Follow us on your favorite platforms for the latest updates, tips, and inspiration.
+        {/* Community Banner Block */}
+        <div className="bg-white border border-zinc-200/90 p-8 rounded-md space-y-4 shadow-xs mt-12">
+          <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wider text-[#E61E32]">
+            Connect &amp; Collaborate
           </p>
-          <h2 className="text-xl md:text-2xl font-black text-zinc-950 tracking-tight">
-            Join the Redlix Community!
+          <h2 className="text-xl md:text-2xl font-bold text-zinc-900 tracking-tight font-inter">
+            Join the Redlix Global Community!
           </h2>
-          <div className="space-y-3.5 text-xs text-zinc-600 leading-relaxed font-normal">
-            <p>
-              <span className="font-semibold text-zinc-900">Dive Deeper!</span> Connect with us on Linkedin, Instagram and Facebook for the latest buzz, insider tips & more.
-            </p>
-            <p>
-              <span className="font-semibold text-zinc-900">Join the Crew!</span> Engage, ask, share on our Redlix platform. Be part of our vibrant community.
-            </p>
-            <p>
-              <span className="font-semibold text-zinc-900">Be in the Know!</span> New Opportunities? Exclusive events? Follow us and be the first.
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-zinc-600 leading-relaxed font-normal pt-2">
+            <div className="bg-zinc-50 p-4 rounded-md border border-zinc-200/80 space-y-1">
+              <span className="font-bold text-zinc-900 block">Dive Deeper!</span>
+              <p className="text-zinc-500">Connect with us on LinkedIn and Instagram for the latest event announcements and technical tips.</p>
+            </div>
+            <div className="bg-zinc-50 p-4 rounded-md border border-zinc-200/80 space-y-1">
+              <span className="font-bold text-zinc-900 block">Join the Crew!</span>
+              <p className="text-zinc-500">Engage, ask questions, and share project updates on our platform community network.</p>
+            </div>
+            <div className="bg-zinc-50 p-4 rounded-md border border-zinc-200/80 space-y-1">
+              <span className="font-bold text-zinc-900 block">Be in the Know!</span>
+              <p className="text-zinc-500">Receive priority notifications for upcoming hackathons, tech sprints, and prize pools.</p>
+            </div>
           </div>
         </div>
 
       </main>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-zinc-200 bg-white mt-12 text-center text-xs text-zinc-400">
+      <footer className="py-8 border-t border-zinc-200 bg-white mt-12 text-center text-xs text-zinc-500 font-medium">
         © 2026 Redlix Secure. Hackathon Platform Registry. All rights reserved.
       </footer>
 
       {/* MODAL: Submit Project */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white border border-zinc-300 w-full max-w-md shadow-2xl relative overflow-hidden">
-            <div className="h-1 bg-orange-500" />
+          <div className="bg-white border border-zinc-200 rounded-md w-full max-w-md shadow-2xl relative overflow-hidden">
+            <div className="h-1 bg-[#E61E32]" />
             <div className="p-6 space-y-6">
               
               <div className="space-y-1">
-                <h3 className="text-lg font-extrabold tracking-tight text-zinc-950">Project Submission</h3>
+                <h3 className="text-lg font-bold tracking-tight text-zinc-900 font-inter">Project Submission</h3>
                 <p className="text-xs text-zinc-500 font-normal">
                   Submit links for your team's completed hackathon project.
                 </p>
@@ -563,7 +600,7 @@ export default function HackathonsPage() {
 
               {submissionSuccess ? (
                 <div className="space-y-4 text-center py-4">
-                  <div className="mx-auto bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-none flex flex-col items-center space-y-2">
+                  <div className="mx-auto bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-md flex flex-col items-center space-y-2">
                     <CheckCircle2 className="h-8 w-8 text-emerald-600" />
                     <p className="text-sm font-bold">Submission Received!</p>
                   </div>
@@ -572,7 +609,7 @@ export default function HackathonsPage() {
                   </p>
                   <button
                     onClick={closeSubmitModal}
-                    className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs rounded-none transition-colors cursor-pointer"
+                    className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs rounded-md transition-colors cursor-pointer"
                   >
                     Done
                   </button>
@@ -587,7 +624,7 @@ export default function HackathonsPage() {
                       placeholder="e.g. cly... (paste your registered Team ID)"
                       value={submitTeamId}
                       onChange={(e) => setSubmitTeamId(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-zinc-300 text-xs text-zinc-900 font-mono rounded-none focus:outline-none focus:border-orange-500 transition-colors shadow-xs"
+                      className="block w-full px-3 py-2 bg-white border border-zinc-300 text-xs text-zinc-900 font-mono rounded-md focus:outline-none focus:border-[#E61E32] transition-colors shadow-xs"
                     />
                   </div>
 
@@ -598,7 +635,7 @@ export default function HackathonsPage() {
                       placeholder="https://github.com/username/project"
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-zinc-300 text-xs text-zinc-900 rounded-none focus:outline-none focus:border-orange-500 transition-colors shadow-xs"
+                      className="block w-full px-3 py-2 bg-white border border-zinc-300 text-xs text-zinc-900 rounded-md focus:outline-none focus:border-[#E61E32] transition-colors shadow-xs"
                     />
                   </div>
 
@@ -609,26 +646,26 @@ export default function HackathonsPage() {
                       placeholder="https://my-demo-app.vercel.app"
                       value={demoUrl}
                       onChange={(e) => setDemoUrl(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border border-zinc-300 text-xs text-zinc-900 rounded-none focus:outline-none focus:border-orange-500 transition-colors shadow-xs"
+                      className="block w-full px-3 py-2 bg-white border border-zinc-300 text-xs text-zinc-900 rounded-md focus:outline-none focus:border-[#E61E32] transition-colors shadow-xs"
                     />
                   </div>
 
                   {errorMsg && (
-                    <p className="text-xs text-red-650 font-semibold">{errorMsg}</p>
+                    <p className="text-xs text-[#E61E32] font-semibold">{errorMsg}</p>
                   )}
 
                   <div className="flex gap-2 justify-end pt-2 border-t border-zinc-150">
                     <button
                       type="button"
                       onClick={closeSubmitModal}
-                      className="px-4 py-2 border border-zinc-300 text-zinc-700 hover:bg-zinc-50 text-xs font-bold rounded-none cursor-pointer"
+                      className="px-4 py-2 border border-zinc-300 text-zinc-700 hover:bg-zinc-50 text-xs font-bold rounded-md cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white text-xs font-semibold rounded-none shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="px-4 py-2 bg-[#E61E32] hover:bg-[#d01729] disabled:bg-red-300 text-white text-xs font-semibold rounded-md shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                     >
                       {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
                       Submit Code

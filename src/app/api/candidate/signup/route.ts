@@ -61,6 +61,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Send welcome email via Resend (async, non-blocking)
+    try {
+      const { sendEmail } = await import("@/lib/resend");
+      await sendEmail({
+        to: cleanEmail,
+        subject: "Welcome to Redlix Secure Candidate Portal",
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #18181b; padding: 20px;">
+            <h2 style="color: #E61E32;">Welcome to Redlix Secure, ${fullName.trim()}!</h2>
+            <p>Your candidate profile has been successfully registered on the Redlix examination portal.</p>
+            <p>You can now sign in using your registered email address: <strong>${cleanEmail}</strong>.</p>
+            <hr style="border: none; border-top: 1px solid #e4e4e7; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #71717a;">© 2026 Redlix Secure Proctoring System. All rights reserved.</p>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error("Non-blocking welcome email dispatch failed:", emailErr);
+    }
+
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json(
