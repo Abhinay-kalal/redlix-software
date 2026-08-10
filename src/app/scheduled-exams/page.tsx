@@ -73,7 +73,7 @@ export default function ScheduledExams() {
       
       {/* Top Header */}
       <header className="sticky top-0 z-50 bg-[#E61E32] border-b border-[#d01729] py-3 px-6 md:px-8 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             {/* Logo directly on red navbar with a soft white shade glow */}
             <img
@@ -83,14 +83,14 @@ export default function ScheduledExams() {
             />
             <div className="flex items-center gap-2 border-l border-white/20 pl-3">
               <span className="font-semibold text-xs text-white font-inter">Scheduled Exams</span>
-              <span className="hidden sm:inline-block px-2.5 py-0.5 bg-white/20 text-white rounded-full text-[10px] font-semibold border border-white/30 backdrop-blur-xs shadow-xs">Directory</span>
+              <span className="hidden sm:inline-block px-2.5 py-0.5 bg-white/20 text-white rounded-md text-[10px] font-semibold border border-white/30 backdrop-blur-xs shadow-xs">Directory</span>
             </div>
           </Link>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-6 md:p-8 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-6">
         
         {/* Page Title */}
         <div className="space-y-1 text-left">
@@ -110,7 +110,7 @@ export default function ScheduledExams() {
             placeholder="Search by exam title or organization..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all shadow-xs"
+            className="block w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-md text-xs text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#E61E32]/20 focus:border-[#E61E32] transition-all shadow-xs"
           />
         </div>
 
@@ -120,16 +120,16 @@ export default function ScheduledExams() {
             <p className="text-zinc-500 text-xs font-semibold">Loading scheduled exams...</p>
           </div>
         ) : filteredExams.length === 0 ? (
-          <div className="py-16 text-center bg-white border border-zinc-200/90 rounded-lg shadow-xs p-8">
+          <div className="py-16 text-center bg-white border border-zinc-200/90 rounded-md shadow-xs p-8">
             <p className="text-zinc-500 text-sm font-medium">No scheduled exams found matching your search.</p>
           </div>
         ) : (
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredExams.map((exam) => (
               <div
                 key={exam.id}
-                className="bg-white border border-zinc-200/90 rounded-xl shadow-xs hover:shadow-md hover:border-[#E61E32]/25 transition-all duration-200 overflow-hidden flex flex-col"
+                className="bg-white border border-zinc-200/90 rounded-md shadow-xs hover:shadow-md hover:border-[#E61E32]/25 transition-all duration-200 overflow-hidden flex flex-col"
               >
                 {/* Cover Image (1200x1200px 1:1 Square Frame) */}
                 <div className="w-full aspect-square relative overflow-hidden bg-zinc-900 shrink-0">
@@ -154,7 +154,7 @@ export default function ScheduledExams() {
                     }}
                   />
                   <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span className="text-[11px] font-semibold bg-white/95 text-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200/90 shadow-xs">
+                    <span className="text-[11px] font-semibold bg-white/95 text-zinc-800 px-2.5 py-1 rounded-md border border-zinc-200/90 shadow-xs">
                       {exam.company_name}
                     </span>
                   </div>
@@ -193,7 +193,7 @@ export default function ScheduledExams() {
                     <button
                       onClick={(e) => handleCopyLink(exam.id, e)}
                       title="Copy Exam Link"
-                      className="px-3 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-zinc-200"
+                      className="px-3 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 font-bold text-xs rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 border border-zinc-200"
                     >
                       <svg className="w-3.5 h-3.5 text-[#E61E32]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -203,7 +203,7 @@ export default function ScheduledExams() {
 
                     <Link
                       href={`/scheduled-exams/${encodeExamId(exam.id)}`}
-                      className="flex-1 px-4 py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer text-center block"
+                      className="flex-1 px-4 py-2.5 bg-[#E61E32] hover:bg-[#d01729] text-white font-bold text-xs rounded-md shadow-xs transition-all cursor-pointer text-center block"
                     >
                       View Exam →
                     </Link>
