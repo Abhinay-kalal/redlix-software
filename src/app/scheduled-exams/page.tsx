@@ -103,18 +103,17 @@ export default function ScheduledExams() {
     <div className="min-h-screen bg-zinc-100 font-sans text-zinc-900 flex flex-col">
       
       {/* Top Header */}
-      <header className="sticky top-0 z-50 bg-[#E61E32] border-b border-[#d01729] py-3 px-6 md:px-8 shadow-xs">
+      <header className="sticky top-0 z-50 bg-[#E61E32] border-b border-[#d01729] py-4.5 md:py-5 px-6 md:px-8 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             {/* Logo directly on red navbar with a soft white shade glow */}
             <img
               src="https://ik.imagekit.io/dypkhqxip/logotraining?updatedAt=1783099023149"
               alt="Redlix Official Logo"
-              className="h-7.5 md:h-8 w-auto object-contain shrink-0"
+              className="h-8 md:h-9 w-auto object-contain shrink-0"
             />
             <div className="flex items-center gap-2 border-l border-white/20 pl-3">
-              <span className="font-semibold text-xs text-white font-inter">Scheduled Exams</span>
-              <span className="hidden sm:inline-block px-2.5 py-0.5 bg-white/20 text-white rounded-md text-[10px] font-semibold border border-white/30 backdrop-blur-xs shadow-xs">Directory</span>
+              <span className="font-semibold text-xs md:text-sm text-white font-inter">Scheduled Exams</span>
             </div>
           </Link>
         </div>
