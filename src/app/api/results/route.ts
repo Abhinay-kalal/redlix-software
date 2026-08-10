@@ -66,20 +66,25 @@ export async function GET(req: NextRequest) {
           const qId = Number(k);
           const isGeneralMCQ = qId >= 1 && qId <= 100;
           const isTrainingMCQ = qId >= 1001 && qId <= 1017;
-          const isPhase02MCQ = qId >= 2001 && qId <= 2019;
-          return (isGeneralMCQ || isTrainingMCQ || isPhase02MCQ) && v && v.toString().trim();
+          const isPhase02MCQ = qId >= 2001 && qId <= 2025;
+          const isMarketingMCQ = qId >= 3001 && qId <= 3050;
+          const isAnalyticsMCQ = qId >= 4001 && qId <= 4050;
+          const isUIUXMCQ = qId >= 5001 && qId <= 5050;
+          return (isGeneralMCQ || isTrainingMCQ || isPhase02MCQ || isMarketingMCQ || isAnalyticsMCQ || isUIUXMCQ) && v && v.toString().trim();
         }).length;
         const codingAnswered = Object.entries(answers).filter(([k, v]: any) => {
           const qId = Number(k);
           const isGeneralCoding = qId >= 101 && qId <= 110;
           const isTrainingCoding = qId >= 1018 && qId <= 1021;
           const isPhase02Open = qId >= 2101 && qId <= 2108;
-          return (isGeneralCoding || isTrainingCoding || isPhase02Open) && v && v.toString().trim();
+          const isTechnicalCoding = qId >= 2026 && qId <= 2050;
+          return (isGeneralCoding || isTrainingCoding || isPhase02Open || isTechnicalCoding) && v && v.toString().trim();
         }).length;
         const attempted = mcqAnswered > 0 || codingAnswered > 0;
         
         return {
           id: r.id,
+          exam_id: r.examId,
           candidate_name: r.candidateName,
           hall_ticket_number: r.hallTicketNumber,
           email: r.email,

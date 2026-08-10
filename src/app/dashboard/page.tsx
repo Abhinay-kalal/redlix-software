@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { createClient } from "@/utils/supabase/client";
 import { QUESTIONS } from "@/app/exam-session/questions";
+import { TECHNICAL_QUESTIONS } from "@/app/exam-session/technicalQuestions";
+import { gradeTechnicalFull } from "@/app/exam-session/technicalAnswerKey";
+import { UIUX_QUESTIONS } from "@/app/exam-session/uiuxQuestions";
+import { gradeUIUXFull } from "@/app/exam-session/uiuxAnswerKey";
+import { MARKETING_QUESTIONS } from "@/app/exam-session/marketingQuestions";
+import { gradeMarketingFull } from "@/app/exam-session/marketingAnswerKey";
+import { ANALYTICS_QUESTIONS } from "@/app/exam-session/analyticsQuestions";
+import { gradeAnalyticsFull } from "@/app/exam-session/analyticsAnswerKey";
 import { TRAINING01_QUESTIONS } from "@/app/exam-session/training01Questions";
 import { gradeTraining01Full } from "@/app/exam-session/training01AnswerKey";
 import { PHASE02_QUESTIONS } from "@/app/exam-session/phase02Questions";
@@ -2065,13 +2073,43 @@ export default function Dashboard() {
       
       let candidateQuestions = QUESTIONS.map((q) => ({ ...q }));
 
-      // ── Redlix Training Exam 01 / Phase 02 ──────────────────────────────
-      const isTraining01Exam = exam && exam.name.toLowerCase().includes("redlix training exam 01");
-      const isPhase02Exam = exam && (exam.name.toLowerCase().includes("redlix phase - 02") || exam.name.toLowerCase().includes("final phase"));
+      // ── Exam Type & Grading ──────────────────────────────
+      const examName = exam ? exam.name.toLowerCase() : "";
+      const isTechnicalExam = exam && examName.includes("technical");
+      const isUIUXExam = exam && (examName.includes("ui") || examName.includes("ux"));
+      const isMarketingExam = exam && examName.includes("marketing");
+      const isAnalyticsExam = exam && examName.includes("analytics");
+      const isTraining01Exam = exam && examName.includes("redlix training exam 01");
+      const isPhase02Exam = exam && (examName.includes("redlix phase - 02") || examName.includes("final phase"));
+
+      let technicalGrade: ReturnType<typeof gradeTechnicalFull> | null = null;
+      let uiuxGrade: ReturnType<typeof gradeUIUXFull> | null = null;
+      let marketingGrade: ReturnType<typeof gradeMarketingFull> | null = null;
+      let analyticsGrade: ReturnType<typeof gradeAnalyticsFull> | null = null;
       let training01Grade: ReturnType<typeof gradeTraining01Full> | null = null;
       let phase02Grade: ReturnType<typeof gradePhase02Full> | null = null;
 
-      if (isTraining01Exam) {
+      if (isTechnicalExam) {
+        candidateQuestions = TECHNICAL_QUESTIONS.map((q) => ({ ...q }));
+        if (candidate.answers) {
+          technicalGrade = gradeTechnicalFull(candidate.answers as Record<string | number, string>);
+        }
+      } else if (isUIUXExam) {
+        candidateQuestions = UIUX_QUESTIONS.map((q) => ({ ...q }));
+        if (candidate.answers) {
+          uiuxGrade = gradeUIUXFull(candidate.answers as Record<string | number, string>);
+        }
+      } else if (isMarketingExam) {
+        candidateQuestions = MARKETING_QUESTIONS.map((q) => ({ ...q }));
+        if (candidate.answers) {
+          marketingGrade = gradeMarketingFull(candidate.answers as Record<string | number, string>);
+        }
+      } else if (isAnalyticsExam) {
+        candidateQuestions = ANALYTICS_QUESTIONS.map((q) => ({ ...q }));
+        if (candidate.answers) {
+          analyticsGrade = gradeAnalyticsFull(candidate.answers as Record<string | number, string>);
+        }
+      } else if (isTraining01Exam) {
         candidateQuestions = TRAINING01_QUESTIONS.map((q) => ({ ...q }));
         if (candidate.answers) {
           training01Grade = gradeTraining01Full(candidate.answers as Record<string | number, string>);
@@ -2097,8 +2135,8 @@ export default function Dashboard() {
         }
       }
 
-      const mcqQuestions = candidateQuestions.filter(q => q.section === "A");
-      const codingQuestions = candidateQuestions.filter(q => q.section === "B");
+      const mcqQuestions = candidateQuestions.filter(q => q.type === "mcq");
+      const codingQuestions = candidateQuestions.filter(q => q.type === "coding" || q.type === "open");
 
       const isQuestionAttempted = (q: typeof QUESTIONS[0]) => {
         const ans = candidate.answers?.[q.id];
@@ -2116,7 +2154,7 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in select-text">
           <div className="relative w-full max-w-4xl bg-white border border-zinc-250 rounded-none overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             
-            {}
+            {/* Modal Header */}
             <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50 shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-zinc-950 flex items-center gap-2">
@@ -2135,7 +2173,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {}
+            {/* Quick Metrics Bar */}
             <div className="grid grid-cols-3 border-b border-zinc-200 bg-zinc-50/50 shrink-0 divide-x divide-zinc-200 text-center py-2.5">
               <div>
                 <p className="text-[10px] text-zinc-400 uppercase font-bold">Total Progress</p>
@@ -2144,18 +2182,136 @@ export default function Dashboard() {
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-400 uppercase font-bold">Section A: MCQs</p>
+                <p className="text-[10px] text-zinc-400 uppercase font-bold">MCQs Section</p>
                 <p className="text-sm font-bold text-emerald-600 mt-0.5">
                   {mcqAttempted} / {mcqQuestions.length} Answered
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-400 uppercase font-bold">Section B: {isPhase02Exam ? "Scenarios" : "Coding"}</p>
+                <p className="text-[10px] text-zinc-400 uppercase font-bold">{isPhase02Exam ? "Scenarios" : codingQuestions.length > 0 ? "Coding Tasks" : "Evaluation"}</p>
                 <p className="text-sm font-bold text-indigo-600 mt-0.5">
                   {codingAttempted} / {codingQuestions.length} {isPhase02Exam ? "Answered" : "Attempted"}
                 </p>
               </div>
             </div>
+
+            {/* Technical Wing — Score Banner */}
+            {isTechnicalExam && technicalGrade && (
+              <div className="px-5 py-3 border-b border-zinc-200 bg-orange-50/60 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-orange-700 mb-2">
+                  🔒 Technical Wing Auto-Graded Score (Admin View Only)
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec A & B MCQs</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">{technicalGrade.mcqMarks} / 50 Marks</p>
+                    <p className="text-[9px] text-zinc-400">{technicalGrade.mcqCorrect} / 25 correct</p>
+                  </div>
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Sec C Coding</p>
+                    <p className="text-sm font-bold text-indigo-700 mt-0.5">{technicalGrade.codingMarks} / 50 Marks</p>
+                    <p className="text-[9px] text-zinc-400">{technicalGrade.codingAttempted} / 25 attempted</p>
+                  </div>
+                  <div className="bg-white border border-orange-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Total Marks</p>
+                    <p className="text-sm font-bold text-zinc-900 mt-0.5">{technicalGrade.totalMarks} / 100</p>
+                    <p className="text-[9px] text-zinc-400">{technicalGrade.percentage}%</p>
+                  </div>
+                  <div className={`border p-2 text-center ${technicalGrade.isPass ? "bg-emerald-500 border-emerald-600 text-white" : "bg-red-500 border-red-600 text-white"}`}>
+                    <p className="text-[9px] uppercase font-bold opacity-80">Status</p>
+                    <p className="text-sm font-bold mt-0.5">{technicalGrade.isPass ? "PASSED" : "FAILED"}</p>
+                    <p className="text-[9px] opacity-80">Cut-off: 40%</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* UI & UX Wing — Score Banner */}
+            {isUIUXExam && uiuxGrade && (
+              <div className="px-5 py-3 border-b border-zinc-200 bg-purple-50/60 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-purple-700 mb-2">
+                  🔒 UI & UX Wing Auto-Graded Score (Admin View Only)
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white border border-purple-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Attempted</p>
+                    <p className="text-sm font-bold text-zinc-800 mt-0.5">{uiuxGrade.totalAttempted} / 50</p>
+                  </div>
+                  <div className="bg-white border border-purple-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Correct Answers</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">{uiuxGrade.totalCorrect} / 50</p>
+                  </div>
+                  <div className="bg-white border border-purple-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Total Marks</p>
+                    <p className="text-sm font-bold text-purple-900 mt-0.5">{uiuxGrade.totalMarks} / 100</p>
+                    <p className="text-[9px] text-zinc-400">{uiuxGrade.percentage}%</p>
+                  </div>
+                  <div className={`border p-2 text-center ${uiuxGrade.isPass ? "bg-emerald-500 border-emerald-600 text-white" : "bg-red-500 border-red-600 text-white"}`}>
+                    <p className="text-[9px] uppercase font-bold opacity-80">Status</p>
+                    <p className="text-sm font-bold mt-0.5">{uiuxGrade.isPass ? "PASSED" : "FAILED"}</p>
+                    <p className="text-[9px] opacity-80">Cut-off: 40%</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Marketing Wing — Score Banner */}
+            {isMarketingExam && marketingGrade && (
+              <div className="px-5 py-3 border-b border-zinc-200 bg-blue-50/60 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-blue-700 mb-2">
+                  🔒 Marketing Wing Auto-Graded Score (Admin View Only)
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white border border-blue-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Attempted</p>
+                    <p className="text-sm font-bold text-zinc-800 mt-0.5">{marketingGrade.totalAttempted} / 50</p>
+                  </div>
+                  <div className="bg-white border border-blue-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Correct Answers</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">{marketingGrade.totalCorrect} / 50</p>
+                  </div>
+                  <div className="bg-white border border-blue-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Total Marks</p>
+                    <p className="text-sm font-bold text-blue-900 mt-0.5">{marketingGrade.totalMarks} / 100</p>
+                    <p className="text-[9px] text-zinc-400">{marketingGrade.percentage}%</p>
+                  </div>
+                  <div className={`border p-2 text-center ${marketingGrade.isPass ? "bg-emerald-500 border-emerald-600 text-white" : "bg-red-500 border-red-600 text-white"}`}>
+                    <p className="text-[9px] uppercase font-bold opacity-80">Status</p>
+                    <p className="text-sm font-bold mt-0.5">{marketingGrade.isPass ? "PASSED" : "FAILED"}</p>
+                    <p className="text-[9px] opacity-80">Cut-off: 40%</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Data Analytics Wing — Score Banner */}
+            {isAnalyticsExam && analyticsGrade && (
+              <div className="px-5 py-3 border-b border-zinc-200 bg-emerald-50/60 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700 mb-2">
+                  🔒 Data Analytics Wing Auto-Graded Score (Admin View Only)
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white border border-emerald-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Attempted</p>
+                    <p className="text-sm font-bold text-zinc-800 mt-0.5">{analyticsGrade.totalAttempted} / 50</p>
+                  </div>
+                  <div className="bg-white border border-emerald-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Correct Answers</p>
+                    <p className="text-sm font-bold text-emerald-700 mt-0.5">{analyticsGrade.totalCorrect} / 50</p>
+                  </div>
+                  <div className="bg-white border border-emerald-200 p-2 text-center">
+                    <p className="text-[9px] text-zinc-500 uppercase font-bold">Total Marks</p>
+                    <p className="text-sm font-bold text-emerald-900 mt-0.5">{analyticsGrade.totalMarks} / 100</p>
+                    <p className="text-[9px] text-zinc-400">{analyticsGrade.percentage}%</p>
+                  </div>
+                  <div className={`border p-2 text-center ${analyticsGrade.isPass ? "bg-emerald-500 border-emerald-600 text-white" : "bg-red-500 border-red-600 text-white"}`}>
+                    <p className="text-[9px] uppercase font-bold opacity-80">Status</p>
+                    <p className="text-sm font-bold mt-0.5">{analyticsGrade.isPass ? "PASSED" : "FAILED"}</p>
+                    <p className="text-[9px] opacity-80">Cut-off: 40%</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Training Exam 01 — Auto-Grade Score Banner (Admin Only, NEVER shown to candidate) */}
             {isTraining01Exam && training01Grade && (

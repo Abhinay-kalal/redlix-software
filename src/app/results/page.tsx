@@ -78,6 +78,7 @@ interface Exam {
 
 interface Candidate {
   id: number;
+  exam_id?: number;
   candidate_name: string;
   hall_ticket_number: string;
   email: string;
@@ -485,12 +486,14 @@ export default function ResultsPage() {
               </div>
             ) : searchedCandidate ? (
               (() => {
-                const isTechnical = selectedExam?.name.toLowerCase().includes("technical");
-                const isUIUX = selectedExam?.name.toLowerCase().includes("ui") || selectedExam?.name.toLowerCase().includes("ux");
-                const isAnalytics = selectedExam?.name.toLowerCase().includes("analytics");
-                const isMarketing = selectedExam?.name.toLowerCase().includes("marketing");
-                const isTraining01 = selectedExam?.name.toLowerCase().includes("redlix training exam 01");
-                const isPhase02 = selectedExam?.name.toLowerCase().includes("redlix phase - 02") || selectedExam?.name.toLowerCase().includes("final phase");
+                const candidateExam = selectedExam || exams.find((e) => e.id === searchedCandidate.exam_id);
+                const examName = candidateExam?.name.toLowerCase() || "";
+                const isTechnical = examName.includes("technical");
+                const isUIUX = examName.includes("ui") || examName.includes("ux");
+                const isAnalytics = examName.includes("analytics");
+                const isMarketing = examName.includes("marketing");
+                const isTraining01 = examName.includes("redlix training exam 01");
+                const isPhase02 = examName.includes("redlix phase - 02") || examName.includes("final phase");
                 const techGrade = (isTechnical && searchedCandidate.answers) ? gradeTechnicalFull(searchedCandidate.answers) : null;
                 const uiuxGrade = (isUIUX && searchedCandidate.answers) ? gradeUIUXFull(searchedCandidate.answers) : null;
                 const analyticsGrade = (isAnalytics && searchedCandidate.answers) ? gradeAnalyticsFull(searchedCandidate.answers) : null;
@@ -513,7 +516,7 @@ export default function ResultsPage() {
                 } else if (isPhase02) {
                   isPass = phase02Grade ? phase02Grade.mcq.marksObtained >= 30 : false;
                 } else {
-                  isPass = false;
+                  isPass = mcqScore ? mcqScore.marksObtained >= 40 : false;
                 }
 
                 const statusBadge = searchedCandidate.attempted
@@ -524,8 +527,8 @@ export default function ResultsPage() {
 
                 const statusText = searchedCandidate.attempted
                   ? isPass
-                    ? isTraining01 ? "Pass (Cleared)" : isPhase02 ? "Pass (Cleared)" : "Pass (Distinction/Cleared)"
-                    : isTraining01 ? "Fail (Below 26/65 cut-off)" : isPhase02 ? "Fail (Below 30/76 MCQ cut-off)" : "Fail (Coding Round Failed)"
+                    ? isTraining01 ? "Pass (Cleared)" : isPhase02 ? "Pass (Cleared)" : "Pass (Cleared)"
+                    : isTraining01 ? "Fail (Below 26/65 cut-off)" : isPhase02 ? "Fail (Below 30/76 MCQ cut-off)" : "Fail (Below Cut-off)"
                   : "No Attempt";
 
                 const scenarioCorrect = training01Grade
@@ -571,7 +574,7 @@ export default function ResultsPage() {
                       </div>
                     </div>
 
-                    {/* Simple points table in gray borders */}
+                    {/* Points evaluation breakdown table */}
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse border border-zinc-200 text-xs text-left">
                         <thead>
@@ -581,7 +584,64 @@ export default function ResultsPage() {
                             <th className="px-4 py-2.5 font-bold text-center">Marks Obtained</th>
                           </tr>
                         </thead>
-                        {isTraining01 ? (
+                        {isTechnical ? (
+                          <tbody className="divide-y divide-zinc-200">
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A & B: MCQs (25 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.mcqCorrect} / 25 correct` : "0 / 25"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.mcqMarks} / 50 pts` : "0 / 50 pts"}
+                              </td>
+                            </tr>
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section C: Coding Challenges (25 tasks)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.codingAttempted} / 25 attempted` : "0 / 25"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-indigo-700">
+                                {searchedCandidate.attempted && techGrade ? `${techGrade.codingMarks} / 50 pts` : "0 / 50 pts"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        ) : isUIUX ? (
+                          <tbody className="divide-y divide-zinc-200">
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: UI & UX MCQs (50 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && uiuxGrade ? `${uiuxGrade.totalCorrect} / 50 correct (${uiuxGrade.totalAttempted} / 50 attempted)` : "0 / 50"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                                {searchedCandidate.attempted && uiuxGrade ? `${uiuxGrade.totalMarks} / 100 pts (${uiuxGrade.percentage}%)` : "0 / 100 pts"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        ) : isMarketing ? (
+                          <tbody className="divide-y divide-zinc-200">
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: Marketing MCQs (50 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && marketingGrade ? `${marketingGrade.totalCorrect} / 50 correct (${marketingGrade.totalAttempted} / 50 attempted)` : "0 / 50"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                                {searchedCandidate.attempted && marketingGrade ? `${marketingGrade.totalMarks} / 100 pts (${marketingGrade.percentage}%)` : "0 / 100 pts"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        ) : isAnalytics ? (
+                          <tbody className="divide-y divide-zinc-200">
+                            <tr className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: Data Analytics MCQs (50 questions)</td>
+                              <td className="px-4 py-3 border-r border-zinc-200 text-center font-mono font-medium text-zinc-600">
+                                {searchedCandidate.attempted && analyticsGrade ? `${analyticsGrade.totalCorrect} / 50 correct (${analyticsGrade.totalAttempted} / 50 attempted)` : "0 / 50"}
+                              </td>
+                              <td className="px-4 py-3 text-center font-mono font-bold text-green-700">
+                                {searchedCandidate.attempted && analyticsGrade ? `${analyticsGrade.totalMarks} / 100 pts (${analyticsGrade.percentage}%)` : "0 / 100 pts"}
+                              </td>
+                            </tr>
+                          </tbody>
+                        ) : isTraining01 ? (
                           <tbody className="divide-y divide-zinc-200">
                             <tr className="hover:bg-zinc-50/50 transition-colors">
                               <td className="px-4 py-3 border-r border-zinc-200 font-semibold text-zinc-700">Section A: MCQs (15 questions)</td>
