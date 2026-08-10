@@ -106,33 +106,8 @@ function RegisterFormContent() {
       setErrorMsg("Please accept all three declaration checkboxes to register.");
       return;
     }
-    if (!turnstileToken) {
-      setErrorMsg("Please complete the security check.");
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMsg("");
-
-    try {
-      const verifyRes = await fetch("/api/verify-turnstile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: turnstileToken }),
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        setErrorMsg("Security verification failed. Please try again.");
-        setIsSubmitting(false);
-        return;
-      }
-    } catch {
-      setErrorMsg("Failed to verify security token. Please try again.");
-      setIsSubmitting(false);
-      return;
-    }
 
     try {
       const { data: existingReg } = await supabase
@@ -634,17 +609,7 @@ function RegisterFormContent() {
             </div>
           </div>
 
-          {/* Turnstile Security Check */}
-          <div className="border-t border-zinc-100 pt-4 flex flex-col items-start">
-            <Turnstile
-              onSuccess={(token) => {
-                setTurnstileToken(token);
-                setErrorMsg("");
-              }}
-              onError={() => setErrorMsg("Security verification encountered an error.")}
-              onExpire={() => setTurnstileToken("")}
-            />
-          </div>
+
 
           {/* Action Buttons */}
           <div className="pt-2 flex gap-3">

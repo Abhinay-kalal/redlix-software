@@ -53,30 +53,10 @@ export default function StudentRegisterPage() {
       return;
     }
 
-    if (!turnstileToken) {
-      setErrorMsg("Please complete the security check.");
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMsg("");
 
     try {
-      // 1. Verify Turnstile
-      const verifyRes = await fetch("/api/verify-turnstile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: turnstileToken }),
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        setErrorMsg("Security verification failed. Please try again.");
-        setIsSubmitting(false);
-        return;
-      }
-
       // Check for existing registration
       const { data: existingReg, error: checkError } = await supabase
         .from("student_registrations")
@@ -298,17 +278,7 @@ export default function StudentRegisterPage() {
                 </div>
               </div>
 
-              {/* Section 5: Security Captcha */}
-              <div className="border-t border-zinc-200 pt-4 flex flex-col items-start">
-                <Turnstile
-                  onSuccess={(token) => {
-                    setTurnstileToken(token);
-                    setErrorMsg("");
-                  }}
-                  onError={() => setErrorMsg("Security verification encountered an error.")}
-                  onExpire={() => setTurnstileToken("")}
-                />
-              </div>
+
             </div>
 
             {/* Right Column: Personal & Academic Details, Action Buttons */}

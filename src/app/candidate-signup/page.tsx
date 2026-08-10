@@ -63,10 +63,6 @@ function CandidateSignupContent() {
       newErrors.phone = "Please enter a valid phone number.";
     }
 
-    if (!turnstileToken) {
-      newErrors.turnstile = "Please complete the security check.";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -313,18 +309,7 @@ function CandidateSignupContent() {
                   </div>
                 </div>
 
-                {/* Turnstile */}
-                <div className="sm:col-span-2 pt-2">
-                  <Turnstile
-                    onSuccess={(token) => {
-                      setTurnstileToken(token);
-                      if (errors.turnstile) setErrors({ ...errors, turnstile: "" });
-                    }}
-                    onError={() => setFormError("Security check encountered an error.")}
-                    onExpire={() => setTurnstileToken("")}
-                  />
-                  {errors.turnstile && <p className="text-red-500 text-[10px] mt-1">{errors.turnstile}</p>}
-                </div>
+
 
                 {/* Submit button */}
                 <div className="sm:col-span-2 pt-2">

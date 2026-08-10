@@ -226,37 +226,10 @@ function ExamLoginContent() {
       setTermsError("");
     }
 
-    if (!turnstileToken) {
-      setSecurityError("Please complete the security check.");
-      valid = false;
-    } else {
-      setSecurityError("");
-    }
-
     if (!valid) return;
 
     setIsLoading(true);
     setLoadingMsg(loadingSteps[0]);
-
-    try {
-      const verifyRes = await fetch("/api/verify-turnstile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token: turnstileToken }),
-      });
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        setSecurityError("Security verification failed. Please try again.");
-        setIsLoading(false);
-        return;
-      }
-    } catch {
-      setSecurityError("Failed to verify security token. Please try again.");
-      setIsLoading(false);
-      return;
-    }
 
     try {
       // Verify credentials server-side (service role bypasses RLS safely)
@@ -621,17 +594,7 @@ function ExamLoginContent() {
                   )}
                 </div>
 
-                <Turnstile
-                  onSuccess={(token) => {
-                    setTurnstileToken(token);
-                    setSecurityError("");
-                  }}
-                  onError={() => setSecurityError("Security verification encountered an error.")}
-                  onExpire={() => setTurnstileToken("")}
-                />
-                {securityError && (
-                  <p className="text-[#E61E32] text-xs mt-1 font-medium">{securityError}</p>
-                )}
+
 
                 <button
                   type="submit"

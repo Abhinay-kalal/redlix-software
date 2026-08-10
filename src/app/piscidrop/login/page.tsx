@@ -85,13 +85,6 @@ export default function PisciDropLoginPage() {
       setPasswordError("");
     }
 
-    if (!turnstileToken) {
-      setSecurityError("Please complete the security check.");
-      valid = false;
-    } else {
-      setSecurityError("");
-    }
-
     if (!valid) return;
 
     setIsLoading(true);
@@ -126,13 +119,6 @@ export default function PisciDropLoginPage() {
       setForgotEmailError("");
     }
 
-    if (!turnstileToken) {
-      setSecurityError("Please complete the security check.");
-      valid = false;
-    } else {
-      setSecurityError("");
-    }
-
     if (!valid) return;
 
     setIsLoading(true);
@@ -149,7 +135,7 @@ export default function PisciDropLoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: forgotEmail, token: turnstileToken }),
+        body: JSON.stringify({ email: forgotEmail }),
       });
       clearInterval(stepsInterval);
       const data = await res.json();
@@ -267,19 +253,7 @@ export default function PisciDropLoginPage() {
                     )}
                   </div>
 
-                  <Turnstile
-                    onSuccess={(token) => {
-                      setTurnstileToken(token);
-                      setSecurityError("");
-                    }}
-                    onError={() => setSecurityError("Security verification encountered an error.")}
-                    onExpire={() => setTurnstileToken("")}
-                  />
-                  {securityError && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {securityError}
-                    </p>
-                  )}
+
 
                   <div className="flex gap-2 mt-2">
                     <button
@@ -403,19 +377,7 @@ export default function PisciDropLoginPage() {
                   </button>
                 </div>
 
-                <Turnstile
-                  onSuccess={(token) => {
-                    setTurnstileToken(token);
-                    setSecurityError("");
-                  }}
-                  onError={() => setSecurityError("Security verification encountered an error.")}
-                  onExpire={() => setTurnstileToken("")}
-                />
-                {securityError && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {securityError}
-                  </p>
-                )}
+
 
                 <button
                   type="submit"

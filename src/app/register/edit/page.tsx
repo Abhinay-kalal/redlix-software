@@ -138,11 +138,6 @@ function EditRegistrationContent() {
       setErrorMsg("Please accept all three declaration checkboxes to proceed.");
       return;
     }
-    if (!turnstileToken) {
-      setErrorMsg("Please complete the security check.");
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMsg("");
 
@@ -266,14 +261,6 @@ function EditRegistrationContent() {
                     />
                   </div>
 
-                  <Turnstile
-                    onSuccess={(token) => {
-                      setTurnstileToken(token);
-                      setErrorMsg("");
-                    }}
-                    onError={() => setErrorMsg("Security verification encountered an error.")}
-                    onExpire={() => setTurnstileToken("")}
-                  />
 
                   <div className="pt-2 flex gap-3">
                     <Link
@@ -500,16 +487,7 @@ function EditRegistrationContent() {
                 </div>
               </div>
 
-              <div className="border-t border-zinc-100 pt-4 flex flex-col items-start">
-                <Turnstile
-                  onSuccess={(token) => {
-                    setTurnstileToken(token);
-                    setErrorMsg("");
-                  }}
-                  onError={() => setErrorMsg("Security verification encountered an error.")}
-                  onExpire={() => setTurnstileToken("")}
-                />
-              </div>
+
 
               <div className="pt-2 flex gap-3">
                 <button

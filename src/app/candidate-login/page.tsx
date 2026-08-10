@@ -83,13 +83,6 @@ function CandidateLoginContent() {
       setPasswordError("");
     }
 
-    if (!turnstileToken) {
-      setSecurityError("Please complete the security check.");
-      valid = false;
-    } else {
-      setSecurityError("");
-    }
-
     return valid;
   };
 
@@ -105,7 +98,7 @@ function CandidateLoginContent() {
       const res = await fetch("/api/candidate/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, turnstileToken }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
@@ -135,13 +128,6 @@ function CandidateLoginContent() {
       valid = false;
     } else {
       setForgotEmailError("");
-    }
-
-    if (!turnstileToken) {
-      setSecurityError("Please complete the security check.");
-      valid = false;
-    } else {
-      setSecurityError("");
     }
 
     if (!valid) return;
@@ -387,18 +373,7 @@ function CandidateLoginContent() {
                   {passwordError && <p className="text-red-500 text-[10px] mt-1">{passwordError}</p>}
                 </div>
 
-                {/* Turnstile */}
-                <div className="pt-1">
-                  <Turnstile
-                    onSuccess={(token) => {
-                      setTurnstileToken(token);
-                      setSecurityError("");
-                    }}
-                    onError={() => setSecurityError("Security check encountered an error.")}
-                    onExpire={() => setTurnstileToken("")}
-                  />
-                  {securityError && <p className="text-red-500 text-[10px] mt-1">{securityError}</p>}
-                </div>
+
 
                 {/* Submit button */}
                 <button

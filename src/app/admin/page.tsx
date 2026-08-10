@@ -69,13 +69,6 @@ export default function LoginPage() {
       setPasswordError("");
     }
 
-    if (!turnstileToken) {
-      setSecurityError("Please complete the security check.");
-      valid = false;
-    } else {
-      setSecurityError("");
-    }
-
     if (!valid) return;
 
     setIsLoading(true);
@@ -87,7 +80,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, token: turnstileToken }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -227,17 +220,7 @@ export default function LoginPage() {
                   </label>
                 </div>
 
-                <Turnstile
-                  onSuccess={(token) => {
-                    setTurnstileToken(token);
-                    setSecurityError("");
-                  }}
-                  onError={() => setSecurityError("Security verification encountered an error.")}
-                  onExpire={() => setTurnstileToken("")}
-                />
-                {securityError && (
-                  <p className="text-[#E61E32] text-xs mt-1 font-medium">{securityError}</p>
-                )}
+
 
                 <button
                   type="submit"

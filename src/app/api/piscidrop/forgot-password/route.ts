@@ -4,33 +4,9 @@ import nodemailer from "nodemailer";
 const NODEMAILER_EMAIL = process.env.NODEMAILER_EMAIL || "webstrixx@gmail.com";
 const NODEMAILER_PASSWORD = process.env.NODEMAILER_PASSWORD || "aplm ucgb cqzy dagm";
 
-async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
-  if (token === "LOCALHOST_BYPASS_TOKEN") return true;
-  const secretKey = process.env.TURNSTILE_SECRET_KEY;
-  if (!secretKey) return false;
-
-  try {
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        secret: secretKey,
-        response: token,
-        remoteip: ip,
-      }),
-    });
-    const data = await response.json();
-    return !!data.success;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const { email, token } = await req.json();
+    const { email } = await req.json();
 
     if (!email) {
       return NextResponse.json({ success: false, error: "missing_email" }, { status: 400 });
@@ -38,17 +14,6 @@ export async function POST(req: NextRequest) {
 
     if (email.trim().toLowerCase() !== "paverasapvtltd@gmail.com") {
       return NextResponse.json({ success: false, error: "email_not_registered" }, { status: 400 });
-    }
-
-    if (!token) {
-      return NextResponse.json({ success: false, error: "missing_security_token" }, { status: 400 });
-    }
-
-    // 1. Verify Turnstile Captcha
-    const ip = req.headers.get("x-forwarded-for") || "";
-    const isHuman = await verifyTurnstile(token, ip);
-    if (!isHuman) {
-      return NextResponse.json({ success: false, error: "security_check_failed" }, { status: 400 });
     }
 
     // 2. Setup Nodemailer Transporter using Gmail SMTP config
