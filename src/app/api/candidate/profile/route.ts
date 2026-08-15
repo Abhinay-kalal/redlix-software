@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
           id,
           name,
           company_name,
+          company_logo,
           date,
           time,
           description,

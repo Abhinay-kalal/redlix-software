@@ -281,7 +281,7 @@ export default function RegisterHackathonPage() {
                   </span>
                   <span className={`text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 ${hackathon.hasFee ? "bg-orange-500 text-white" : "bg-emerald-500 text-white"
                     }`}>
-                    {hackathon.hasFee ? `$${hackathon.registrationFee.toFixed(2)} Fee` : "Free Entry"}
+                    {hackathon.hasFee ? `₹${hackathon.registrationFee.toLocaleString("en-IN")} Fee` : "Free Entry"}
                   </span>
                 </div>
               </div>
@@ -491,15 +491,15 @@ export default function RegisterHackathonPage() {
                     <div className="bg-zinc-50 border border-zinc-200 p-4 text-xs font-semibold text-zinc-700 space-y-2.5">
                       <div className="flex justify-between">
                         <span>Registration Fee</span>
-                        <span className="text-zinc-900 font-bold">${hackathon.registrationFee.toFixed(2)}</span>
+                        <span className="text-zinc-900 font-bold">₹{hackathon.registrationFee.toLocaleString("en-IN")}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Processing Fee</span>
-                        <span className="text-zinc-900 font-bold">$0.00</span>
+                        <span className="text-zinc-900 font-bold">₹0.00</span>
                       </div>
                       <div className="flex justify-between border-t border-zinc-200 pt-2.5 text-sm font-bold text-zinc-950">
                         <span>Total Paid</span>
-                        <span className="text-orange-500 font-black">${hackathon.registrationFee.toFixed(2)}</span>
+                        <span className="text-orange-500 font-black">₹{hackathon.registrationFee.toLocaleString("en-IN")}</span>
                       </div>
                     </div>
 

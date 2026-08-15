@@ -417,7 +417,7 @@ export default function HackathonsPage() {
                       <span className={`text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-md ${
                         h.hasFee ? "bg-[#E61E32] text-white" : "bg-emerald-600 text-white"
                       }`}>
-                        {h.hasFee ? `$${h.registrationFee.toFixed(2)} Fee` : "Free Entry"}
+                        {h.hasFee ? `₹${h.registrationFee.toLocaleString("en-IN")} Fee` : "Free Entry"}
                       </span>
                     </div>
                   </div>
