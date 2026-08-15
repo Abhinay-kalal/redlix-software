@@ -15,16 +15,7 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const path = url.pathname;
 
-  // Proxy hackathons module requests directly to the Go server on port 8080
-  if (
-    path.startsWith("/api/hackathons") ||
-    path.startsWith("/api/teams") ||
-    path.startsWith("/api/submissions")
-  ) {
-    const target = new URL(url.pathname + url.search, "http://localhost:8080");
-    console.log("[PROXY MIDDLEWARE] Rewriting", path, "to", target.toString());
-    return NextResponse.rewrite(target);
-  }
+  // Removed obsolete Go server proxy for hackathons/teams/submissions
 
   // 1. Strict Rate Limiting for Public Candidate Endpoints
   if (

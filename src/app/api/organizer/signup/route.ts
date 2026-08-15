@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = hashPassword(password);
 
-    try {
       // Create Organizer account in DB
       const organizer = await prisma.organizer.create({
         data: {
@@ -37,17 +36,6 @@ export async function POST(req: NextRequest) {
       res.cookies.set("organizer_logged_in", "true", { path: "/", maxAge: 86400 * 7 });
       res.cookies.set("organizer_email", cleanEmail, { path: "/", maxAge: 86400 * 7 });
       return res;
-    } catch {
-      // Fallback response for DB save
-      const res = NextResponse.json({
-        success: true,
-        redirectUrl: "/admin/hackathons",
-        data: { email: cleanEmail, fullName: fullName.trim() },
-      });
-      res.cookies.set("organizer_logged_in", "true", { path: "/", maxAge: 86400 * 7 });
-      res.cookies.set("organizer_email", cleanEmail, { path: "/", maxAge: 86400 * 7 });
-      return res;
-    }
   } catch (error: any) {
     console.error("POST /api/organizer/signup error:", error);
     return NextResponse.json({ success: false, error: error.message || "Failed to create organizer account" }, { status: 500 });

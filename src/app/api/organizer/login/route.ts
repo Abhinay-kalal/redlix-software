@@ -17,11 +17,13 @@ export async function POST(req: NextRequest) {
         where: { email: cleanEmail },
       });
 
-      if (organizer) {
-        const passwordMatch = verifyPassword(password, organizer.password);
-        if (!passwordMatch) {
-          return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 });
-        }
+      if (!organizer) {
+        return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 });
+      }
+
+      const passwordMatch = verifyPassword(password, organizer.password);
+      if (!passwordMatch) {
+        return NextResponse.json({ success: false, error: "Invalid email or password" }, { status: 401 });
       }
     } catch {
       // Fallback auth check
