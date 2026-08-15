@@ -122,6 +122,50 @@ model Hackathon {
   registrationFee Float    @default(0)
   hasFee          Boolean  @default(false)
   createdAt       DateTime @default(now())
+
+  // Sprint Additions
+  joinCode        String?  @unique
+  questions       String?  @db.Text // JSON stringified questions list
+  logoUrl         String?  @db.Text
+  location        String?
+  isStarted       Boolean  @default(false)
+}
+
+model SprintParticipant {
+  id        String   @id @default(cuid())
+  sprintId  String
+  name      String
+  email     String
+  joinedAt  DateTime @default(now())
+  score     Int      @default(0)
+  answers   String?  @db.Text // Saved candidate answers (JSON)
+}
+
+model SprintSubmission {
+  id          String   @id @default(cuid())
+  sprintId    String
+  email       String
+  score       Int      @default(0)
+  answers     String   @db.Text // JSON stringified candidate submissions
+  submittedAt DateTime @default(now())
+}
+
+model CandidateNotification {
+  id        String   @id @default(cuid())
+  email     String   // Target candidate email
+  sender    String   // Sender name (e.g. System Administrator)
+  subject   String
+  body      String   @db.Text
+  date      DateTime @default(now())
+  unread    Boolean  @default(true)
+}
+
+model CandidateOtp {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 model Team {
@@ -163,4 +207,26 @@ model Organizer {
   createdAt    DateTime  @default(now())
 }
 
+// Candidate social: friend connections
+model CandidateConnection {
+  id                 String   @id @default(cuid())
+  from_email         String
+  from_name          String
+  to_registration_id Int      // registrations.id of the target
+  to_email           String   @default("") // filled on acceptance
+  to_name            String   @default("")
+  status             String   @default("pending") // pending | accepted | rejected
+  created_at         DateTime @default(now())
 
+  @@unique([from_email, to_registration_id])
+}
+
+// Candidate social: chat messages within an accepted connection
+model CandidateChatMessage {
+  id            String   @id @default(cuid())
+  connection_id String
+  sender_email  String
+  sender_name   String
+  message       String   @db.Text
+  created_at    DateTime @default(now())
+}

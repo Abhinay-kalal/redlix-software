@@ -22,7 +22,11 @@ import {
   Shield,
   Clock,
   ArrowRight,
-  FolderOpen
+  FolderOpen,
+  UploadCloud,
+  Copy,
+  Check,
+  MapPin
 } from "lucide-react";
 
 interface Hackathon {
@@ -58,7 +62,56 @@ export default function AdminHackathonsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "create" | "list" | "teams">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "create" | "create-sprint" | "list" | "teams">("overview");
+
+  // Sprint Wizard states
+  const [sprintStep, setSprintStep] = useState<1 | 2 | 3>(1);
+  const [sprintTitle, setSprintTitle] = useState("");
+  const [sprintDescription, setSprintDescription] = useState("");
+  const [sprintDuration, setSprintDuration] = useState("60"); // duration in mins
+  const [sprintType, setSprintType] = useState("Online"); // Online, In-Person, Hybrid
+  const [sprintLocation, setSprintLocation] = useState(""); // URL or address
+  const [sprintLogo, setSprintLogo] = useState<string>(""); // base64 logo representation
+  const [logoDimensionsError, setLogoDimensionsError] = useState("");
+
+  // Question feeding states
+  const [questionType, setQuestionType] = useState<"coding" | "quiz">("coding");
+  
+  // MCQ Questions array
+  const [mcqQuestions, setMcqQuestions] = useState<Array<{
+    questionText: string;
+    options: { A: string; B: string; C: string; D: string };
+    correctOption: "A" | "B" | "C" | "D";
+  }>>([]);
+
+  // Coding Questions array
+  const [codingQuestions, setCodingQuestions] = useState<Array<{
+    title: string;
+    problemDescription: string;
+    codeTemplate: string;
+    testCases: Array<{ input: string; expectedOutput: string }>;
+  }>>([]);
+
+  // New MCQ temporary inputs
+  const [tempMcqText, setTempMcqText] = useState("");
+  const [tempMcqA, setTempMcqA] = useState("");
+  const [tempMcqB, setTempMcqB] = useState("");
+  const [tempMcqC, setTempMcqC] = useState("");
+  const [tempMcqD, setTempMcqD] = useState("");
+  const [tempMcqCorrect, setTempMcqCorrect] = useState<"A" | "B" | "C" | "D">("A");
+
+  // New Coding temporary inputs
+  const [tempCodeTitle, setTempCodeTitle] = useState("");
+  const [tempCodeDesc, setTempCodeDesc] = useState("");
+  const [tempCodeTemplate, setTempCodeTemplate] = useState("function solution() {\n  // Write your code here\n}");
+  const [tempTestInput1, setTempTestInput1] = useState("");
+  const [tempTestOutput1, setTempTestOutput1] = useState("");
+  const [tempTestInput2, setTempTestInput2] = useState("");
+  const [tempTestOutput2, setTempTestOutput2] = useState("");
+
+  // Resulting Room details after submission
+  const [createdSprint, setCreatedSprint] = useState<any>(null);
+  const [lobbyParticipants, setLobbyParticipants] = useState<any[]>([]);
 
   // Real-time Clock
   const [clockTime, setClockTime] = useState("");
@@ -103,6 +156,143 @@ export default function AdminHackathonsPage() {
   // Edit Modal State
   const [editingHackathon, setEditingHackathon] = useState<Hackathon | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Sprint Wizard helper functions
+  const handleLogoUpload = (file: File) => {
+    setLogoDimensionsError("");
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        img.src = e.target.result as string;
+      }
+    };
+
+    img.onload = () => {
+      if (img.width !== 1200 || img.height !== 1200) {
+        setLogoDimensionsError(`Invalid dimensions: ${img.width}x${img.height}px. Logo must be exactly 1200 x 1200 pixels.`);
+        setSprintLogo("");
+      } else {
+        setSprintLogo(img.src);
+        setLogoDimensionsError("");
+      }
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const resetSprintForm = () => {
+    setSprintStep(1);
+    setSprintTitle("");
+    setSprintDescription("");
+    setSprintDuration("60");
+    setSprintType("Online");
+    setSprintLocation("");
+    setSprintLogo("");
+    setLogoDimensionsError("");
+    setMcqQuestions([]);
+    setCodingQuestions([]);
+    setTempMcqText("");
+    setTempMcqA("");
+    setTempMcqB("");
+    setTempMcqC("");
+    setTempMcqD("");
+    setTempMcqCorrect("A");
+    setTempCodeTitle("");
+    setTempCodeDesc("");
+    setTempCodeTemplate("function solution() {\n  // Write your code here\n}");
+    setTempTestInput1("");
+    setTempTestOutput1("");
+    setTempTestInput2("");
+    setTempTestOutput2("");
+    setCreatedSprint(null);
+    setLobbyParticipants([]);
+  };
+
+  const handleSprintSubmit = async () => {
+    if (!sprintTitle) {
+      alert("Sprint Name is required.");
+      return;
+    }
+
+    const payload = {
+      title: sprintTitle,
+      description: sprintDescription,
+      startDate: new Date(),
+      endDate: new Date(Date.now() + parseInt(sprintDuration) * 60 * 1000),
+      teamSize: 1, // Individual candidate
+      logoUrl: sprintLogo,
+      location: sprintLocation,
+      type: sprintType,
+      questions: {
+        type: questionType,
+        list: questionType === "coding" ? codingQuestions : mcqQuestions
+      }
+    };
+
+    try {
+      const res = await fetch("/api/sprints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCreatedSprint(data.data);
+        setSprintStep(3);
+        // Refresh local list of hackathons/sprints
+        fetchData();
+      } else {
+        alert(data.error || "Failed to create sprint.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting sprint.");
+    }
+  };
+
+  const handleStartSprint = async () => {
+    if (!createdSprint) return;
+    try {
+      const res = await fetch(`/api/sprints/${createdSprint.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isStarted: true })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCreatedSprint(data.data);
+        alert("Sprint has been started successfully! Waiting room candidates will be auto-redirected.");
+      } else {
+        alert("Failed to start sprint: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error starting sprint.");
+    }
+  };
+
+  // Lobby Polling Effect
+  useEffect(() => {
+    if (activeTab !== "create-sprint" || sprintStep !== 3 || !createdSprint) return;
+    
+    const pollParticipants = async () => {
+      try {
+        const res = await fetch(`/api/sprints/participants?sprintId=${createdSprint.id}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) {
+          setLobbyParticipants(data.data);
+        }
+      } catch (err) {
+        console.error("Lobby polling error:", err);
+      }
+    };
+
+    pollParticipants();
+    const interval = setInterval(pollParticipants, 3000);
+    return () => clearInterval(interval);
+  }, [activeTab, sprintStep, createdSprint]);
 
   // Fetch real data from database (No mock/dummy fallback)
   const fetchData = async () => {
@@ -318,7 +508,7 @@ export default function AdminHackathonsPage() {
         }
       });
     });
-    return total > 0 ? `$${total.toLocaleString()}` : "$0";
+    return total > 0 ? `₹${total.toLocaleString("en-IN")}` : "₹0";
   };
 
   const filteredHackathons = hackathons.filter(h =>
@@ -375,7 +565,8 @@ export default function AdminHackathonsPage() {
             {[
               { id: "overview", label: "Overview", icon: "grid_view" },
               { id: "create", label: "Create Hackathon", icon: "add_task" },
-              { id: "list", label: "All Hackathons", icon: "folder_open" },
+              { id: "create-sprint", label: "Create Sprint", icon: "timer" },
+              { id: "list", label: "All Sprints & Events", icon: "folder_open" },
               { id: "teams", label: "Registered Teams", icon: "groups" },
             ].map((item) => {
               const isActive = activeTab === item.id;
@@ -415,99 +606,152 @@ export default function AdminHackathonsPage() {
           <div className="flex-1 p-6 md:p-8 space-y-8 max-w-7xl w-full mx-auto">
             
             {/* 4 STATS CARDS (NO MOCK DATA) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               
-              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-                <div className="flex justify-between items-start mb-3">
+              <div className="bg-white py-3 px-4 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-[105px]">
+                <div className="flex justify-between items-start mb-1">
                   <div>
-                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Hackathons</span>
-                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">{hackathons.length}</div>
+                    <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Total Hackathons</span>
+                    <div className="text-xl md:text-2xl font-semibold text-zinc-900 font-inter mt-0.5">{hackathons.length}</div>
                   </div>
-                  <div className="p-2.5 bg-[#E61E32]/10 text-[#E61E32] border border-[#E61E32]/20 rounded-xl flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-xl">folder_open</span>
+                  <div className="p-1.5 bg-[#E61E32]/10 text-[#E61E32] border border-[#E61E32]/20 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-lg">folder_open</span>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 font-medium">Real events published in database</p>
+                <p className="text-[10px] text-zinc-500 font-medium">Real events published in database</p>
               </div>
 
-              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-                <div className="flex justify-between items-start mb-3">
+              <div className="bg-white py-3 px-4 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-[105px]">
+                <div className="flex justify-between items-start mb-1">
                   <div>
-                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Registered Teams</span>
-                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">{teams.length}</div>
+                    <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Registered Teams</span>
+                    <div className="text-xl md:text-2xl font-semibold text-zinc-900 font-inter mt-0.5">{teams.length}</div>
                   </div>
-                  <div className="p-2.5 bg-blue-50 text-blue-600 border border-blue-200/80 rounded-xl flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-xl">groups</span>
+                  <div className="p-1.5 bg-blue-50 text-blue-600 border border-blue-200/80 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-lg">groups</span>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 font-medium">Actual registered participant teams</p>
+                <p className="text-[10px] text-zinc-500 font-medium">Actual registered participant teams</p>
               </div>
 
-              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-                <div className="flex justify-between items-start mb-3">
+              <div className="bg-white py-3 px-4 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-[105px]">
+                <div className="flex justify-between items-start mb-1">
                   <div>
-                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Total Prize Pool</span>
-                    <div className="text-2xl md:text-3xl font-semibold text-zinc-900 font-inter mt-1">{calculateTotalPrizes()}</div>
+                    <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Total Prize Pool</span>
+                    <div className="text-xl md:text-2xl font-semibold text-zinc-900 font-inter mt-0.5">{calculateTotalPrizes()}</div>
                   </div>
-                  <div className="p-2.5 bg-emerald-50 text-emerald-600 border border-emerald-200/80 rounded-xl flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-xl">payments</span>
+                  <div className="p-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200/80 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-lg">payments</span>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 font-medium">Calculated from event rewards</p>
+                <p className="text-[10px] text-zinc-500 font-medium">Calculated from event rewards</p>
               </div>
 
-              <div className="bg-white p-5 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
-                <div className="flex justify-between items-start mb-3">
+              <div className="bg-white py-3 px-4 border border-zinc-200/80 rounded-xl shadow-xs hover:shadow-md transition-all flex flex-col justify-between h-[105px]">
+                <div className="flex justify-between items-start mb-1">
                   <div>
-                    <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Evaluation Engine</span>
-                    <div className="text-sm font-bold text-emerald-600 mt-2 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4" /> Operational
+                    <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Evaluation Engine</span>
+                    <div className="text-sm font-bold text-emerald-600 mt-1 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Operational
                     </div>
                   </div>
-                  <div className="p-2.5 bg-purple-50 text-purple-600 border border-purple-200/80 rounded-xl flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-xl">shield</span>
+                  <div className="p-1.5 bg-purple-50 text-purple-600 border border-purple-200/80 rounded-lg flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-lg">shield</span>
                   </div>
                 </div>
-                <p className="text-xs text-zinc-500 font-medium">Ready to accept team code</p>
+                <p className="text-[10px] text-zinc-500 font-medium">Ready to accept team code</p>
               </div>
 
             </div>
 
-            {/* RECENT HACKATHONS SECTION */}
-            <div className="bg-white border border-zinc-200 rounded-xl shadow-xs overflow-hidden">
-              <div className="p-5 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-base font-bold text-zinc-900">Published Hackathons</h2>
-                  <p className="text-xs text-zinc-500">Live events stored in your organizer database</p>
+            {/* HACKATHONS LIST / EMPTY STATE */}
+            {hackathons.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 max-w-4xl mx-auto text-center space-y-6">
+                <div className="space-y-2">
+                  <h2 className="text-xl font-extrabold text-zinc-900 font-inter">No active events created yet</h2>
+                  <p className="text-xs text-zinc-500 max-w-md">
+                    Get started by setting up coding challenges or quizzes for your candidates.
+                  </p>
                 </div>
 
-                <button
-                  onClick={() => setActiveTab("create")}
-                  className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  className="bg-white border border-zinc-200/80 rounded-2xl shadow-md hover:shadow-xl transition-all text-left flex flex-col md:flex-row max-w-2xl w-full overflow-hidden group"
                 >
-                  <span className="material-symbols-outlined text-sm">add</span>
-                  <span>Create Hackathon</span>
-                </button>
-              </div>
+                  {/* Left content block */}
+                  <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
+                    <div>
+                      <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-md border border-emerald-100 uppercase inline-block w-fit mb-3">
+                        Sprint Engine
+                      </span>
+                      <h3 className="text-lg font-black text-zinc-900 leading-snug">
+                        Host Coding Challenges &amp; Quizzes
+                      </h3>
+                      <p className="text-xs text-zinc-500 mt-2 leading-relaxed font-normal">
+                        Deploy automated code compilers, design custom programming challenges with hidden test cases, and publish online multiple-choice quizzes.
+                      </p>
 
-              {hackathons.length === 0 ? (
-                <div className="p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-red-50 text-[#E61E32] flex items-center justify-center mx-auto">
-                    <Trophy className="w-6 h-6" />
+                      <ul className="mt-5 space-y-2.5 text-[11px] font-semibold text-zinc-650">
+                        <li className="flex items-center gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Automated Code Compile &amp; Run</span>
+                        </li>
+                        <li className="flex items-center gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Hidden Test Case Validation</span>
+                        </li>
+                        <li className="flex items-center gap-2.5">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>Multiple Choice Question Assessments</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-zinc-100">
+                      <button
+                        onClick={() => {
+                          setType("Online");
+                          setTeamSize(1);
+                          setTitle("");
+                          setDescription("");
+                          setActiveTab("create-sprint");
+                        }}
+                        className="w-full md:w-auto bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white text-xs font-extrabold py-2.5 px-5 rounded-lg flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                      >
+                        <span>Initialize Sprint</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="text-sm font-bold text-zinc-900">No hackathons recorded yet</h3>
-                  <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                    You currently have 0 hackathons in the database. Click below to publish your first hackathon.
-                  </p>
+
+                  {/* Right illustration block */}
+                  <div className="md:w-72 shrink-0 h-48 md:h-auto relative overflow-hidden bg-zinc-900">
+                    <img
+                      src="/coding_sprint.jpg"
+                      alt="Coding Sprint Illustration"
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-white via-transparent to-transparent opacity-10 md:opacity-20 pointer-events-none" />
+                  </div>
+                </motion.div>
+              </div>
+            ) : (
+              <div className="bg-white border border-zinc-200 rounded-xl shadow-xs overflow-hidden">
+                <div className="p-5 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-base font-bold text-zinc-900">Published Sprints</h2>
+                    <p className="text-xs text-zinc-500">Live events stored in your organizer database</p>
+                  </div>
+
                   <button
-                    onClick={() => setActiveTab("create")}
-                    className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-semibold px-4 py-2 rounded-md inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    onClick={() => setActiveTab("create-sprint")}
+                    className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                   >
                     <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span>Create Hackathon</span>
+                    <span>Create Sprint</span>
                   </button>
                 </div>
-              ) : (
+
                 <div className="divide-y divide-zinc-200">
                   {hackathons.map((h) => (
                     <div key={h.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-zinc-50/80 transition-colors">
@@ -555,9 +799,608 @@ export default function AdminHackathonsPage() {
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
+            )}
+
+          </div>
+        ) : activeTab === "create-sprint" ? (
+          /* TAB: CREATE SPRINT WIZARD */
+          <div className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+            {/* WIZARD STEP HEADER */}
+            <div className="bg-white border border-zinc-200 rounded-xl shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-1.5">
+                <h2 className="text-lg font-black text-zinc-900 font-inter tracking-tight">Create Sprint Room</h2>
+                <p className="text-xs text-zinc-550">Configure parameters, feed coding or MCQ questions, and launch real-time waiting rooms.</p>
+              </div>
+              
+              {/* Stepper progress indicator */}
+              <div className="flex items-center gap-2 md:gap-4 select-none">
+                {[
+                  { step: 1, label: "Setup Details" },
+                  { step: 2, label: "Feed Questions" },
+                  { step: 3, label: "Live Lobby" }
+                ].map((item, idx) => {
+                  const isActive = sprintStep === item.step;
+                  const isCompleted = sprintStep > item.step;
+                  return (
+                    <div key={item.step} className="flex items-center">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                          isActive 
+                            ? "bg-[#E61E32] text-white shadow-sm scale-110" 
+                            : isCompleted 
+                              ? "bg-emerald-500 text-white" 
+                              : "bg-zinc-100 text-zinc-500 border border-zinc-200"
+                        }`}>
+                          {isCompleted ? "✓" : item.step}
+                        </div>
+                        <span className={`text-xs font-bold transition-all ${
+                          isActive 
+                            ? "text-[#E61E32] font-extrabold" 
+                            : isCompleted 
+                              ? "text-emerald-600 font-extrabold" 
+                              : "text-zinc-550"
+                        }`}>
+                          {item.label}
+                        </span>
+                      </div>
+                      {idx < 2 && (
+                        <div className={`h-[2px] w-6 md:w-10 ml-2 md:ml-4 rounded ${
+                          sprintStep > item.step ? "bg-emerald-400" : "bg-zinc-200"
+                        }`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
+            {sprintStep === 1 ? (
+              /* STEP 1: SPRINT DETAILS */
+              <div className="bg-white border border-zinc-200 rounded-xl shadow-xs p-6 md:p-8 space-y-6">
+                <div className="border-b border-zinc-200 pb-4 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 shadow-2xs">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-zinc-900 font-inter">Configure Sprint Profile</h3>
+                    <p className="text-[11px] text-zinc-550">Provide basic meta parameters and room banner logo.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left Column: Logo & Type */}
+                  <div className="space-y-5">
+                    {/* Logo Dropzone */}
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Sprint Logo (1200 x 1200 px) *</label>
+                      <div 
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) handleLogoUpload(file);
+                        }}
+                        onClick={() => document.getElementById("sprint-logo-input")?.click()}
+                        className="border-dashed border-2 border-zinc-200 hover:border-emerald-500/80 rounded-xl py-12 px-8 text-center cursor-pointer transition-all bg-zinc-50/30 hover:bg-zinc-100/40 flex flex-col items-center justify-center space-y-3 group h-48"
+                      >
+                        <input 
+                          id="sprint-logo-input" 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleLogoUpload(file);
+                          }}
+                        />
+                        {sprintLogo ? (
+                          <div className="space-y-2 flex flex-col items-center">
+                            <img src={sprintLogo} alt="Logo preview" className="w-24 h-24 object-contain rounded-lg border border-zinc-200 shadow-sm" />
+                            <span className="text-[11px] font-bold text-emerald-600">Logo loaded successfully</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-10 h-10 rounded-full bg-zinc-100 group-hover:bg-emerald-50 text-zinc-455 group-hover:text-emerald-600 flex items-center justify-center transition-all border border-zinc-200/50 shadow-2xs">
+                              <UploadCloud className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-zinc-800">Drag &amp; drop logo here, or click to browse</p>
+                              <p className="text-[10px] text-zinc-500">Image size must be exactly 1200 x 1200 pixels</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {logoDimensionsError && (
+                        <p className="text-xs font-bold text-red-650 mt-1.5 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{logoDimensionsError}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Type of Sprint *</label>
+                      <select
+                        value={sprintType}
+                        onChange={(e) => setSprintType(e.target.value)}
+                        className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32] focus:ring-1 focus:ring-[#E61E32]/20 hover:border-zinc-450 transition-all cursor-pointer font-medium"
+                      >
+                        <option value="Online">Online Sprints &amp; Tests</option>
+                        <option value="In-Person">In-Person Coding Room</option>
+                        <option value="Hybrid">Hybrid Event</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Meta details */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Sprint Title / Name *</label>
+                      <div className="relative rounded-lg shadow-2xs">
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Speedrun Code Sprint 2026"
+                          value={sprintTitle}
+                          onChange={(e) => setSprintTitle(e.target.value)}
+                          className="w-full text-xs py-2.5 pl-9 pr-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32] focus:ring-1 focus:ring-[#E61E32]/20 hover:border-zinc-450 transition-all font-medium"
+                        />
+                        <FolderOpen className="absolute left-3 top-3 w-4 h-4 text-zinc-400" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Description</label>
+                      <textarea
+                        rows={3}
+                        placeholder="Describe the challenge goals and programming topics..."
+                        value={sprintDescription}
+                        onChange={(e) => setSprintDescription(e.target.value)}
+                        className="w-full text-xs p-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32] focus:ring-1 focus:ring-[#E61E32]/20 hover:border-zinc-455 transition-all resize-none font-medium"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Duration (Minutes)</label>
+                        <div className="relative rounded-lg shadow-2xs">
+                          <input
+                            type="number"
+                            value={sprintDuration}
+                            onChange={(e) => setSprintDuration(e.target.value)}
+                            className="w-full text-xs py-2.5 pl-9 pr-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32] focus:ring-1 focus:ring-[#E61E32]/20 hover:border-zinc-455 transition-all font-medium"
+                          />
+                          <Clock className="absolute left-3 top-3 w-4 h-4 text-zinc-400" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Location / Room URL</label>
+                        <div className="relative rounded-lg shadow-2xs">
+                          <input
+                            type="text"
+                            placeholder="e.g. Room A-2 or Zoom URL"
+                            value={sprintLocation}
+                            onChange={(e) => setSprintLocation(e.target.value)}
+                            className="w-full text-xs py-2.5 pl-9 pr-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32] focus:ring-1 focus:ring-[#E61E32]/20 hover:border-zinc-455 transition-all font-medium"
+                          />
+                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-zinc-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-zinc-200 flex justify-end">
+                  <button
+                    onClick={() => {
+                      if (!sprintTitle) {
+                        alert("Please fill in the Sprint Title.");
+                        return;
+                      }
+                      setSprintStep(2);
+                    }}
+                    className="bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white text-xs font-black py-2.5 px-5 rounded-lg flex items-center gap-1.5 shadow-sm transition-all cursor-pointer hover:shadow-md hover:scale-[1.01]"
+                  >
+                    <span>Continue to Feed Questions</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : sprintStep === 2 ? (
+              /* STEP 2: FEED QUESTIONS */
+              <div className="bg-white border border-zinc-200 rounded-xl shadow-xs p-6 md:p-8 space-y-6">
+                <div className="border-b border-zinc-200 pb-4 flex justify-between items-center">
+                  <div>
+                    <h3 className="text-base font-bold text-zinc-900">Step 2: Feed Room Questions</h3>
+                    <p className="text-xs text-zinc-500">Provide programming test cases or multiple choice question details.</p>
+                  </div>
+                  <button
+                    onClick={() => setSprintStep(1)}
+                    className="text-xs font-bold text-zinc-650 hover:text-zinc-950 border border-zinc-350 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Back to Details
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1.5 max-w-xs">
+                    <label className="block text-xs font-bold text-zinc-700 uppercase">Question Format *</label>
+                    <select
+                      value={questionType}
+                      onChange={(e) => {
+                        setQuestionType(e.target.value as "coding" | "quiz");
+                        setCodingQuestions([]);
+                        setMcqQuestions([]);
+                      }}
+                      className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32]"
+                    >
+                      <option value="coding">Programming Code Challenge</option>
+                      <option value="quiz">Multiple Choice Quiz (MCQ)</option>
+                    </select>
+                  </div>
+
+                  {questionType === "coding" ? (
+                    /* CODING QUESTION SETUP */
+                    <div className="space-y-4 border border-zinc-200/80 rounded-xl p-5 bg-zinc-50/50">
+                      <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">Add Coding Question</h4>
+                      
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-zinc-650">Question Title *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Reverse String"
+                          value={tempCodeTitle}
+                          onChange={(e) => setTempCodeTitle(e.target.value)}
+                          className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32]"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-zinc-650">Problem Description *</label>
+                        <textarea
+                          rows={3}
+                          placeholder="Provide input limits, instructions, and examples..."
+                          value={tempCodeDesc}
+                          onChange={(e) => setTempCodeDesc(e.target.value)}
+                          className="w-full text-xs p-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32]"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-zinc-650">Initial Starter Template Code *</label>
+                        <textarea
+                          rows={4}
+                          value={tempCodeTemplate}
+                          onChange={(e) => setTempCodeTemplate(e.target.value)}
+                          className="w-full text-xs p-3 font-mono border border-zinc-300 rounded-lg bg-zinc-950 text-emerald-400 focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="border border-zinc-200 rounded-lg p-3 bg-white space-y-2">
+                          <span className="text-[10px] font-extrabold text-[#E61E32] uppercase">Test Case 1</span>
+                          <input
+                            type="text"
+                            placeholder="Input (e.g. 'hello')"
+                            value={tempTestInput1}
+                            onChange={(e) => setTempTestInput1(e.target.value)}
+                            className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Expected Output (e.g. 'olleh')"
+                            value={tempTestOutput1}
+                            onChange={(e) => setTempTestOutput1(e.target.value)}
+                            className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
+                          />
+                        </div>
+
+                        <div className="border border-zinc-200 rounded-lg p-3 bg-white space-y-2">
+                          <span className="text-[10px] font-extrabold text-[#E61E32] uppercase">Test Case 2 (Hidden)</span>
+                          <input
+                            type="text"
+                            placeholder="Input (e.g. 'sprint')"
+                            value={tempTestInput2}
+                            onChange={(e) => setTempTestInput2(e.target.value)}
+                            className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Expected Output (e.g. 'tnirps')"
+                            value={tempTestOutput2}
+                            onChange={(e) => setTempTestOutput2(e.target.value)}
+                            className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (!tempCodeTitle || !tempCodeDesc || !tempTestOutput1) {
+                            alert("Please fill in the question title, description, and test case expected outputs.");
+                            return;
+                          }
+                          setCodingQuestions([...codingQuestions, {
+                            title: tempCodeTitle,
+                            problemDescription: tempCodeDesc,
+                            codeTemplate: tempCodeTemplate,
+                            testCases: [
+                              { input: tempTestInput1, expectedOutput: tempTestOutput1 },
+                              { input: tempTestInput2, expectedOutput: tempTestOutput2 }
+                            ]
+                          }]);
+                          setTempCodeTitle("");
+                          setTempCodeDesc("");
+                          setTempCodeTemplate("function solution() {\n  // Write your code here\n}");
+                          setTempTestInput1("");
+                          setTempTestOutput1("");
+                          setTempTestInput2("");
+                          setTempTestOutput2("");
+                        }}
+                        className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-bold py-2 px-4 rounded-lg cursor-pointer"
+                      >
+                        Add to Question List
+                      </button>
+                    </div>
+                  ) : (
+                    /* MCQ QUESTION SETUP */
+                    <div className="space-y-4 border border-zinc-200/80 rounded-xl p-5 bg-zinc-50/50">
+                      <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">Add MCQ Quiz Question</h4>
+                      
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-zinc-650">Question Text *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Which keyword is used to define a constant variable in ES6?"
+                          value={tempMcqText}
+                          onChange={(e) => setTempMcqText(e.target.value)}
+                          className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold text-zinc-500">Option A *</label>
+                          <input type="text" value={tempMcqA} onChange={(e) => setTempMcqA(e.target.value)} className="w-full text-xs py-2 px-3 border border-zinc-200 rounded-lg" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold text-zinc-500">Option B *</label>
+                          <input type="text" value={tempMcqB} onChange={(e) => setTempMcqB(e.target.value)} className="w-full text-xs py-2 px-3 border border-zinc-200 rounded-lg" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold text-zinc-500">Option C *</label>
+                          <input type="text" value={tempMcqC} onChange={(e) => setTempMcqC(e.target.value)} className="w-full text-xs py-2 px-3 border border-zinc-200 rounded-lg" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="block text-[10px] font-bold text-zinc-500">Option D *</label>
+                          <input type="text" value={tempMcqD} onChange={(e) => setTempMcqD(e.target.value)} className="w-full text-xs py-2 px-3 border border-zinc-200 rounded-lg" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 max-w-xs">
+                        <label className="block text-xs font-bold text-zinc-700 uppercase">Correct Option *</label>
+                        <select
+                          value={tempMcqCorrect}
+                          onChange={(e) => setTempMcqCorrect(e.target.value as any)}
+                          className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
+                        >
+                          <option value="A">Option A</option>
+                          <option value="B">Option B</option>
+                          <option value="C">Option C</option>
+                          <option value="D">Option D</option>
+                        </select>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (!tempMcqText || !tempMcqA || !tempMcqB) {
+                            alert("Please fill in the question text and options A and B.");
+                            return;
+                          }
+                          setMcqQuestions([...mcqQuestions, {
+                            questionText: tempMcqText,
+                            options: { A: tempMcqA, B: tempMcqB, C: tempMcqC, D: tempMcqD },
+                            correctOption: tempMcqCorrect
+                          }]);
+                          setTempMcqText("");
+                          setTempMcqA("");
+                          setTempMcqB("");
+                          setTempMcqC("");
+                          setTempMcqD("");
+                          setTempMcqCorrect("A");
+                        }}
+                        className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-bold py-2 px-4 rounded-lg cursor-pointer"
+                      >
+                        Add to Question List
+                      </button>
+                    </div>
+                  )}
+
+                  {/* RENDER CURRENT FEED OF QUESTIONS */}
+                  <div className="space-y-3 pt-4">
+                    <h4 className="text-xs font-extrabold text-zinc-900 uppercase">Feed Preview ({questionType === "coding" ? codingQuestions.length : mcqQuestions.length} Questions added)</h4>
+                    {questionType === "coding" && codingQuestions.length === 0 && (
+                      <p className="text-xs text-zinc-500 italic">No programming challenges added yet.</p>
+                    )}
+                    {questionType === "quiz" && mcqQuestions.length === 0 && (
+                      <p className="text-xs text-zinc-500 italic">No multiple choice quiz questions added yet.</p>
+                    )}
+
+                    <div className="space-y-2">
+                      {questionType === "coding" ? codingQuestions.map((q, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3 border border-zinc-200 rounded-lg bg-white">
+                          <div>
+                            <span className="text-[10px] font-bold text-zinc-500 mr-2">Q{idx+1}</span>
+                            <span className="text-xs font-bold text-zinc-900">{q.title}</span>
+                            <p className="text-[10px] text-zinc-500 line-clamp-1 mt-0.5">{q.problemDescription}</p>
+                          </div>
+                          <button
+                            onClick={() => setCodingQuestions(codingQuestions.filter((_, i) => i !== idx))}
+                            className="p-1.5 text-zinc-400 hover:text-red-650 hover:bg-red-50 rounded"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )) : mcqQuestions.map((q, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-3 border border-zinc-200 rounded-lg bg-white">
+                          <div>
+                            <span className="text-[10px] font-bold text-zinc-500 mr-2">Q{idx+1}</span>
+                            <span className="text-xs font-bold text-zinc-900">{q.questionText}</span>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">Correct: Option {q.correctOption}</p>
+                          </div>
+                          <button
+                            onClick={() => setMcqQuestions(mcqQuestions.filter((_, i) => i !== idx))}
+                            className="p-1.5 text-zinc-400 hover:text-red-650 hover:bg-red-50 rounded"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-zinc-200 flex justify-between">
+                  <button
+                    onClick={() => setSprintStep(1)}
+                    className="text-xs font-bold text-zinc-650 hover:text-zinc-950 px-4 py-2 cursor-pointer"
+                  >
+                    Back to Details
+                  </button>
+                  <button
+                    onClick={() => {
+                      const len = questionType === "coding" ? codingQuestions.length : mcqQuestions.length;
+                      if (len === 0) {
+                        alert("Please add at least one question to the sprint feed.");
+                        return;
+                      }
+                      handleSprintSubmit();
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-6 rounded-lg flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  >
+                    <span>Publish &amp; Open Scanner Lobby</span>
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* STEP 3: SCANNER LOBBY VIEW */
+              <div className="bg-white border border-zinc-200 rounded-xl shadow-xs p-6 md:p-8 space-y-8">
+                <div className="text-center space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-250 flex items-center justify-center mx-auto shadow-xs">
+                    <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-650" />
+                  </div>
+                  <h3 className="text-base font-extrabold text-zinc-900">Sprint Room is Live</h3>
+                  <p className="text-xs text-zinc-500">Organizer room successfully created. Candidates can now join the waiting room.</p>
+                </div>
+
+                {createdSprint && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Left side: QR Code and join code */}
+                    <div className="border border-zinc-200 rounded-2xl p-6 bg-zinc-50/50 flex flex-col items-center justify-center text-center space-y-5">
+                      <div className="space-y-1 bg-white px-5 py-3 border border-zinc-200 rounded-xl shadow-xs w-full max-w-xs">
+                        <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-widest block">Room Access Code</span>
+                        <div className="flex items-center justify-center gap-2 mt-1">
+                          <h4 className="text-2xl font-black text-zinc-950 font-mono tracking-wider">{createdSprint.joinCode}</h4>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(createdSprint.joinCode);
+                              alert("Room code copied to clipboard!");
+                            }}
+                            className="p-1.5 text-zinc-500 hover:text-zinc-950 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-all cursor-pointer border border-zinc-200"
+                            title="Copy Room Code"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Display QR code */}
+                      <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm relative group">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(window.location.origin + "/sprints/join?code=" + createdSprint.joinCode)}`}
+                          alt="Room Join QR Code"
+                          className="w-44 h-44 object-contain"
+                        />
+                      </div>
+
+                      <p className="text-[11px] text-zinc-505 max-w-xs leading-relaxed">
+                        Instruct candidates to scan this QR code or visit <span className="font-semibold text-zinc-800">{window.location.origin + "/register"}</span> and enter code <span className="font-bold text-zinc-900 font-mono">{createdSprint.joinCode}</span>.
+                      </p>
+                    </div>
+
+                    {/* Right side: Connected candidates list */}
+                    <div className="border border-zinc-200 rounded-2xl p-6 bg-white flex flex-col justify-between h-[360px]">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center border-b border-zinc-200 pb-2.5">
+                          <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">Candidates In Room ({lobbyParticipants.length})</h4>
+                          <span className="flex h-2.5 w-2.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                          </span>
+                        </div>
+
+                        {lobbyParticipants.length === 0 ? (
+                          <div className="text-center py-12 space-y-2">
+                            <p className="text-xs text-zinc-500 italic">Waiting for candidates to join...</p>
+                            <div className="w-5 h-5 rounded-full border-2 border-t-emerald-600 border-zinc-250 animate-spin mx-auto" />
+                          </div>
+                        ) : (
+                          <div className="space-y-2 overflow-y-auto max-h-[220px] no-scrollbar pr-1">
+                            {lobbyParticipants.map((p, idx) => (
+                              <div key={idx} className="flex justify-between items-center p-2.5 border border-zinc-200 rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-700 shrink-0 uppercase">
+                                    {p.name ? p.name.charAt(0).toUpperCase() : "C"}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-zinc-900 leading-snug">{p.name || "Candidate"}</p>
+                                    <p className="text-[10px] text-zinc-500 font-mono mt-0.5 leading-none">{p.email}</p>
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  <span>Joined</span>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Control Button */}
+                      <div>
+                        {createdSprint.isStarted ? (
+                          <div className="w-full py-3 bg-emerald-50 border border-emerald-250 text-emerald-700 text-xs font-extrabold rounded-xl text-center">
+                            Sprint Started! Candidates are playing.
+                          </div>
+                        ) : (
+                          <button
+                            onClick={handleStartSprint}
+                            className="w-full bg-[#E61E32] hover:bg-[#d01729] active:bg-[#b81223] text-white text-xs font-black py-3 rounded-xl shadow-xs transition-all cursor-pointer text-center uppercase tracking-wider"
+                          >
+                            Start Sprint Event Now
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-zinc-200 flex justify-start">
+                  <button
+                    onClick={() => {
+                      resetSprintForm();
+                      setActiveTab("overview");
+                    }}
+                    className="text-xs font-bold text-zinc-650 hover:text-zinc-950 px-4 py-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors cursor-pointer"
+                  >
+                    Close Lobby and Return to Dashboard
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : activeTab === "create" ? (
           /* TAB 2: CREATE HACKATHON FORM */
@@ -672,7 +1515,7 @@ export default function AdminHackathonsPage() {
                     <label className="block text-[11px] font-bold text-zinc-700 uppercase">1st Prize</label>
                     <input
                       type="text"
-                      placeholder="$2,500"
+                      placeholder="₹25,000"
                       value={prizeFirst}
                       onChange={(e) => setPrizeFirst(e.target.value)}
                       className="w-full text-xs py-2 px-2.5 border border-zinc-300 rounded-lg bg-white"
@@ -682,7 +1525,7 @@ export default function AdminHackathonsPage() {
                     <label className="block text-[11px] font-bold text-zinc-700 uppercase">2nd Prize</label>
                     <input
                       type="text"
-                      placeholder="$1,200"
+                      placeholder="₹15,000"
                       value={prizeSecond}
                       onChange={(e) => setPrizeSecond(e.target.value)}
                       className="w-full text-xs py-2 px-2.5 border border-zinc-300 rounded-lg bg-white"
@@ -692,12 +1535,40 @@ export default function AdminHackathonsPage() {
                     <label className="block text-[11px] font-bold text-zinc-700 uppercase">3rd Prize</label>
                     <input
                       type="text"
-                      placeholder="$800"
+                      placeholder="₹10,000"
                       value={prizeThird}
                       onChange={(e) => setPrizeThird(e.target.value)}
                       className="w-full text-xs py-2 px-2.5 border border-zinc-300 rounded-lg bg-white"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 items-end">
+                  <div className="flex items-center gap-2 py-2">
+                    <input
+                      id="createHasFee"
+                      type="checkbox"
+                      checked={hasFee}
+                      onChange={(e) => setHasFee(e.target.checked)}
+                      className="h-4 w-4 rounded border-zinc-300 text-[#E61E32] focus:ring-[#E61E32] accent-[#E61E32]"
+                    />
+                    <label htmlFor="createHasFee" className="text-xs font-bold text-zinc-700 uppercase cursor-pointer select-none">
+                      Requires Entry Fee
+                    </label>
+                  </div>
+                  {hasFee && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold text-zinc-700 uppercase">Registration Fee (₹)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="e.g. 500"
+                        value={registrationFee}
+                        onChange={(e) => setRegistrationFee(Number(e.target.value))}
+                        className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32]"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 flex justify-end gap-3">
@@ -868,6 +1739,102 @@ export default function AdminHackathonsPage() {
                     className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">Max Team Size</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={teamSize}
+                    onChange={(e) => setTeamSize(Number(e.target.value))}
+                    className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">Event Type</label>
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
+                  >
+                    <option value="Online">Online Sprint</option>
+                    <option value="In-Person">In-Person Challenge</option>
+                    <option value="Hybrid">Hybrid Event</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-zinc-700 uppercase">Banner Image URL</label>
+                <input
+                  type="text"
+                  value={image}
+                  onChange={(e) => setImage(e.target.value)}
+                  className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">1st Prize</label>
+                  <input
+                    type="text"
+                    placeholder="₹25,000"
+                    value={prizeFirst}
+                    onChange={(e) => setPrizeFirst(e.target.value)}
+                    className="w-full text-xs py-2 px-2.5 border border-zinc-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">2nd Prize</label>
+                  <input
+                    type="text"
+                    placeholder="₹15,000"
+                    value={prizeSecond}
+                    onChange={(e) => setPrizeSecond(e.target.value)}
+                    className="w-full text-xs py-2 px-2.5 border border-zinc-300 rounded-lg bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">3rd Prize</label>
+                  <input
+                    type="text"
+                    placeholder="₹10,000"
+                    value={prizeThird}
+                    onChange={(e) => setPrizeThird(e.target.value)}
+                    className="w-full text-xs py-2 px-2.5 border border-zinc-300 rounded-lg bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 items-end">
+                <div className="flex items-center gap-2 py-2">
+                  <input
+                    id="editHasFee"
+                    type="checkbox"
+                    checked={hasFee}
+                    onChange={(e) => setHasFee(e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 text-[#E61E32] focus:ring-[#E61E32] accent-[#E61E32]"
+                  />
+                  <label htmlFor="editHasFee" className="text-[11px] font-bold text-zinc-700 uppercase cursor-pointer select-none">
+                    Requires Entry Fee
+                  </label>
+                </div>
+                {hasFee && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase">Registration Fee (₹)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={registrationFee}
+                      onChange={(e) => setRegistrationFee(Number(e.target.value))}
+                      className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="pt-3 border-t border-zinc-200 flex justify-end gap-2">

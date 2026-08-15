@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
@@ -10,6 +10,8 @@ import Script from "next/script";
 
 function CandidateLoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,12 +59,12 @@ function CandidateLoginContent() {
           // Store auth token client side (also cookie is set by server)
           localStorage.setItem("candidate_authenticated", "true");
           localStorage.setItem("candidate_email", email.trim().toLowerCase());
-          router.push("/candidate-dashboard");
+          router.push(redirectUrl || "/candidate-dashboard");
         }, 650);
       }
     }
     return () => clearTimeout(timer);
-  }, [success, loadingStep, email, router]);
+  }, [success, loadingStep, email, router, redirectUrl]);
 
   const validate = () => {
     let valid = true;
@@ -386,7 +388,7 @@ function CandidateLoginContent() {
 
               <div className="mt-8 text-center text-xs text-zinc-500 pt-4 border-t border-zinc-150">
                 New candidate?{" "}
-                <Link href="/candidate-signup" className="text-orange-600 font-bold hover:underline hover:text-orange-700">
+                <Link href={redirectUrl ? `/candidate-signup?redirect=${encodeURIComponent(redirectUrl)}` : "/candidate-signup"} className="text-orange-600 font-bold hover:underline hover:text-orange-700">
                   Register profile here
                 </Link>
               </div>

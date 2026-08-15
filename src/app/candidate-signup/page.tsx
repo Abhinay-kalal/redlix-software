@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FloatingPathsBackground } from "@/components/ui/floating-paths";
 import { Turnstile } from "@/components/ui/turnstile";
@@ -10,6 +10,8 @@ import Script from "next/script";
 
 function CandidateSignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "";
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -98,7 +100,11 @@ function CandidateSignupContent() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push("/candidate-login");
+        if (redirectUrl) {
+          router.push(`/candidate-login?redirect=${encodeURIComponent(redirectUrl)}`);
+        } else {
+          router.push("/candidate-login");
+        }
       }, 1500);
     } catch (err: any) {
       setFormError("A network error occurred. Please try again.");
@@ -324,7 +330,7 @@ function CandidateSignupContent() {
 
               <div className="mt-8 text-center text-xs text-zinc-500 pt-4 border-t border-zinc-150">
                 Already registered?{" "}
-                <Link href="/candidate-login" className="text-orange-600 font-bold hover:underline hover:text-orange-700">
+                <Link href={redirectUrl ? `/candidate-login?redirect=${encodeURIComponent(redirectUrl)}` : "/candidate-login"} className="text-orange-600 font-bold hover:underline hover:text-orange-700">
                   Sign in here
                 </Link>
               </div>
