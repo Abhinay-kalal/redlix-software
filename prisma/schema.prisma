@@ -124,21 +124,30 @@ model Hackathon {
   createdAt       DateTime @default(now())
 
   // Sprint Additions
-  joinCode        String?  @unique
-  questions       String?  @db.Text // JSON stringified questions list
-  logoUrl         String?  @db.Text
-  location        String?
-  isStarted       Boolean  @default(false)
+  joinCode          String?     @unique
+  questions         String?     @db.Text // JSON stringified questions list
+  logoUrl           String?     @db.Text
+  location          String?
+  isStarted         Boolean     @default(false)
+  parentHackathonId String?     // If this is a Sprint inside a Hackathon
+  parentHackathon   Hackathon?  @relation("HackathonSprints", fields: [parentHackathonId], references: [id])
+  sprints           Hackathon[] @relation("HackathonSprints")
 }
 
 model SprintParticipant {
-  id        String   @id @default(cuid())
-  sprintId  String
-  name      String
-  email     String
-  joinedAt  DateTime @default(now())
-  score     Int      @default(0)
-  answers   String?  @db.Text // Saved candidate answers (JSON)
+  id             String   @id @default(cuid())
+  sprintId       String
+  name           String
+  email          String
+  joinedAt       DateTime @default(now())
+  score          Int      @default(0)
+  answers        String?  @db.Text // Saved candidate answers (JSON)
+  warningsCount  Int      @default(0)
+  isLocked       Boolean  @default(false)
+  isSubmitted    Boolean  @default(false)
+  deviceId       String?
+  latestSnapshot String?  @db.Text
+  cheatingLogs   String?  @db.Text // JSON array of violation events
 }
 
 model SprintSubmission {
@@ -172,6 +181,7 @@ model Team {
   id          String   @id @default(cuid())
   name        String
   hackathonId String
+  members     String   @db.Text @default("[]") // JSON array of candidate emails
   createdAt   DateTime @default(now())
 }
 

@@ -21,6 +21,8 @@ function CandidateSignupContent() {
   const [college, setCollege] = useState("");
   const [department, setDepartment] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
 
   // Error and Loading states
   const [formError, setFormError] = useState("");
@@ -69,11 +71,43 @@ function CandidateSignupContent() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsLoading(true);
+    setLoadingMsg("Sending OTP to your email...");
+    setFormError("");
+
+    try {
+      const res = await fetch("/api/candidate/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok || !data.success) {
+        setFormError(data.error || "Failed to send OTP.");
+      } else {
+        setOtpSent(true);
+      }
+    } catch (err: any) {
+      setFormError("A network error occurred.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyAndSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length !== 6) {
+      setFormError("Please enter the 6-digit OTP.");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingMsg("Verifying OTP and creating account...");
     setFormError("");
 
     try {
@@ -87,6 +121,7 @@ function CandidateSignupContent() {
           phone,
           college,
           department,
+          otp,
           turnstileToken,
         }),
       });
@@ -99,11 +134,15 @@ function CandidateSignupContent() {
       }
 
       setSuccess(true);
+      localStorage.setItem("candidate_authenticated", "true");
+      localStorage.setItem("candidate_email", email);
+      localStorage.setItem("candidate_name", fullName);
+      
       setTimeout(() => {
         if (redirectUrl) {
-          router.push(`/candidate-login?redirect=${encodeURIComponent(redirectUrl)}`);
+          router.push(redirectUrl);
         } else {
-          router.push("/candidate-login");
+          router.push("/candidate-dashboard");
         }
       }, 1500);
     } catch (err: any) {
@@ -182,7 +221,7 @@ function CandidateSignupContent() {
                 </div>
               )}
 
-              <form className="grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={handleSubmit} noValidate>
+              <form className="grid grid-cols-1 sm:grid-cols-2 gap-4" onSubmit={(e) => { e.preventDefault(); if (!otpSent) handleSendOtp(e); else handleVerifyAndSignup(e); }} noValidate>
                 {/* Full Name */}
                 <div className="sm:col-span-2">
                   <label htmlFor="fullName" className="block text-xs font-medium text-zinc-700 mb-1">
@@ -317,14 +356,48 @@ function CandidateSignupContent() {
 
 
 
+                {/* OTP Section */}
+                {otpSent && (
+                  <div className="sm:col-span-2">
+                    <label htmlFor="otp" className="block text-xs font-medium text-zinc-700 mb-1">
+                      6-Digit OTP *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-zinc-400">
+                        <Lock className="w-4 h-4" />
+                      </span>
+                      <input
+                        id="otp"
+                        type="text"
+                        placeholder="123456"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                        className="text-xs w-full py-2 pl-9 pr-3 border border-zinc-300 rounded-none bg-white text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-mono tracking-widest text-center text-lg"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Submit button */}
                 <div className="sm:col-span-2 pt-2">
-                  <button
-                    type="submit"
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-none transition-colors cursor-pointer shadow-sm text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
-                  >
-                    Register Candidate Profile <ArrowRight className="w-4 h-4" />
-                  </button>
+                  {!otpSent ? (
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-2.5 px-4 rounded-none transition-colors cursor-pointer shadow-sm text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
+                    >
+                      Send Verification OTP <Mail className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleVerifyAndSignup}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-none transition-colors cursor-pointer shadow-sm text-xs uppercase tracking-wider flex items-center justify-center gap-1.5"
+                    >
+                      Verify & Register <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </form>
 

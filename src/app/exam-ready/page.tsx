@@ -47,16 +47,46 @@ export default function ExamReadyPage() {
   useEffect(() => {
     const raw = sessionStorage.getItem("exam_session");
     if (!raw) { router.replace("/exam-login"); return; }
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed.hallTicketNumber && localStorage.getItem(`exam_violated_${parsed.hallTicketNumber}`)) {
-        router.replace("/exam-session");
-        return;
+    
+    let isMounted = true;
+    
+    const verifySession = async () => {
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed.hallTicketNumber) throw new Error("Invalid session");
+
+        // Verify with the server to check if candidate is blocked
+        const res = await fetch("/api/exam/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hallTicketNumber: parsed.hallTicketNumber,
+            candidateName: parsed.candidateName,
+            examId: parsed.exam?.id,
+          }),
+        });
+        
+        const data = await res.json();
+        
+        if (!isMounted) return;
+        
+        if (!data.success && data.error === "blocked") {
+          // If the server says they are blocked, redirect to session which handles lockout
+          router.replace("/exam-session");
+          return;
+        }
+
+        setSession(parsed);
+      } catch {
+        if (isMounted) router.replace("/exam-login");
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      setSession(parsed);
-    }
-    catch { router.replace("/exam-login"); }
-    finally { setLoading(false); }
+    };
+    
+    verifySession();
+    
+    return () => { isMounted = false; };
   }, [router]);
 
   const handleBeginExam = async () => {

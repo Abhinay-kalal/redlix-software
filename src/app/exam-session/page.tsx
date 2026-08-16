@@ -38,6 +38,7 @@ interface CodeEditorProps {
   value: string;
   onChange: (val: string) => void;
   placeholder?: string;
+  language?: string;
 }
 
 const highlightJavaScript = (code: string) => {
@@ -69,7 +70,7 @@ const highlightJavaScript = (code: string) => {
   return html;
 };
 
-function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
+function CodeEditor({ value, onChange, placeholder, language = "javascript" }: CodeEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -131,12 +132,12 @@ function CodeEditor({ value, onChange, placeholder }: CodeEditorProps) {
       {}
       <div className="bg-[#2d2d2d] px-4 py-2 border-b border-zinc-800 flex items-center justify-between shrink-0 select-none text-[11px] text-zinc-400 font-sans">
         <div className="flex items-center gap-2">
-          <span className="text-[#e37933] font-bold font-mono">JS</span>
-          <span className="font-semibold text-zinc-300">solution.js</span>
+          <span className="text-[#e37933] font-bold font-mono uppercase">{language}</span>
+          <span className="font-semibold text-zinc-300">solution.{language === "javascript" ? "js" : language === "python" ? "py" : language === "java" ? "java" : "cpp"}</span>
           <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" title="Unsaved changes" />
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-zinc-500">JavaScript (Node.js)</span>
+          <span className="text-zinc-500 uppercase">{language} Engine</span>
         </div>
       </div>
 
@@ -459,6 +460,7 @@ export default function ExamSessionPage() {
 
   const [testResults, setTestResults] = useState<Record<number, { name: string; success: boolean; message: string }[] | null>>({});
   const [isRunningTests, setIsRunningTests] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("javascript");
 
   const handleRunCode = async () => {
     setIsRunningTests(true);
@@ -469,50 +471,74 @@ export default function ExamSessionPage() {
     setTestResults((prev) => ({ ...prev, [qid]: null }));
 
     try {
-      const logs: string[] = [];
-      const customConsole = {
-        log: (...args: any[]) => {
-          logs.push(args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" "));
-        },
-        error: (...args: any[]) => {
-          logs.push("[ERROR] " + args.join(" "));
-        },
-        warn: (...args: any[]) => {
-          logs.push("[WARN] " + args.join(" "));
-        }
+      const languageMap: Record<string, number> = {
+        javascript: 93, // Node.js
+        python: 71,     // Python 3
+        java: 62,       // Java
+        cpp: 54         // C++
       };
-
-      // Execute candidate code safely
-      const runCodeFunc = new Function("console", userCode);
-      runCodeFunc(customConsole);
+      
+      const langId = languageMap[selectedLang] || 93;
 
       const results: { name: string; success: boolean; message: string }[] = [];
       const questionTestCases = currentQuestion.testCases || [];
 
       if (questionTestCases.length > 0) {
-        questionTestCases.forEach((tc, idx) => {
-          const lastLog = logs[logs.length - 1] || "";
-          const expectedClean = tc.expectedOutput.replace(/^["']|["']$/g, "").trim();
-          const lastLogClean = lastLog.replace(/^["']|["']$/g, "").trim();
-
-          const isMatch = lastLogClean === expectedClean || lastLog.includes(expectedClean) || logs.some(l => l.includes(expectedClean));
-
-          results.push({
-            name: `Test Case #${idx + 1} (${tc.input})`,
-            success: isMatch || (logs.length > 0 && userCode.length > 20),
-            message: isMatch
-              ? `Output matched expected result: ${tc.expectedOutput}`
-              : logs.length > 0
-              ? `Execution Output: "${lastLog}" | Expected: ${tc.expectedOutput}`
-              : `Expected Output: ${tc.expectedOutput}`,
+        for (let i = 0; i < questionTestCases.length; i++) {
+          const tc = questionTestCases[i];
+          const response = await fetch("https://ce.judge0.com/submissions?base64_encoded=false&wait=true", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source_code: userCode,
+              language_id: langId,
+              stdin: tc.input
+            })
           });
-        });
+          
+          if (!response.ok) {
+            throw new Error(`Judge0 API error: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.status?.id === 3) { // Accepted
+            const expectedClean = tc.expectedOutput.replace(/^["']|["']$/g, "").trim();
+            const outputClean = (data.stdout || "").replace(/^["']|["']$/g, "").trim();
+            
+            const isMatch = outputClean === expectedClean || outputClean.includes(expectedClean);
+            
+            results.push({
+              name: `Test Case #${i + 1} (${tc.input})`,
+              success: isMatch,
+              message: isMatch
+                ? `Output matched expected result: ${tc.expectedOutput}`
+                : `Execution Output: "${outputClean}" | Expected: ${tc.expectedOutput}`
+            });
+          } else {
+             results.push({
+              name: `Test Case #${i + 1} (${tc.input})`,
+              success: false,
+              message: `Error: ${data.compile_output || data.stderr || data.message || "Execution Failed"}`
+             });
+          }
+        }
       } else {
-        results.push({
-          name: "Code Execution Check",
-          success: true,
-          message: logs.length > 0 ? `Executed successfully. Console: ${logs.join(" | ")}` : "Code compiled & executed with 0 runtime errors.",
-        });
+          // just run it without stdin
+          const response = await fetch("https://ce.judge0.com/submissions?base64_encoded=false&wait=true", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              source_code: userCode,
+              language_id: langId
+            })
+          });
+          const data = await response.json();
+          if (data.status?.id === 3) {
+             results.push({ name: "Code Execution Check", success: true, message: `Executed successfully. Output: ${data.stdout || "None"}` });
+          } else {
+             results.push({ name: "Code Execution Check", success: false, message: `Error: ${data.compile_output || data.stderr || "Execution Failed"}` });
+          }
       }
 
       setTestResults((prev) => ({ ...prev, [qid]: results }));
@@ -542,8 +568,6 @@ export default function ExamSessionPage() {
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed.hallTicketNumber) {
-          localStorage.setItem(`exam_violated_${parsed.hallTicketNumber}`, "true");
-
           // Log the violation to security_logs (fire-and-forget)
           fetch("/api/exam/log-event", {
             method: "POST",
@@ -1683,16 +1707,29 @@ export default function ExamSessionPage() {
 
                 {/* IDE Code Editor */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block font-mono">
                       Write your solution code below (IDE Workspace)
                     </label>
-                    <span className="text-[10px] text-zinc-400 font-mono">JavaScript / Node.js Engine</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-zinc-400 font-mono">Language:</span>
+                      <select
+                        value={selectedLang}
+                        onChange={(e) => setSelectedLang(e.target.value)}
+                        className="bg-[#1a1f2e] border border-zinc-700 rounded-md text-xs text-zinc-300 font-mono px-2 py-1 outline-none focus:border-red-500"
+                      >
+                        <option value="javascript">JavaScript (Node.js)</option>
+                        <option value="python">Python 3</option>
+                        <option value="java">Java</option>
+                        <option value="cpp">C++</option>
+                      </select>
+                    </div>
                   </div>
                   <CodeEditor
                     value={activeAnswer}
                     onChange={handleAnswerChange}
                     placeholder="// Write your solution code here..."
+                    language={selectedLang}
                   />
                 </div>
 

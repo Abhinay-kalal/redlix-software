@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Award,
   ChevronRight,
+  ChevronDown,
   RefreshCw,
   PlayCircle,
   MessageCircle,
@@ -81,6 +82,7 @@ export default function CandidateDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [hackathons, setHackathons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -144,12 +146,13 @@ export default function CandidateDashboard() {
       if (!res.ok || !data.success) {
         localStorage.removeItem("candidate_authenticated");
         localStorage.removeItem("candidate_email");
-        router.push("/sprints/auth");
+        router.push("/candidate-login");
         return;
       }
 
       setCandidate(data.candidate);
       setRegistrations(data.registrations || []);
+      setHackathons(data.hackathons || []);
       
       // Initialize form values
       if (data.candidate) {
@@ -168,7 +171,7 @@ export default function CandidateDashboard() {
   useEffect(() => {
     const auth = localStorage.getItem("candidate_authenticated");
     if (auth !== "true") {
-      router.push("/sprints/auth");
+      router.push("/candidate-login");
       return;
     }
     const params = new URLSearchParams(window.location.search);
@@ -237,7 +240,10 @@ export default function CandidateDashboard() {
     localStorage.removeItem("candidate_authenticated");
     localStorage.removeItem("candidate_email");
     localStorage.removeItem("candidate_name");
-    router.push("/sprints/auth");
+    try {
+      await fetch("/api/candidate/logout", { method: "POST" });
+    } catch (err) {}
+    router.push("/candidate-login");
   };
 
   const handleJoinSprintLobby = async (e: React.FormEvent) => {
@@ -560,8 +566,8 @@ export default function CandidateDashboard() {
                   {/* Stat 1 */}
                   <div className="bg-white p-5 border border-zinc-200/80 shadow-md rounded-xl flex items-center justify-between transition-transform hover:scale-[1.01]">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold text-zinc-400">Registered Exams</p>
-                      <p className="text-3xl font-semibold text-zinc-900 tracking-tight mt-1">{registrations.length}</p>
+                      <p className="text-xs font-semibold text-zinc-400">Registered Events</p>
+                      <p className="text-3xl font-semibold text-zinc-900 tracking-tight mt-1">{registrations.length + hackathons.length}</p>
                     </div>
                     <div className="w-12 h-12 bg-red-50 text-[#E61E32] flex items-center justify-center rounded-xl">
                       <ClipboardList className="w-6 h-6" strokeWidth={1.8} />
@@ -572,7 +578,9 @@ export default function CandidateDashboard() {
                   <div className="bg-white p-5 border border-zinc-200/80 shadow-md rounded-xl flex items-center justify-between transition-transform hover:scale-[1.01]">
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-[#E61E32]">Sprints Active</p>
-                      <p className="text-3xl font-semibold text-zinc-900 tracking-tight mt-1">1</p>
+                      <p className="text-3xl font-semibold text-zinc-900 tracking-tight mt-1">
+                        {hackathons.reduce((acc, h) => acc + (h.sprints?.filter((s: any) => s.isStarted).length || 0), 0)}
+                      </p>
                     </div>
                     <div className="w-12 h-12 bg-emerald-50 text-emerald-600 flex items-center justify-center rounded-xl">
                       <Code2 className="w-6 h-6" strokeWidth={1.8} />
@@ -594,107 +602,45 @@ export default function CandidateDashboard() {
             </div>
 
             {/* Main content split */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-normal">
-              {/* Profile card summary */}
-              <div className="bg-white border border-zinc-200/80 shadow-xs p-6 space-y-4 rounded-xl h-fit">
-                <h3 className="text-xs font-semibold text-zinc-500 border-b border-zinc-200 pb-2">Academic Profile</h3>
-                <div className="space-y-3.5 text-xs">
-                  <div>
-                    <span className="text-[11px] text-zinc-400 block font-semibold mb-0.5">Full Name</span>
-                    <span className="font-semibold text-zinc-800 block text-sm">{candidate?.full_name}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Mail className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-[11px] text-zinc-400 block font-semibold mb-0.5">Email Address</span>
-                      <span className="font-medium text-zinc-700 block truncate max-w-[180px]">{candidate?.email}</span>
-                    </div>
-                  </div>
-                  {candidate?.phone && (
-                    <div className="flex gap-2">
-                      <Phone className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-[11px] text-zinc-400 block font-semibold mb-0.5">Phone Contact</span>
-                        <span className="font-semibold text-zinc-750 block">{candidate?.phone}</span>
-                      </div>
-                    </div>
-                  )}
-                  {candidate?.college && (
-                    <div className="flex gap-2">
-                      <BookOpen className="w-4 h-4 text-zinc-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="text-[11px] text-zinc-400 block font-semibold mb-0.5">College / Institution</span>
-                        <span className="font-semibold text-zinc-750 block leading-tight">{candidate?.college}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setActiveTab("profile")}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 border border-zinc-300 hover:bg-zinc-50 text-zinc-700 text-xs font-semibold rounded-lg mt-4 cursor-pointer"
-                >
-                  Edit Profile Details
-                </button>
-              </div>
-
-              {/* Sprints Joiner & Active Exams */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Sprint Quick Code Joiner Card */}
-                <div className="bg-white border border-zinc-200/80 p-6 rounded-xl shadow-xs space-y-4">
-                  <div className="flex items-center gap-2 border-b border-zinc-100 pb-2">
-                    <Key className="w-4 h-4 text-[#E61E32]" />
-                    <h3 className="text-xs font-semibold text-zinc-800">Quick Code Joiner</h3>
-                  </div>
-
-                  <form onSubmit={handleJoinSprintLobby} className="flex gap-3">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      placeholder="Enter 6-Digit Room Code"
-                      value={lobbyCode}
-                      onChange={(e) => setLobbyCode(e.target.value.replace(/[^0-9]/g, ""))}
-                      className="flex-1 text-xs py-2 px-3.5 border border-zinc-300 rounded-lg focus:outline-none focus:border-[#E61E32] font-mono tracking-widest font-semibold"
-                    />
-                    <button
-                      type="submit"
-                      disabled={joiningLobby}
-                      className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-semibold px-6 py-2 rounded-lg cursor-pointer flex items-center gap-1 shrink-0"
-                    >
-                      {joiningLobby ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Join Wait Lobby"}
-                    </button>
-                  </form>
-                  {lobbyError && <p className="text-xs font-bold text-red-500">{lobbyError}</p>}
-                  {lobbySuccess && <p className="text-xs font-bold text-emerald-650">{lobbySuccess}</p>}
-                </div>
+            <div className="flex flex-col gap-6 font-normal">
+              
+              {/* Active Exams */}
+              <div className="space-y-6">
 
                 <div className="space-y-4">
-                  <h3 className="text-xs font-semibold text-zinc-500">Recent Evaluations</h3>
-                  {registrations.length === 0 ? (
+                  <h3 className="text-xs font-semibold text-zinc-500">My Hackathons & Live Sprints</h3>
+                  {hackathons.length === 0 ? (
                     <div className="bg-white border border-zinc-200 p-8 text-center text-xs text-zinc-500 font-semibold rounded-xl">
-                      No recent registrations found.
+                      No registered hackathons.
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {registrations.slice(0, 2).map((reg) => (
-                        <div key={reg.id} className="bg-white border border-zinc-200 p-4 flex justify-between items-center shadow-2xs rounded-xl">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-zinc-100 border border-zinc-200 rounded-lg flex items-center justify-center text-xs font-bold text-zinc-500 shrink-0">
-                              {reg.exams.company_name?.charAt(0) || "E"}
-                            </div>
-                            <div>
-                              <span className="text-[9px] font-semibold bg-zinc-100 text-zinc-600 px-2 py-0.5 border border-zinc-200 rounded-md">{reg.exams.company_name}</span>
-                              <h4 className="text-xs font-semibold text-zinc-800 mt-1">{reg.exams.name}</h4>
+                      {hackathons.map((h) => {
+                        return (
+                          <div key={h.id} className="bg-white border border-zinc-200 flex flex-col shadow-2xs rounded-xl overflow-hidden transition-all hover:border-zinc-300">
+                            {/* Clickable Header */}
+                            <div 
+                              onClick={() => router.push(`/hackathons/${h.id}`)}
+                              className="p-4 cursor-pointer hover:bg-zinc-50 transition-colors flex justify-between items-center group"
+                            >
+                              <div className="flex items-center gap-3">
+                                {h.image ? (
+                                  <img src={h.image} className="w-10 h-10 rounded-lg object-cover border border-zinc-200 shrink-0" />
+                                ) : (
+                                  <div className="w-10 h-10 bg-zinc-100 border border-zinc-200 rounded-lg flex items-center justify-center text-sm font-bold text-zinc-500 shrink-0">
+                                    H
+                                  </div>
+                                )}
+                                <div>
+                                  <h4 className="text-xs font-bold text-zinc-800 line-clamp-1">{h.title}</h4>
+                                  <span className="text-[10px] font-semibold text-zinc-500">{h.sprints?.length || 0} Sprints</span>
+                                </div>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-zinc-400 transition-transform duration-200 group-hover:translate-x-1" />
                             </div>
                           </div>
-                          {reg.exams.show_login ? (
-                            <Link href={`/exam-login?examId=${reg.exam_id}`} className="text-xs font-semibold text-[#E61E32] hover:underline flex items-center gap-0.5 shrink-0">
-                              Enter <ChevronRight className="w-3.5 h-3.5" />
-                            </Link>
-                          ) : (
-                            <span className="text-[10px] font-bold text-zinc-400">Closed</span>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -707,78 +653,52 @@ export default function CandidateDashboard() {
         {activeTab === "exams" && (
           <div className="space-y-4 font-normal">
             <div className="flex justify-between items-center border-b border-zinc-200 pb-3">
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Active Exam Registrations</h3>
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Active Registrations</h3>
             </div>
 
-            {registrations.length === 0 ? (
+            {registrations.length === 0 && hackathons.length === 0 ? (
               <div className="bg-white border border-zinc-200 shadow-sm p-12 text-center rounded-xl">
-                <p className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-2">No Exams Found</p>
+                <p className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-2">No Registrations Found</p>
                 <p className="text-zinc-400 text-xs mb-6 max-w-sm mx-auto leading-relaxed">
-                  You have not registered for any evaluations.
+                  You have not registered for any hackathons or evaluations.
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-5 max-w-3xl">
-                {registrations.map((reg) => (
-                  <div key={reg.id} className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden hover:border-red-500/20 transition-all flex flex-row">
-                    {/* Left Column: Full square image — 1200x1200 fully visible */}
-                    <div className="w-[180px] h-[180px] shrink-0 border-r border-zinc-200 overflow-hidden">
-                      <img
-                        src={getExamCardImage(reg.exams.name)}
-                        alt="Exam Banner"
-                        className="w-full h-full object-cover"
-                      />
+                {/* Hackathons Loop */}
+                {hackathons.map((h) => (
+                  <div key={h.id} className="bg-white border border-zinc-200 shadow-sm rounded-xl overflow-hidden hover:border-orange-500/20 transition-all flex flex-row">
+                    <div className="w-[180px] h-[180px] shrink-0 border-r border-zinc-200 overflow-hidden bg-zinc-50">
+                      {h.image ? (
+                        <img
+                          src={h.image}
+                          alt="Hackathon Banner"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center">
+                          <Code2 className="w-12 h-12 text-zinc-300 mb-2" />
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Hackathon</span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Right Column: Info Section */}
                     <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                       <div className="space-y-2">
-                        <h4 className="text-lg font-semibold text-zinc-950 tracking-tight leading-snug">{reg.exams.name}</h4>
-                        <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{reg.exams.description}</p>
+                        <h4 className="text-lg font-semibold text-zinc-950 tracking-tight leading-snug">{h.title}</h4>
+                        <p className="text-xs text-zinc-500 leading-relaxed line-clamp-2">{h.description || "No description provided."}</p>
                       </div>
 
-                      {/* Technical Metadata */}
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 py-1 text-xs text-zinc-655 border-t border-zinc-100 pt-3">
-                        <div>
-                          <span className="text-[10px] text-zinc-400 block font-semibold mb-0.5">Total Questions</span>
-                          <span className="font-semibold text-zinc-800">{reg.exams.total_qns} Questions</span>
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-zinc-400 block font-semibold mb-0.5">Question Format</span>
-                          <span className="font-semibold text-zinc-800">{reg.exams.types_of_qns || "MCQs"}</span>
-                        </div>
-                      </div>
-
-                      {/* Schedule & Hall Ticket */}
-                      <div className="grid grid-cols-2 gap-4 border-t border-b border-zinc-200 py-3 text-xs text-zinc-700 font-semibold">
-                        <div>
-                          <p className="text-[9px] text-zinc-400 font-semibold mb-0.5">Schedule</p>
-                          <p className="text-zinc-900 font-bold">{reg.exams.date}</p>
-                          <p className="text-zinc-500 font-normal">{reg.exams.time} IST</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] text-zinc-400 font-semibold mb-0.5">Hall Ticket</p>
-                          <p className="text-[#E61E32] font-mono tracking-wider font-bold">{reg.hall_ticket_number || "NOT_GENERATED"}</p>
-                        </div>
-                      </div>
-
-                      {/* Action Area */}
-                      <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center justify-between pt-4 mt-auto">
                         <span className="text-[9px] text-zinc-400 uppercase font-bold tracking-wider">
-                          {reg.blocked ? "Locked" : reg.exams.show_login ? "Active" : "Closed"}
+                          {h.sprints && h.sprints.some((s: any) => s.isStarted) ? "Sprint Live" : "Waiting for Sprints"}
                         </span>
-                        {reg.exams.show_login ? (
-                          <Link
-                            href={`/exam-login?examId=${reg.exam_id}`}
-                            className="px-4 py-2 bg-[#E61E32] hover:bg-[#d01729] text-white font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors shadow-sm inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            Launch Exam <ChevronRight className="w-4 h-4" />
-                          </Link>
-                        ) : (
-                          <button disabled className="px-3.5 py-1.5 bg-zinc-100 border border-zinc-200 text-zinc-400 text-xs font-bold uppercase tracking-wider cursor-not-allowed rounded-lg">
-                            Entry Closed
-                          </button>
-                        )}
+                        <Link
+                          href={`/hackathons/${h.id}`}
+                          className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors shadow-sm inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          View Details <ChevronRight className="w-4 h-4" />
+                        </Link>
                       </div>
                     </div>
                   </div>

@@ -32,8 +32,24 @@ export async function PUT(
     const body = await req.json();
     const { isStarted, title, description, questions } = body;
 
+    const sprint = await prisma.hackathon.findUnique({ where: { id } });
+    if (!sprint) {
+      return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+    }
+
     const updateData: any = {};
-    if (isStarted !== undefined) updateData.isStarted = Boolean(isStarted);
+    if (isStarted !== undefined) {
+      updateData.isStarted = Boolean(isStarted);
+      
+      // If we are starting the sprint right now, shift the start/end dates so the 
+      // countdown strictly enforces the duration starting from this exact moment!
+      if (updateData.isStarted && !sprint.isStarted) {
+        const durationMs = sprint.endDate.getTime() - sprint.startDate.getTime();
+        updateData.startDate = new Date();
+        updateData.endDate = new Date(Date.now() + durationMs);
+      }
+    }
+    
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (questions !== undefined) updateData.questions = typeof questions === "string" ? questions : JSON.stringify(questions);

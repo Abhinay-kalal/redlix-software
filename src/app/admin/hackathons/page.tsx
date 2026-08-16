@@ -26,7 +26,8 @@ import {
   UploadCloud,
   Copy,
   Check,
-  MapPin
+  MapPin,
+  Activity
 } from "lucide-react";
 
 interface Hackathon {
@@ -46,6 +47,8 @@ interface Hackathon {
   registrationFee: number;
   hasFee: boolean;
   createdAt: string;
+  joinCode?: string | null;
+  isStarted?: boolean;
 }
 
 interface Team {
@@ -59,6 +62,7 @@ export default function AdminHackathonsPage() {
   const router = useRouter();
 
   const [hackathons, setHackathons] = useState<Hackathon[]>([]);
+  const [sprints, setSprints] = useState<Hackathon[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -72,10 +76,11 @@ export default function AdminHackathonsPage() {
   const [sprintType, setSprintType] = useState("Online"); // Online, In-Person, Hybrid
   const [sprintLocation, setSprintLocation] = useState(""); // URL or address
   const [sprintLogo, setSprintLogo] = useState<string>(""); // base64 logo representation
+  const [sprintParentHackathon, setSprintParentHackathon] = useState("");
   const [logoDimensionsError, setLogoDimensionsError] = useState("");
 
   // Question feeding states
-  const [questionType, setQuestionType] = useState<"coding" | "quiz">("coding");
+  const [questionType, setQuestionType] = useState<"coding" | "frontend" | "sql" | "quiz">("coding");
   
   // MCQ Questions array
   const [mcqQuestions, setMcqQuestions] = useState<Array<{
@@ -90,6 +95,7 @@ export default function AdminHackathonsPage() {
     problemDescription: string;
     codeTemplate: string;
     testCases: Array<{ input: string; expectedOutput: string }>;
+    languageCategory?: "coding" | "frontend" | "sql";
   }>>([]);
 
   // New MCQ temporary inputs
@@ -156,6 +162,7 @@ export default function AdminHackathonsPage() {
   // Edit Modal State
   const [editingHackathon, setEditingHackathon] = useState<Hackathon | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editSprintDuration, setEditSprintDuration] = useState("60");
 
   // Sprint Wizard helper functions
   const handleLogoUpload = (file: File) => {
@@ -190,6 +197,7 @@ export default function AdminHackathonsPage() {
     setSprintType("Online");
     setSprintLocation("");
     setSprintLogo("");
+    setSprintParentHackathon("");
     setLogoDimensionsError("");
     setMcqQuestions([]);
     setCodingQuestions([]);
@@ -215,6 +223,11 @@ export default function AdminHackathonsPage() {
       alert("Sprint Name is required.");
       return;
     }
+    
+    if (!sprintParentHackathon) {
+      alert("Please select an Associated Hackathon.");
+      return;
+    }
 
     const payload = {
       title: sprintTitle,
@@ -225,6 +238,7 @@ export default function AdminHackathonsPage() {
       logoUrl: sprintLogo,
       location: sprintLocation,
       type: sprintType,
+      parentHackathonId: sprintParentHackathon,
       questions: {
         type: questionType,
         list: questionType === "coding" ? codingQuestions : mcqQuestions
@@ -273,6 +287,28 @@ export default function AdminHackathonsPage() {
     }
   };
 
+  const handleStopSprint = async () => {
+    if (!createdSprint) return;
+    if (!confirm("Are you sure you want to STOP this sprint? Active participants will be kicked to the waiting room.")) return;
+    try {
+      const res = await fetch(`/api/sprints/${createdSprint.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isStarted: false })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCreatedSprint(data.data);
+        alert("Sprint has been stopped. Active candidates are being redirected.");
+      } else {
+        alert("Failed to stop sprint: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error stopping sprint.");
+    }
+  };
+
   // Lobby Polling Effect
   useEffect(() => {
     if (activeTab !== "create-sprint" || sprintStep !== 3 || !createdSprint) return;
@@ -298,7 +334,7 @@ export default function AdminHackathonsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch Hackathons
+      // Fetch Hackathons (non-sprints only)
       const hRes = await fetch("/api/hackathons");
       const hText = await hRes.text();
       let hJson;
@@ -307,6 +343,17 @@ export default function AdminHackathonsPage() {
         setHackathons(hJson.data);
       } else {
         setHackathons([]);
+      }
+
+      // Fetch all Sprints separately
+      const sRes = await fetch("/api/sprints");
+      const sText = await sRes.text();
+      let sJson;
+      try { sJson = JSON.parse(sText); } catch { sJson = { success: true, data: [] }; }
+      if (sJson && sJson.success && Array.isArray(sJson.data)) {
+        setSprints(sJson.data);
+      } else {
+        setSprints([]);
       }
 
       // Fetch Registered Teams
@@ -322,6 +369,7 @@ export default function AdminHackathonsPage() {
     } catch (err) {
       console.error("Error fetching organizer data:", err);
       setHackathons([]);
+      setSprints([]);
       setTeams([]);
     } finally {
       setLoading(false);
@@ -424,6 +472,14 @@ export default function AdminHackathonsPage() {
       hasFee,
     };
 
+    if (editingHackathon.parentHackathonId) {
+      const dur = Number(editSprintDuration);
+      if (!isNaN(dur)) {
+        payload.startDate = new Date(editingHackathon.startDate).toISOString();
+        payload.endDate = new Date(new Date(editingHackathon.startDate).getTime() + dur * 60 * 1000).toISOString();
+      }
+    }
+
     try {
       const res = await fetch(`/api/hackathons/${editingHackathon.id}`, {
         method: "PUT",
@@ -467,9 +523,16 @@ export default function AdminHackathonsPage() {
     try {
       setStartDate(new Date(h.startDate).toISOString().split("T")[0]);
       setEndDate(new Date(h.endDate).toISOString().split("T")[0]);
+      
+      // Calculate duration for sprint edit
+      if (h.parentHackathonId) {
+        const diff = Math.ceil((new Date(h.endDate).getTime() - new Date(h.startDate).getTime()) / 60000);
+        setEditSprintDuration(diff.toString());
+      }
     } catch {
       setStartDate("");
       setEndDate("");
+      setEditSprintDuration("60");
     }
     setTeamSize(h.teamSize);
     setType(h.type || "Online");
@@ -739,7 +802,7 @@ export default function AdminHackathonsPage() {
               <div className="bg-white border border-zinc-200 rounded-xl shadow-xs overflow-hidden">
                 <div className="p-5 border-b border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-base font-bold text-zinc-900">Published Sprints</h2>
+                    <h2 className="text-base font-bold text-zinc-900">Published Hackathons</h2>
                     <p className="text-xs text-zinc-500">Live events stored in your organizer database</p>
                   </div>
 
@@ -753,7 +816,7 @@ export default function AdminHackathonsPage() {
                 </div>
 
                 <div className="divide-y divide-zinc-200">
-                  {hackathons.map((h) => (
+                  {hackathons.filter(h => !h.joinCode).map((h) => (
                     <div key={h.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-zinc-50/80 transition-colors">
                       <div className="flex items-start gap-4">
                         <img
@@ -936,6 +999,23 @@ export default function AdminHackathonsPage() {
                   {/* Right Column: Meta details */}
                   <div className="space-y-4">
                     <div className="space-y-2">
+                      <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Associated Hackathon *</label>
+                      <div className="relative rounded-lg shadow-2xs">
+                        <select
+                          required
+                          value={sprintParentHackathon}
+                          onChange={(e) => setSprintParentHackathon(e.target.value)}
+                          className="w-full text-xs py-2.5 pl-3 pr-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32] focus:ring-1 focus:ring-[#E61E32]/20 hover:border-zinc-450 transition-all font-medium appearance-none"
+                        >
+                          <option value="" disabled>Select a Hackathon</option>
+                          {hackathons.map((h) => (
+                            <option key={h.id} value={h.id}>{h.title}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
                       <label className="block text-[10px] font-extrabold text-zinc-500 uppercase tracking-wider">Sprint Title / Name *</label>
                       <div className="relative rounded-lg shadow-2xs">
                         <input
@@ -1026,24 +1106,28 @@ export default function AdminHackathonsPage() {
                 <div className="space-y-4">
                   <div className="space-y-1.5 max-w-xs">
                     <label className="block text-xs font-bold text-zinc-700 uppercase">Question Format *</label>
-                    <select
-                      value={questionType}
-                      onChange={(e) => {
-                        setQuestionType(e.target.value as "coding" | "quiz");
-                        setCodingQuestions([]);
-                        setMcqQuestions([]);
-                      }}
-                      className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32]"
-                    >
-                      <option value="coding">Programming Code Challenge</option>
-                      <option value="quiz">Multiple Choice Quiz (MCQ)</option>
-                    </select>
+                      <select
+                        value={questionType}
+                        onChange={(e) => {
+                          setQuestionType(e.target.value as "coding" | "frontend" | "sql" | "quiz");
+                          setCodingQuestions([]);
+                          setMcqQuestions([]);
+                        }}
+                        className="w-full text-xs py-2.5 px-3 border border-zinc-300 rounded-lg bg-white focus:outline-none focus:border-[#E61E32]"
+                      >
+                        <option value="coding">Algorithmic (C/C++/Python/Java/JS)</option>
+                        <option value="frontend">Frontend Web (HTML/CSS/JS)</option>
+                        <option value="sql">Database Query (SQL)</option>
+                        <option value="quiz">Multiple Choice Quiz (MCQ)</option>
+                      </select>
                   </div>
 
-                  {questionType === "coding" ? (
+                  {["coding", "frontend", "sql"].includes(questionType) ? (
                     /* CODING QUESTION SETUP */
                     <div className="space-y-4 border border-zinc-200/80 rounded-xl p-5 bg-zinc-50/50">
-                      <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">Add Coding Question</h4>
+                      <h4 className="text-xs font-extrabold text-zinc-900 uppercase tracking-wider">
+                        Add {questionType === "frontend" ? "Frontend" : questionType === "sql" ? "SQL" : "Coding"} Question
+                      </h4>
                       
                       <div className="space-y-1.5">
                         <label className="block text-[11px] font-bold text-zinc-650">Question Title *</label>
@@ -1079,17 +1163,19 @@ export default function AdminHackathonsPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="border border-zinc-200 rounded-lg p-3 bg-white space-y-2">
-                          <span className="text-[10px] font-extrabold text-[#E61E32] uppercase">Test Case 1</span>
+                          <span className="text-[10px] font-extrabold text-[#E61E32] uppercase">
+                            {questionType === "frontend" ? "Test Case 1 (e.g. DOM query)" : "Test Case 1"}
+                          </span>
                           <input
                             type="text"
-                            placeholder="Input (e.g. 'hello')"
+                            placeholder={questionType === "frontend" ? "Selector (e.g. 'button.submit')" : "Input (e.g. 'hello')"}
                             value={tempTestInput1}
                             onChange={(e) => setTempTestInput1(e.target.value)}
                             className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
                           />
                           <input
                             type="text"
-                            placeholder="Expected Output (e.g. 'olleh')"
+                            placeholder={questionType === "frontend" ? "Expected Check (e.g. 'exists')" : "Expected Output (e.g. 'olleh')"}
                             value={tempTestOutput1}
                             onChange={(e) => setTempTestOutput1(e.target.value)}
                             className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
@@ -1097,17 +1183,19 @@ export default function AdminHackathonsPage() {
                         </div>
 
                         <div className="border border-zinc-200 rounded-lg p-3 bg-white space-y-2">
-                          <span className="text-[10px] font-extrabold text-[#E61E32] uppercase">Test Case 2 (Hidden)</span>
+                          <span className="text-[10px] font-extrabold text-[#E61E32] uppercase">
+                            {questionType === "frontend" ? "Test Case 2 (Hidden)" : "Test Case 2 (Hidden)"}
+                          </span>
                           <input
                             type="text"
-                            placeholder="Input (e.g. 'sprint')"
+                            placeholder={questionType === "frontend" ? "Selector (e.g. '.error-text')" : "Input (e.g. 'sprint')"}
                             value={tempTestInput2}
                             onChange={(e) => setTempTestInput2(e.target.value)}
                             className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
                           />
                           <input
                             type="text"
-                            placeholder="Expected Output (e.g. 'tnirps')"
+                            placeholder={questionType === "frontend" ? "Expected Check (e.g. 'color: red')" : "Expected Output (e.g. 'tnirps')"}
                             value={tempTestOutput2}
                             onChange={(e) => setTempTestOutput2(e.target.value)}
                             className="w-full text-xs py-1.5 px-2 border border-zinc-200 rounded"
@@ -1125,6 +1213,7 @@ export default function AdminHackathonsPage() {
                             title: tempCodeTitle,
                             problemDescription: tempCodeDesc,
                             codeTemplate: tempCodeTemplate,
+                            languageCategory: questionType as "coding" | "frontend" | "sql",
                             testCases: [
                               { input: tempTestInput1, expectedOutput: tempTestOutput1 },
                               { input: tempTestInput2, expectedOutput: tempTestOutput2 }
@@ -1132,7 +1221,11 @@ export default function AdminHackathonsPage() {
                           }]);
                           setTempCodeTitle("");
                           setTempCodeDesc("");
-                          setTempCodeTemplate("function solution() {\n  // Write your code here\n}");
+                          setTempCodeTemplate(
+                            questionType === "frontend" ? "<!-- Write HTML/CSS/JS here -->\n<div></div>" :
+                            questionType === "sql" ? "-- Write your SQL query here\nSELECT * FROM table;" :
+                            "function solution() {\n  // Write your code here\n}"
+                          );
                           setTempTestInput1("");
                           setTempTestOutput1("");
                           setTempTestInput2("");
@@ -1351,18 +1444,47 @@ export default function AdminHackathonsPage() {
                             {lobbyParticipants.map((p, idx) => (
                               <div key={idx} className="flex justify-between items-center p-2.5 border border-zinc-200 rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition-colors">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-700 shrink-0 uppercase">
+                                  <div className={`w-8 h-8 rounded-full ${p.isLocked ? 'bg-red-100 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-100 text-emerald-700'} flex items-center justify-center text-xs font-bold shrink-0 uppercase`}>
                                     {p.name ? p.name.charAt(0).toUpperCase() : "C"}
                                   </div>
                                   <div>
-                                    <p className="text-xs font-bold text-zinc-900 leading-snug">{p.name || "Candidate"}</p>
+                                    <p className="text-xs font-bold text-zinc-900 leading-snug">
+                                      {p.name || "Candidate"}
+                                      {p.warningsCount > 0 && !p.isLocked && <span className="ml-2 text-[10px] text-amber-600">({p.warningsCount} strikes)</span>}
+                                    </p>
                                     <p className="text-[10px] text-zinc-500 font-mono mt-0.5 leading-none">{p.email}</p>
                                   </div>
                                 </div>
-                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                  <span>Joined</span>
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  {p.isLocked ? (
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const res = await fetch("/api/sprints/participants/unlock", {
+                                            method: "POST",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ participantId: p.id })
+                                          });
+                                          const data = await res.json();
+                                          if (data.success) {
+                                            alert("Candidate unlocked successfully.");
+                                            // The polling will automatically refresh the UI
+                                          }
+                                        } catch (e) {
+                                          alert("Failed to unlock candidate.");
+                                        }
+                                      }}
+                                      className="text-[9px] font-bold text-white bg-red-600 hover:bg-red-700 px-2.5 py-1 rounded border border-red-700 uppercase tracking-wider cursor-pointer"
+                                    >
+                                      Unlock
+                                    </button>
+                                  ) : (
+                                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span>Joined</span>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -1372,8 +1494,25 @@ export default function AdminHackathonsPage() {
                       {/* Control Button */}
                       <div>
                         {createdSprint.isStarted ? (
-                          <div className="w-full py-3 bg-emerald-50 border border-emerald-250 text-emerald-700 text-xs font-extrabold rounded-xl text-center">
-                            Sprint Started! Candidates are playing.
+                          <div className="space-y-3">
+                            <div className="w-full py-3 bg-emerald-50 border border-emerald-250 text-emerald-700 text-xs font-extrabold rounded-xl text-center">
+                              Sprint Started! Candidates are playing.
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => router.push(`/admin/hackathons/${createdSprint.id}/live`)}
+                                className="flex-1 bg-zinc-900 hover:bg-black text-white text-[10px] font-black py-3 rounded-xl shadow-xs transition-all cursor-pointer text-center uppercase tracking-wider flex items-center justify-center gap-1.5"
+                              >
+                                <Activity className="w-3.5 h-3.5" />
+                                Live Analytics
+                              </button>
+                              <button
+                                onClick={handleStopSprint}
+                                className="flex-1 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-[10px] font-black py-3 rounded-xl shadow-xs transition-all cursor-pointer text-center uppercase tracking-wider"
+                              >
+                                Stop Sprint
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <button
@@ -1593,62 +1732,160 @@ export default function AdminHackathonsPage() {
             </div>
           </div>
         ) : activeTab === "list" ? (
-          /* TAB 3: ALL HACKATHONS LIST */
+          /* TAB 3: ALL SPRINTS LIST */
           <div className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
             <div className="bg-white border border-zinc-200 rounded-xl shadow-xs p-5 flex items-center justify-between">
               <div className="relative w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <input
                   type="text"
-                  placeholder="Filter hackathons..."
+                  placeholder="Search sprints..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full text-xs bg-zinc-50 border border-zinc-200 pl-9 pr-3 py-2 rounded-lg"
+                  className="w-full text-xs bg-zinc-50 border border-zinc-200 pl-9 pr-3 py-2 rounded-lg outline-none focus:border-[#E61E32]"
                 />
               </div>
 
               <button
-                onClick={() => setActiveTab("create")}
-                className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-xs"
+                onClick={() => setActiveTab("create-sprint")}
+                className="bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>New Event</span>
+                <span>New Sprint</span>
               </button>
             </div>
 
-            <div className="bg-white border border-zinc-200 rounded-xl shadow-xs overflow-hidden">
-              {filteredHackathons.length === 0 ? (
-                <div className="p-12 text-center text-xs text-zinc-500 font-medium">
-                  No hackathons found in database.
-                </div>
-              ) : (
-                <div className="divide-y divide-zinc-200">
-                  {filteredHackathons.map((h) => (
-                    <div key={h.id} className="p-4 md:p-5 flex items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-zinc-900">{h.title}</h4>
-                        <p className="text-xs text-zinc-500">{h.type} • {formatDate(h.startDate)} to {formatDate(h.endDate)}</p>
-                      </div>
+            {/* Sprint list — sourced from dedicated /api/sprints endpoint */}
+            {(() => {
+              const filteredSprints = sprints.filter(h =>
+                h.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (h.description && h.description.toLowerCase().includes(searchQuery.toLowerCase()))
+              );
+              const now = new Date();
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openEditModal(h)}
-                          className="p-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-600"
+              if (filteredSprints.length === 0) {
+                return (
+                  <div className="bg-white border border-zinc-200 rounded-xl shadow-xs p-12 text-center space-y-3">
+                    <span className="material-symbols-outlined text-4xl text-zinc-300">timer</span>
+                    <p className="text-sm font-bold text-zinc-600">No sprints created yet</p>
+                    <p className="text-xs text-zinc-400">Create your first sprint to get started.</p>
+                    <button
+                      onClick={() => setActiveTab("create-sprint")}
+                      className="mt-2 bg-[#E61E32] hover:bg-[#d01729] text-white text-xs font-bold px-4 py-2 rounded-lg cursor-pointer"
+                    >
+                      Create Sprint
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="bg-white border border-zinc-200 rounded-xl shadow-xs overflow-hidden">
+                  <div className="divide-y divide-zinc-100">
+                    {filteredSprints.map((h) => {
+                      const end = new Date(h.endDate);
+                      const isCompleted = end < now;
+                      const isLive = h.isStarted && !isCompleted;
+
+                      let statusBadge;
+                      if (isCompleted) {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 bg-zinc-100 text-zinc-500 text-[9px] font-black rounded border border-zinc-200 uppercase tracking-widest flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                            Completed
+                          </span>
+                        );
+                      } else if (isLive) {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 bg-red-50 text-[#E61E32] text-[9px] font-black rounded border border-red-100 uppercase tracking-widest flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#E61E32] animate-pulse" />
+                            Live
+                          </span>
+                        );
+                      } else {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black rounded border border-amber-100 uppercase tracking-widest flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            Upcoming
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={h.id}
+                          className={`p-4 md:p-5 flex items-center justify-between gap-4 transition-colors ${isCompleted ? "opacity-80 hover:bg-zinc-50/60" : "hover:bg-zinc-50/80"} cursor-pointer`}
+                          onClick={() => {
+                            if (isCompleted) {
+                              // Open archived analytics
+                              router.push(`/admin/hackathons/${h.id}/live`);
+                            } else {
+                              // Open live lobby
+                              setCreatedSprint(h);
+                              setSprintStep(3);
+                              setActiveTab("create-sprint");
+                            }
+                          }}
                         >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(h.id)}
-                          className="p-2 border border-zinc-200 rounded-lg hover:bg-red-50 text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isCompleted ? "bg-zinc-100 border border-zinc-200" : isLive ? "bg-red-50 border border-red-100" : "bg-amber-50 border border-amber-100"}`}>
+                              <span className={`material-symbols-outlined text-[18px] ${isCompleted ? "text-zinc-400" : isLive ? "text-[#E61E32]" : "text-amber-500"}`}>timer</span>
+                            </div>
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="text-sm font-bold text-zinc-900 truncate">{h.title}</h4>
+                                {statusBadge}
+                              </div>
+                              <p className="text-[10px] text-zinc-500 font-mono">
+                                Room: {h.joinCode} · {formatDate(h.startDate)} → {formatDate(h.endDate)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                            {isCompleted ? (
+                              <button
+                                onClick={() => router.push(`/admin/hackathons/${h.id}/live`)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg border bg-zinc-900 text-white hover:bg-zinc-700 transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">analytics</span>
+                                View Results
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setCreatedSprint(h);
+                                  setSprintStep(3);
+                                  setActiveTab("create-sprint");
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg border bg-emerald-600 text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[14px]">qr_code_scanner</span>
+                                Open Lobby
+                              </button>
+                            )}
+                            <button
+                              onClick={() => openEditModal(h)}
+                              className="p-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 text-zinc-500 cursor-pointer"
+                              title="Edit sprint"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(h.id)}
+                              className="p-2 border border-zinc-200 rounded-lg hover:bg-red-50 text-red-500 cursor-pointer"
+                              title="Delete sprint"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })()}
           </div>
         ) : (
           /* TAB 4: REGISTERED TEAMS */
@@ -1729,16 +1966,32 @@ export default function AdminHackathonsPage() {
                     className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-zinc-700 uppercase">End Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
-                  />
-                </div>
+                {editingHackathon?.parentHackathonId ? (
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase">Duration (Minutes)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        required
+                        value={editSprintDuration}
+                        onChange={(e) => setEditSprintDuration(e.target.value)}
+                        className="w-full text-xs py-2 pl-8 pr-3 border border-zinc-300 rounded-lg bg-white"
+                      />
+                      <Clock className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-700 uppercase">End Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full text-xs py-2 px-3 border border-zinc-300 rounded-lg bg-white"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

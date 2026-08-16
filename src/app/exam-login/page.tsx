@@ -264,13 +264,6 @@ function ExamLoginContent() {
 
       const { candidate, exam } = verifyCredData;
 
-      // Clear client-side violation lock on successful validation (re-enabled candidates)
-      try {
-        localStorage.removeItem(`exam_violated_${candidate.hallTicketNumber}`);
-      } catch (err) {
-        console.error("Failed to clear localStorage lockout:", err);
-      }
-
       // Ensure fingerprint is collected (may already be set from background effect)
       if (!visitorIdRef.current) {
         try {

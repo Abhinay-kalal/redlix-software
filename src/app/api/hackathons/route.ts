@@ -61,6 +61,10 @@ export const FALLBACK_HACKATHONS = [
 export async function GET() {
   try {
     const hackathons = await prisma.hackathon.findMany({
+      where: {
+        // Only return real hackathons — sprints have a joinCode set
+        joinCode: null
+      },
       orderBy: { createdAt: "desc" }
     });
 

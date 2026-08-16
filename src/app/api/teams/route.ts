@@ -8,16 +8,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
     }
 
+    // Get current candidate from cookies
+    const cookieStore = req.cookies;
+    const candidateEmail = cookieStore.get("candidate_email")?.value;
+    
+    if (!candidateEmail) {
+      return NextResponse.json({ success: false, error: "Unauthorized. Please login again." }, { status: 401 });
+    }
+
     try {
       const team = await prisma.team.create({
         data: {
           name,
-          hackathonId
+          hackathonId,
+          members: JSON.stringify([candidateEmail])
         }
       });
       return NextResponse.json({ success: true, data: team });
     } catch {
-      // Fallback for team registration
+      // Fallback
       const mockTeamId = "team_" + Math.random().toString(36).substring(2, 9);
       return NextResponse.json({
         success: true,

@@ -80,10 +80,47 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Fetch Hackathons and Sprints via Prisma
+    const { prisma } = await import("@/lib/prisma");
+    
+    // Find all teams where this candidate is a member
+    const allTeams = await prisma.team.findMany({
+      orderBy: { createdAt: "desc" }
+    });
+
+    const candidateTeams = allTeams.filter(t => {
+      try {
+        const members = JSON.parse(t.members || "[]");
+        return members.includes(candidate.email);
+      } catch {
+        return false;
+      }
+    });
+
+    const hackathonIds = candidateTeams.map(t => t.hackathonId);
+
+    // Fetch the actual hackathons
+    const hackathons = await prisma.hackathon.findMany({
+      where: {
+        id: { in: hackathonIds },
+        joinCode: null, // Ensure we get the main hackathon, not sprints
+      },
+      include: {
+        sprints: true, // Fetch associated active sprints
+      }
+    });
+
+    // Map the hackathons with their teams
+    const hackathonsWithTeams = hackathons.map(h => ({
+      ...h,
+      team: candidateTeams.find(t => t.hackathonId === h.id)
+    }));
+
     return NextResponse.json({
       success: true,
       candidate,
       registrations: registrations || [],
+      hackathons: hackathonsWithTeams,
     });
   } catch (err: any) {
     return NextResponse.json(

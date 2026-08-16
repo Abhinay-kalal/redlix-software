@@ -74,20 +74,50 @@ export default function ExamPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Load session from storage
+  // Load session from storage and verify with server
   useEffect(() => {
     const raw = sessionStorage.getItem("exam_session");
     if (!raw) { router.replace("/exam-login"); return; }
-    try {
-      const parsed: ExamSession = JSON.parse(raw);
-      if (parsed.hallTicketNumber && localStorage.getItem(`exam_violated_${parsed.hallTicketNumber}`)) {
-        router.replace("/exam-session");
-        return;
+    
+    let isMounted = true;
+    
+    const verifySession = async () => {
+      try {
+        const parsed: ExamSession = JSON.parse(raw);
+        if (!parsed.hallTicketNumber) throw new Error("Invalid session");
+
+        // Verify with the server to check if candidate is blocked
+        const res = await fetch("/api/exam/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hallTicketNumber: parsed.hallTicketNumber,
+            candidateName: parsed.candidateName,
+            examId: parsed.exam?.id,
+          }),
+        });
+        
+        const data = await res.json();
+        
+        if (!isMounted) return;
+        
+        if (!data.success && data.error === "blocked") {
+          router.replace("/exam-session");
+          return;
+        }
+
+        setSession(parsed);
+        examTarget.current = parseExamDateTime(parsed.exam.date, parsed.exam.time);
+      } catch {
+        if (isMounted) router.replace("/exam-login");
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      setSession(parsed);
-      examTarget.current = parseExamDateTime(parsed.exam.date, parsed.exam.time);
-    } catch { router.replace("/exam-login"); }
-    finally { setLoading(false); }
+    };
+    
+    verifySession();
+    
+    return () => { isMounted = false; };
   }, [router]);
 
   // Countdown to exam scheduled time

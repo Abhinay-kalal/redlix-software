@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       logoUrl,
       location,
       questions,
-      type
+      type,
+      parentHackathonId
     } = body;
 
     if (!title || !startDate || !endDate) {
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
         questions: typeof questions === "string" ? questions : JSON.stringify(questions),
         joinCode,
         isStarted: false,
+        parentHackathonId: parentHackathonId || null,
       },
     });
 

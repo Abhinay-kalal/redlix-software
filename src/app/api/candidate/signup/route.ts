@@ -13,17 +13,25 @@ export async function POST(req: NextRequest) {
       phone,
       college,
       department,
+      otp, // newly added
     } = body;
 
     // Validation
-    if (!fullName || !email || !password) {
+    if (!fullName || !email || !password || !otp) {
       return NextResponse.json(
-        { success: false, error: "Missing required registration parameters." },
+        { success: false, error: "Missing required registration parameters including OTP." },
         { status: 400 }
       );
     }
 
     const cleanEmail = email.trim().toLowerCase();
+
+    // Verify OTP first
+    const { verifyOtp } = await import("@/lib/otpStore");
+    const isOtpValid = verifyOtp(cleanEmail, otp);
+    if (!isOtpValid) {
+      return NextResponse.json({ success: false, error: "OTP verification failed or expired" }, { status: 400 });
+    }
 
     // Check if duplicate email
     const { data: existingUser, error: checkError } = await supabase
@@ -81,7 +89,11 @@ export async function POST(req: NextRequest) {
       console.error("Non-blocking welcome email dispatch failed:", emailErr);
     }
 
-    return NextResponse.json({ success: true });
+    const res = NextResponse.json({ success: true, redirectUrl: "/candidate-dashboard" });
+    res.cookies.set("candidate_logged_in", "true", { path: "/", maxAge: 86400 * 7 });
+    res.cookies.set("candidate_email", cleanEmail, { path: "/", maxAge: 86400 * 7 });
+    
+    return res;
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message || "Internal server error" },

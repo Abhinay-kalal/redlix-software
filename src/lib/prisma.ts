@@ -4,7 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const { PrismaClient } = require("@prisma/client");
 
 const DEFAULT_DATABASE_URL =
-  "postgresql://postgres.zemknulufleswmroqcrc:examrishiredlix@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
+  "postgresql://postgres.bqfcylhnjadiljzpwkve:NpZlAmWSypqwVTKm@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true";
 
 const connectionString = (process.env.DATABASE_URL && process.env.DATABASE_URL.trim()) || DEFAULT_DATABASE_URL;
 
